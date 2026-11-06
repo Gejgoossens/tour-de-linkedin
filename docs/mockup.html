@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tour de LinkedIn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --geel:#FFD300; --geel-d:#4A3A00;
+  --asfalt:#23262B;
+  --pagina:#ECEEF0; --wit:#FFFFFF; --lijn:#D5D9DD; --sub:#5A6068;
+  --blauw:#2563C9;
+  --cond:'Barlow Condensed','Arial Narrow',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--pagina);color:var(--asfalt);font:16px/1.5 Barlow,system-ui,sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 64px}
+button,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--blauw);outline-offset:2px}
+
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.merk{font:800 28px/1 var(--cond);margin:0}
+.nav{display:flex;align-items:center;gap:6px}
+.nav button{width:38px;height:38px;border:1.5px solid var(--asfalt);background:var(--wit);border-radius:4px;cursor:pointer;font-size:20px;line-height:1}
+.nav button:disabled{opacity:.3;cursor:default}
+.nav select{height:38px;border:1.5px solid var(--asfalt);background:var(--wit);border-radius:4px;padding:0 10px;font-family:var(--cond);font-size:17px;font-weight:700}
+
+.hero{background:var(--geel);color:var(--geel-d);overflow:hidden;border-radius:2px}
+.finish{height:14px;background:repeating-conic-gradient(var(--asfalt) 0 25%,var(--wit) 0 50%) 0 0/14px 14px}
+.hero-in{padding:18px 22px 0}
+.hero .kop{font:700 18px/1.2 var(--cond);margin:0}
+.hero .winnaar{font:800 clamp(50px,12vw,92px)/.92 var(--cond);color:var(--asfalt);margin:10px 0 10px}
+.hero .detail{font-size:16px;margin:0;max-width:52ch}
+.hero .detail b{font-weight:600;color:var(--asfalt)}
+.profiel{display:block;width:100%;height:auto;margin-top:12px}
+.profiel .lijn{fill:none;stroke:var(--asfalt);stroke-width:2.5;stroke-linejoin:round}
+.profiel text{font-family:var(--cond);font-weight:700}
+@media (prefers-reduced-motion:no-preference){
+  .profiel .lijn{stroke-dasharray:1600;stroke-dashoffset:1600;animation:teken 1.4s ease-out .15s forwards}
+  @keyframes teken{to{stroke-dashoffset:0}}
+}
+
+section{background:var(--wit);border:1px solid var(--lijn);border-radius:6px;padding:18px 18px 10px;margin-top:16px}
+section h2{font:700 24px/1.1 var(--cond);margin:0 0 4px}
+.toel{color:var(--sub);font-size:14px;margin:0 0 10px}
+
+.renner{display:grid;grid-template-columns:24px 40px minmax(0,1fr) auto;align-items:center;column-gap:10px;padding:10px 0;border-top:1px solid var(--lijn)}
+.renner:first-of-type{border-top:0}
+.pos{font:700 20px/1 var(--cond);color:var(--sub);text-align:center}
+.pos.een{color:var(--asfalt)}
+.renner.buiten{color:var(--sub)}
+.renner.buiten .bib{border-color:var(--lijn);color:var(--sub)}
+.bib{position:relative;width:40px;height:30px;border:1.5px solid var(--asfalt);border-radius:2px;background:var(--wit);display:flex;align-items:center;justify-content:center;font:800 18px/1 var(--cond)}
+.bib::before,.bib::after{content:"";position:absolute;top:3px;width:3px;height:3px;border-radius:50%;background:var(--sub)}
+.bib::before{left:3px}.bib::after{right:3px}
+.naam{font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.truitjes{display:inline-flex;gap:2px}
+.splits{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.split{font-size:12px;padding:1px 6px;border-radius:3px;background:var(--pagina);color:var(--sub);font-variant-numeric:tabular-nums}
+.split.best{background:var(--geel);color:var(--geel-d);font-weight:600}
+.split.mis{text-decoration:line-through}
+.sub2{color:var(--sub);font-size:14px;margin-top:2px}
+.tijd{text-align:right;font:700 20px/1 var(--cond);font-variant-numeric:tabular-nums}
+.tijd small{display:block;font:500 14px/1.4 Barlow,sans-serif;color:var(--sub)}
+
+.truien{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:8px}
+.trui{width:100%;text-align:left;background:var(--wit);font:inherit;color:inherit;cursor:default;display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:center;padding:12px;border:1px solid var(--lijn);border-radius:4px}
+button.trui{cursor:pointer}
+button.trui:hover{border-color:var(--asfalt)}
+.tabs button svg{vertical-align:-4px}
+.t-naam{font:700 18px/1.1 var(--cond)}
+.t-spel{font-size:13px;color:var(--sub)}
+.t-drager{font-weight:600;margin-top:4px}
+.t-dag{font-size:13px;color:var(--sub)}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}
+.tabs button{border:1.5px solid var(--asfalt);background:var(--wit);border-radius:20px;padding:4px 14px;cursor:pointer;font-weight:500;font-size:14px}
+.tabs button[aria-pressed="true"]{background:var(--asfalt);color:var(--wit)}
+
+.ere{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-bottom:8px}
+.ere h3{font:700 18px/1.2 var(--cond);margin:0 0 6px}
+.ere ol{list-style:none;margin:0;padding:0}
+.ere li{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--lijn);font-size:15px}
+.ere li:first-child{border-top:0}
+.bezig{color:var(--sub)}
+.leeg{color:var(--sub);font-size:14px;padding:6px 0}
+
+.views{margin:0 0 14px}
+.views button{font:700 18px/1 var(--cond);padding:8px 18px;border-radius:4px}
+#statFilter{margin:0 0 4px}
+.recs{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:8px}
+.rec{border:1px solid var(--lijn);border-radius:4px;padding:12px}
+.rec h3{font:700 18px/1.1 var(--cond);margin:0 0 6px;display:flex;gap:6px;align-items:center}
+.rec ol{list-style:none;margin:0;padding:0}
+.rec li{display:grid;grid-template-columns:16px 1fr auto;gap:8px;padding:5px 0;border-top:1px solid var(--lijn);font-size:14px;align-items:baseline}
+.rec li:first-child{border-top:0}
+.rec li b{font:700 17px/1 var(--cond);font-variant-numeric:tabular-nums}
+.d{color:var(--sub);font-size:12px}
+.rec-noot{margin:6px 0 0}
+.scroll{overflow-x:auto;margin-bottom:10px}
+.tbl{width:100%;min-width:340px;border-collapse:collapse;table-layout:fixed;font-size:13px;font-variant-numeric:tabular-nums}
+.tbl th,.tbl td{padding:7px 2px;text-align:center;border-bottom:1px solid var(--wit)}
+.tbl th{font:700 15px/1.1 var(--cond)}
+.tbl th small{display:block;font:400 11px/1.3 Barlow,sans-serif;color:var(--sub)}
+.tbl td:first-child,.tbl th:first-child{text-align:left;width:72px;font-weight:600;padding-left:0}
+.tbl td.best{font-weight:700;box-shadow:inset 0 0 0 2px var(--asfalt)}
+.tbl tr.som td{border-top:2px solid var(--asfalt);font-weight:600}
+.tbl.vrij{table-layout:auto}
+.tbl.vrij td,.tbl.vrij th{border-bottom:1px solid var(--lijn)}
+.tbl.matrix td{border:1px solid var(--lijn)}
+.tbl.matrix td:first-child{border:0}
+.tbl.matrix td.voor{background:#FFF3B0;font-weight:600}
+.tbl.matrix tr.gekozen td{outline:2px solid var(--asfalt);outline-offset:-2px}
+.conclusie{font-size:15px;margin:0 0 10px;max-width:62ch}
+.profielen{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:10px}
+.prof{border:1px solid var(--lijn);border-radius:4px;padding:12px}
+.kop2{display:flex;gap:8px;align-items:center;font-weight:600;margin-bottom:10px}
+.mini{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-bottom:8px}
+.mini b{display:block;font:700 22px/1 var(--cond);font-variant-numeric:tabular-nums}
+.mini span{font-size:12px;color:var(--sub)}
+.prof p{margin:5px 0 0;font-size:14px}
+.prof p b{font-weight:600}
+.legenda{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;margin:6px 0 10px}
+.legenda i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px}
+.feit{padding:9px 0;border-top:1px solid var(--lijn);font-size:15px}
+.feit:first-of-type{border-top:0}
+.feit b{font-weight:600}
+[hidden]{display:none!important}
+footer{color:var(--sub);font-size:13px;margin-top:22px;max-width:62ch}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1 class="merk">Tour de LinkedIn</h1>
+    <div class="nav">
+      <button id="vorige" aria-label="Vorige etappe">&#8249;</button>
+      <select id="kies" aria-label="Kies etappe"></select>
+      <button id="volgende" aria-label="Volgende etappe">&#8250;</button>
+    </div>
+  </div>
+
+  <div class="tabs views" role="group" aria-label="Kies weergave">
+    <button data-view="tour" aria-pressed="true">Tour</button>
+    <button data-view="stats" aria-pressed="false">Statistieken</button>
+  </div>
+
+  <div id="tourView">
+    <div class="hero" id="hero"></div>
+    <section id="uitslag"></section>
+    <section id="truien"></section>
+    <section id="klassement"></section>
+    <section id="erelijst"></section>
+  </div>
+
+  <div id="statView" hidden>
+    <div class="tabs" id="statFilter" role="group" aria-label="Kies speler"></div>
+    <section id="s-records"></section>
+    <section id="s-weekdag"></section>
+    <section id="s-spelers"></section>
+    <section id="s-onderling"></section>
+    <section id="s-verloop"></section>
+    <section id="s-opvallend"></section>
+  </div>
+
+  <footer><span style="display:block;margin-bottom:6px">Versie 16 september, bijgewerkt tot en met vandaag.</span>Tijden in seconden, per etappe opgeteld over alle spellen. Laagste tijd wint. Elke maand is een nieuwe Tour, opgebouwd uit hele weken: een week hoort bij de maand waarin de donderdag valt. <span id="regel"></span></footer>
+</div>
+
+<!-- ===== DATA: plak nieuwe rijen onderaan, zelfde kolommen. Lege cel = niet gespeeld ===== -->
+<script id="data" type="text/csv">
+Datum,Etappe,Spel,Mathijs,Bouw,Corne,Jari,Giyo
+2026-08-31,1,Wend,6,7,11,17,
+2026-08-31,1,Zip,4,5,5,7,
+2026-08-31,1,Patches,8,3,4,7,
+2026-08-31,1,Tango,33,33,26,47,
+2026-08-31,1,Queens,16,7,7,9,
+2026-09-01,2,Wend,13,11,13,23,
+2026-09-01,2,Zip,8,7,8,7,
+2026-09-01,2,Patches,3,4,4,4,
+2026-09-01,2,Tango,27,30,31,74,
+2026-09-01,2,Queens,37,6,12,11,
+2026-09-02,3,Wend,22,16,32,47,
+2026-09-02,3,Zip,23,7,18,13,
+2026-09-02,3,Patches,10,8,6,15,
+2026-09-02,3,Tango,20,33,24,45,
+2026-09-02,3,Queens,23,18,18,27,
+2026-09-03,4,Wend,35,90,49,13,
+2026-09-03,4,Zip,12,8,16,11,
+2026-09-03,4,Patches,12,12,18,124,
+2026-09-03,4,Tango,54,37,31,49,
+2026-09-03,4,Queens,57,62,24,11,
+2026-09-04,5,Wend,47,15,51,40,123
+2026-09-04,5,Zip,6,28,23,17,11
+2026-09-04,5,Patches,20,17,14,33,54
+2026-09-04,5,Tango,58,54,23,50,233
+2026-09-04,5,Queens,43,19,40,41,65
+2026-09-05,6,Wend,25,26,16,61,53
+2026-09-05,6,Zip,16,7,11,44,7
+2026-09-05,6,Patches,26,84,23,106,75
+2026-09-05,6,Tango,106,105,25,45,117
+2026-09-05,6,Queens,83,25,41,51,91
+2026-09-06,7,Wend,70,109,55,55,
+2026-09-06,7,Zip,20,23,12,85,
+2026-09-06,7,Patches,41,47,24,85,
+2026-09-06,7,Tango,50,44,61,67,
+2026-09-06,7,Queens,158,52,61,82,
+2026-09-07,8,Wend,18,7,18,34,29
+2026-09-07,8,Zip,5,5,8,7,4
+2026-09-07,8,Patches,6,6,6,6,6
+2026-09-07,8,Tango,15,20,15,21,51
+2026-09-07,8,Queens,4,9,6,8,19
+2026-09-08,9,Wend,16,29,33,16,19
+2026-09-08,9,Zip,15,37,12,29,15
+2026-09-08,9,Patches,22,8,6,18,15
+2026-09-08,9,Tango,33,31,23,32,85
+2026-09-08,9,Queens,15,7,9,39,21
+2026-09-09,10,Wend,27,25,17,29,44
+2026-09-09,10,Zip,5,9,5,27,16
+2026-09-09,10,Patches,11,7,37,19,37
+2026-09-09,10,Tango,35,27,71,44,85
+2026-09-09,10,Queens,17,8,11,11,41
+2026-09-10,11,Wend,33,18,40,22,39
+2026-09-10,11,Zip,7,5,6,8,7
+2026-09-10,11,Patches,13,21,13,13,13
+2026-09-10,11,Tango,46,31,66,43,80
+2026-09-10,11,Queens,25,27,12,11,12
+2026-09-11,12,Wend,33,11,28,26,22
+2026-09-11,12,Zip,18,13,18,30,20
+2026-09-11,12,Patches,26,13,15,44,37
+2026-09-11,12,Tango,51,41,33,75,108
+2026-09-11,12,Queens,34,29,35,45,30
+2026-09-13,13,Wend,81,34,45,96,127
+2026-09-13,13,Zip,29,6,23,28,17
+2026-09-13,13,Patches,30,13,24,14,132
+2026-09-13,13,Tango,73,56,34,50,122
+2026-09-13,13,Queens,87,159,70,94,114
+2026-09-14,14,Wend,13,9,12,6,18
+2026-09-14,14,Zip,4,5,5,5,7
+2026-09-14,14,Patches,7,5,7,7,12
+2026-09-14,14,Tango,25,26,22,48,53
+2026-09-14,14,Queens,11,6,8,7,13
+2026-09-15,15,Wend,17,14,25,13,22
+2026-09-15,15,Zip,10,9,10,12,12
+2026-09-15,15,Patches,14,9,8,11,18
+2026-09-15,15,Tango,32,49,32,52,76
+2026-09-15,15,Queens,12,7,9,20,11
+2026-09-16,16,Wend,30,20,26,47,47
+2026-09-16,16,Zip,4,3,4,6,12
+2026-09-16,16,Patches,7,7,12,16,24
+2026-09-16,16,Tango,37,29,30,63,83
+2026-09-16,16,Queens,7,7,7,14,7
+</script>
+
+<script>
+const STRAFSECONDEN = 10;
+/* false: wie een spel mist krijgt de langzaamste tijd + STRAFSECONDEN.
+   true:  een spel telt alleen als iedereen het speelde (zoals in de Excel). */
+const ALLEEN_VOLLEDIG = false;
+/* Optioneel: dagen vóór deze datum (bijv. "2026-09-07") tellen niet mee. Leeg = alles telt. */
+const START_DATUM = "";
+const TRUIEN = {
+  Wend:    { kleur:"blauw",  naam:"Blauwe trui" },
+  Zip:     { kleur:"groen",  naam:"Groene trui" },
+  Patches: { kleur:"oranje", naam:"Oranje trui" },
+  Tango:   { kleur:"wit",    naam:"Witte trui" },
+  Queens:  { kleur:"bol",    naam:"Bolletjestrui" }
+};
+const EXTRA_KLEUREN = ["paars","turkoois"];
+const KLEUR = {
+  geel:["#FFD300","#6B5500"], groen:["#1E8A4C","#0E3F22"], blauw:["#2563C9","#0F2E5C"],
+  oranje:["#F07A1A","#6A300A"], wit:["#FFFFFF","#6B7078"], bol:["#FFFFFF","#8E1B28"],
+  paars:["#6D4BC4","#2E1C5E"], turkoois:["#1A9C9C","#0B4545"]
+};
+const SHIRT = "M10 4 L13 3 Q16 7 19 3 L22 4 L30 10 L26 15 L23 13 L23 29 L9 29 L9 13 L6 15 L2 10 Z";
+
+function truiSvg(kleur, size){
+  if(kleur === "lantaarn"){
+    return `<svg viewBox="0 0 32 32" width="${size}" height="${size}" aria-hidden="true"><path d="M12 5 Q16 1 20 5" fill="none" stroke="#23262B" stroke-width="1.6"/><rect x="10" y="6" width="12" height="3" rx="1" fill="#23262B"/><rect x="11" y="9" width="10" height="15" rx="2" fill="#D7263D" stroke="#7A1420" stroke-width="1.2"/><rect x="10" y="24" width="12" height="3" rx="1" fill="#23262B"/></svg>`;
+  }
+  const [f, s] = KLEUR[kleur] || KLEUR.wit;
+  let dots = "";
+  if(kleur === "bol") [[12,10],[20,10],[16,17],[12,23],[20,23]].forEach(([x,y]) => dots += `<circle cx="${x}" cy="${y}" r="2.3" fill="#D7263D"/>`);
+  return `<svg viewBox="0 0 32 32" width="${size}" height="${size}" aria-hidden="true"><path d="${SHIRT}" fill="${f}" stroke="${s}" stroke-width="1.3" stroke-linejoin="round"/>${dots}</svg>`;
+}
+
+function parseCSV(text){
+  return text.trim().split(/\r?\n/).map(line => {
+    const out = []; let cur = "", q = false;
+    for(let i = 0; i < line.length; i++){
+      const c = line[i];
+      if(q){ if(c === '"' && line[i+1] === '"'){ cur += '"'; i++; } else if(c === '"') q = false; else cur += c; }
+      else if(c === '"') q = true;
+      else if(c === "," || c === ";"){ out.push(cur); cur = ""; }
+      else cur += c;
+    }
+    out.push(cur);
+    return out.map(s => s.trim());
+  });
+}
+function normDatum(d){
+  const m = d.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/);
+  return m ? `${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}` : d;
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function fmt(sec){
+  sec = Math.round(sec);
+  const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), s = sec%60;
+  return h ? `${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}` : `${m}:${String(s).padStart(2,"0")}`;
+}
+function isoWeek(ds){
+  const d = new Date(ds + "T12:00:00");
+  const t = new Date(d); t.setDate(d.getDate() - ((d.getDay()+6)%7) + 3);
+  const jan4 = new Date(t.getFullYear(), 0, 4, 12);
+  const w = 1 + Math.round(((t - jan4)/86400000 - 3 + ((jan4.getDay()+6)%7)) / 7);
+  return { key:`${t.getFullYear()}-${String(w).padStart(2,"0")}`, nr:w, maand:`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}` };
+}
+const maandKey = ds => isoWeek(ds).maand;
+const maandNaam = key => new Date(key + "-15T12:00:00").toLocaleDateString("nl-NL", { month:"long" });
+const maandJaar = key => new Date(key + "-15T12:00:00").toLocaleDateString("nl-NL", { month:"long", year:"numeric" });
+const datumNL = ds => new Date(ds + "T12:00:00").toLocaleDateString("nl-NL", { weekday:"long", day:"numeric", month:"long" });
+const datumKort = ds => new Date(ds + "T12:00:00").toLocaleDateString("nl-NL", { day:"numeric", month:"short" });
+const namen = a => a.length === 1 ? a[0] : a.slice(0,-1).join(", ") + " en " + a[a.length-1];
+
+/* ===== data inlezen ===== */
+const rijen = parseCSV(document.getElementById("data").textContent);
+const spelers = rijen[0].slice(3).filter(Boolean);
+const perEtappe = new Map();
+for(const r of rijen.slice(1)){
+  if(!r[0] || !r[2]) continue;
+  const datum = normDatum(r[0]);
+  if(START_DATUM && datum < START_DATUM) continue;
+  const nr = Number(r[1]) || 0;
+  const raw = {};
+  spelers.forEach((p, i) => {
+    const v = (r[3+i] || "").replace(",", ".");
+    raw[p] = v === "" || isNaN(Number(v)) ? null : Number(v);
+  });
+  const gespeeld = spelers.filter(p => raw[p] !== null).map(p => raw[p]);
+  if(!gespeeld.length) continue;
+  if(ALLEEN_VOLLEDIG && gespeeld.length < spelers.length) continue;
+  const slechtst = Math.max(...gespeeld);
+  const eff = {};
+  spelers.forEach(p => eff[p] = raw[p] !== null ? raw[p] : slechtst + STRAFSECONDEN);
+  const key = nr ? "e" + nr : "d" + datum;
+  if(!perEtappe.has(key)) perEtappe.set(key, { nr, datum, spellen:[] });
+  perEtappe.get(key).spellen.push({ spel:r[2], raw, eff });
+}
+const etappes = [...perEtappe.values()].sort((a,b) => a.datum.localeCompare(b.datum) || a.nr - b.nr);
+etappes.forEach((e, i) => {
+  e.nr = i + 1;
+  e.totaal = {};
+  spelers.forEach(p => e.totaal[p] = e.spellen.reduce((a, g) => a + g.eff[p], 0));
+});
+const alleSpellen = [...new Set(etappes.flatMap(e => e.spellen.map(g => g.spel)))];
+function truiVoor(spel){
+  if(TRUIEN[spel]) return TRUIEN[spel];
+  const i = alleSpellen.filter(s => !TRUIEN[s]).indexOf(spel);
+  return { kleur:EXTRA_KLEUREN[i % EXTRA_KLEUREN.length], naam:`Trui van ${spel}` };
+}
+function som(lijst, spel){
+  const t = {}; spelers.forEach(p => t[p] = 0);
+  lijst.forEach(e => e.spellen.forEach(g => { if(!spel || g.spel === spel) spelers.forEach(p => t[p] += g.eff[p]); }));
+  return t;
+}
+/* wie doet mee: een speler telt pas mee vanaf zijn eerste gespeelde dag */
+const eerste = {};
+etappes.forEach(e => e.spellen.forEach(g => spelers.forEach(p => { if(g.raw[p] !== null && !eerste[p]) eerste[p] = e.datum; })));
+const deelnemers = lijst => lijst.length ? spelers.filter(p => eerste[p] && eerste[p] <= lijst[0].datum) : spelers.slice();
+const buiten = lijst => spelers.filter(p => !deelnemers(lijst).includes(p));
+const laatsteStart = Object.values(eerste).sort().slice(-1)[0];
+const laatkomers = spelers.filter(p => eerste[p] === laatsteStart);
+function rangschik(t, wie = spelers){
+  const a = wie.map(p => ({ p, t:t[p] })).sort((x,y) => x.t - y.t || spelers.indexOf(x.p) - spelers.indexOf(y.p));
+  let pos = 0;
+  a.forEach((r, i) => { if(i === 0 || r.t !== a[i-1].t) pos = i + 1; r.pos = pos; });
+  return a;
+}
+function ritzeges(lijst){
+  const z = {}; spelers.forEach(p => z[p] = 0);
+  lijst.forEach(e => rangschik(e.totaal, deelnemers([e])).filter(r => r.pos === 1).forEach(r => z[r.p]++));
+  return z;
+}
+function spelzeges(lijst, spel){
+  const z = {}; spelers.forEach(p => z[p] = 0);
+  lijst.forEach(e => e.spellen.filter(g => g.spel === spel).forEach(g => {
+    const v = spelers.map(p => g.raw[p]).filter(v => v !== null);
+    const best = Math.min(...v);
+    spelers.forEach(p => { if(g.raw[p] === best) z[p]++; });
+  }));
+  return z;
+}
+function categorie(gem){
+  if(gem >= 60) return "HC";
+  if(gem >= 40) return "1e cat.";
+  if(gem >= 25) return "2e cat.";
+  if(gem >= 15) return "3e cat.";
+  return "4e cat.";
+}
+function gemiddelde(g){
+  const v = spelers.map(p => g.raw[p]).filter(v => v !== null);
+  return v.reduce((a,b) => a+b, 0) / v.length;
+}
+
+function profielSvg(e){
+  const W = Math.max(320, Math.round(document.getElementById("hero").clientWidth || 700));
+  const H = 172, basis = 118, top = 34, n = e.spellen.length;
+  const gem = e.spellen.map(gemiddelde);
+  const max = Math.max(...gem);
+  const stap = W / n;
+  const hoogte = gem.map(v => 14 + (basis - top - 14) * (v / max));
+  const pts = [[0, basis - 6]];
+  e.spellen.forEach((g, i) => {
+    const x = stap * (i + .5);
+    pts.push([x - stap*.32, basis - hoogte[i]*.25 - 4], [x - stap*.1, basis - hoogte[i]*.8], [x, basis - hoogte[i]], [x + stap*.14, basis - hoogte[i]*.72]);
+  });
+  pts.push([W, basis - 8]);
+  const lijn = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+  const z = gem.indexOf(max), zx = stap * (z + .5), zy = basis - hoogte[z];
+  const labels = e.spellen.map((g, i) => {
+    const x = stap * (i + .5);
+    return `<text x="${x}" y="${basis + 27}" text-anchor="middle" fill="#FFFFFF" font-size="${W < 520 ? 16 : 19}">${esc(g.spel)}</text><text x="${x}" y="${basis + 46}" text-anchor="middle" fill="#FFD300" font-size="${W < 520 ? 13 : 15}">${categorie(gem[i])}${W < 520 ? "" : ", " + fmt(gem[i])}</text>`;
+  }).join("");
+  return `<svg class="profiel" viewBox="0 0 ${W} ${H}" role="img" aria-label="Rittenprofiel van de etappe, ${esc(e.spellen[z].spel)} was het zwaarste spel">
+    <path d="${lijn} L ${W} ${H} L 0 ${H} Z" fill="#23262B" opacity=".1"/>
+    <rect x="0" y="${basis}" width="${W}" height="${H-basis}" fill="#23262B"/>
+    <path class="lijn" d="${lijn}"/>
+    <line x1="${zx}" y1="${zy}" x2="${zx}" y2="${zy-24}" stroke="#23262B" stroke-width="2"/>
+    <rect x="${zx}" y="${zy-24}" width="17" height="11" fill="#D7263D"/>
+    ${labels}</svg>`;
+}
+
+/* ===== statistieken ===== */
+const DAGEN = ["Ma","Di","Wo","Do","Vr","Za","Zo"];
+const DAGEN_LANG = ["maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag","zondag"];
+const weekdag = ds => (new Date(ds + "T12:00:00").getDay() + 6) % 7;
+const SPELER_KLEUR = ["#23262B","#2563C9","#D7263D","#1E8A4C","#F07A1A","#6D4BC4","#1A9C9C","#8A6A00"];
+const kleurVan = p => SPELER_KLEUR[spelers.indexOf(p) % SPELER_KLEUR.length];
+const gem = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+const spreiding = a => { const m = gem(a); return a.length > 1 ? Math.sqrt(gem(a.map(v => (v - m) ** 2))) : 0; };
+const verschil = (v, ref) => `${Math.round(Math.abs(v / ref - 1) * 100)}% ${v < ref ? "sneller" : "trager"}`;
+const bibG = p => `<span class="bib">${spelers.indexOf(p) + 1}</span>`;
+
+const resultaten = [];
+etappes.forEach(e => e.spellen.forEach(g => spelers.forEach(p => {
+  if(g.raw[p] !== null) resultaten.push({ p, spel:g.spel, t:g.raw[p], datum:e.datum, nr:e.nr });
+})));
+const ritTijden = [];
+etappes.forEach(e => spelers.forEach(p => {
+  if(e.spellen.every(g => g.raw[p] !== null)) ritTijden.push({ p, t:e.spellen.reduce((a, g) => a + g.raw[p], 0), datum:e.datum, nr:e.nr });
+}));
+const ritVan = new Map(ritTijden.map(r => [r.p + "|" + r.nr, r.t]));
+let statSpeler = "";
+
+function verloopSvg(f){
+  const box = document.getElementById("s-verloop");
+  const W = Math.max(300, Math.round(box.clientWidth - 38)), H = 240, L = 42, R = 8, T = 10, B = 30;
+  if(!ritTijden.length) return `<div class="leeg">Nog geen volledige etappes.</div>`;
+  const n = etappes.length;
+  const xs = etappes.map((e, i) => L + (W - L - R) * (n === 1 ? .5 : i / (n - 1)));
+  const vals = ritTijden.map(r => r.t);
+  const stapOpties = [30, 60, 120, 300, 600];
+  let y0 = Math.min(...vals), y1 = Math.max(...vals);
+  const stap = stapOpties.find(s => (y1 - y0) / s <= 5) || 900;
+  y0 = Math.floor(y0 / stap) * stap; y1 = Math.ceil(y1 / stap) * stap; if(y1 === y0) y1 += stap;
+  const y = v => T + (H - T - B) * (1 - (v - y0) / (y1 - y0));
+  let grid = "";
+  for(let v = y0; v <= y1; v += stap) grid += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#D5D9DD"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" font-size="12" fill="#5A6068">${fmt(v)}</text>`;
+  const elk = Math.max(1, Math.ceil(n / Math.floor((W - L) / 34)));
+  const xl = etappes.map((e, i) => i % elk === 0 || i === n - 1 ? `<text x="${xs[i]}" y="${H - 10}" text-anchor="middle" font-size="12" fill="#5A6068">${e.nr}</text>` : "").join("");
+  const volgorde = spelers.filter(p => p !== f).concat(f ? [f] : []);
+  const lijnen = volgorde.map(p => {
+    let d = "", vorig = false, punten = "";
+    etappes.forEach((e, i) => {
+      const t = ritVan.get(p + "|" + e.nr);
+      if(t === undefined){ vorig = false; return; }
+      d += (vorig ? "L" : "M") + xs[i].toFixed(1) + " " + y(t).toFixed(1) + " ";
+      punten += `<circle cx="${xs[i].toFixed(1)}" cy="${y(t).toFixed(1)}" r="${p === f ? 3.5 : 2.5}" fill="${kleurVan(p)}"/>`;
+      vorig = true;
+    });
+    const op = f && p !== f ? .15 : 1;
+    return `<g opacity="${op}"><path d="${d}" fill="none" stroke="${kleurVan(p)}" stroke-width="${p === f ? 3 : 2}" stroke-linejoin="round"/>${punten}</g>`;
+  }).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Etappetijd per speler per etappe">${grid}${xl}${lijnen}
+    <text x="${W - R}" y="${H - 10}" text-anchor="end" font-size="12" fill="#5A6068"> </text></svg>`;
+}
+
+function renderStats(){
+  const f = statSpeler;
+  const filter = document.getElementById("statFilter");
+  filter.innerHTML = ["", ...spelers].map(p => `<button data-sp="${esc(p)}" aria-pressed="${p === f}">${p ? esc(p) : "Iedereen"}</button>`).join("");
+  filter.querySelectorAll("button").forEach(b => b.onclick = () => {
+    statSpeler = b.dataset.sp; renderStats();
+    document.querySelector(`#statFilter [data-sp="${CSS.escape(statSpeler)}"]`).focus();
+  });
+
+  /* snelste tijden */
+  document.getElementById("s-records").innerHTML = `
+    <h2>${f ? "Snelste tijden van " + esc(f) : "Snelste tijden"}</h2>
+    <p class="toel">Top 5 per spel. Alleen echt gespeelde tijden, geen straftijden.</p>
+    <div class="recs">${alleSpellen.map(sp => {
+      const alle = resultaten.filter(r => r.spel === sp).sort((a, b) => a.t - b.t || a.datum.localeCompare(b.datum));
+      const lijst = alle.filter(r => !f || r.p === f).slice(0, 5);
+      const rec = alle[0];
+      const extra = f && lijst.length && rec ? `<p class="d rec-noot">${lijst[0].t === rec.t ? "Houdt het groepsrecord" : `Groepsrecord: ${esc(rec.p)}, ${fmt(rec.t)}`}</p>` : "";
+      return `<div class="rec"><h3>${truiSvg(truiVoor(sp).kleur, 20)} ${esc(sp)}</h3>
+        ${lijst.length ? `<ol>${lijst.map((r, i) => `<li><span class="d">${i && r.t === lijst[i - 1].t ? "" : i + 1}</span><span>${f ? "" : esc(r.p) + " "}<span class="d">${datumKort(r.datum)}</span></span><b>${fmt(r.t)}</b></li>`).join("")}</ol>` : `<div class="leeg">Nog geen tijden.</div>`}
+        ${extra}</div>`;
+    }).join("")}</div>`;
+
+  /* weekdagen */
+  const nDag = DAGEN.map((_, d) => etappes.filter(e => weekdag(e.datum) === d).length);
+  const rijen = alleSpellen.map(sp => ({ label:sp, w:DAGEN.map((_, d) => gem(resultaten.filter(r => r.spel === sp && weekdag(r.datum) === d && (!f || r.p === f)).map(r => r.t))) }));
+  const ritRij = { label:"Etappe", som:true, w:DAGEN.map((_, d) => gem(ritTijden.filter(r => weekdag(r.datum) === d && (!f || r.p === f)).map(r => r.t))) };
+  const cel = (v, rij) => {
+    if(v === null) return `<td class="d">–</td>`;
+    const vs = rij.w.filter(x => x !== null), mn = Math.min(...vs), mx = Math.max(...vs);
+    const t = mx > mn ? (v - mn) / (mx - mn) : 0;
+    return `<td class="${v === mn && vs.length > 1 ? "best" : ""}" style="background:color-mix(in srgb, #FFD300 ${Math.round((1 - t) * 85 + 5)}%, #FFFFFF)">${fmt(v)}</td>`;
+  };
+  const geldig = ritRij.w.map((v, i) => ({ v, i })).filter(x => x.v !== null).sort((a, b) => a.v - b.v);
+  let conclusie = "";
+  if(geldig.length > 1){
+    const s = geldig[0], l = geldig[geldig.length - 1];
+    conclusie = `${f ? esc(f) + " is" : "Jullie zijn"} het snelst op ${DAGEN_LANG[s.i]}, gemiddeld ${fmt(s.v)} per etappe, en het traagst op ${DAGEN_LANG[l.i]} met ${fmt(l.v)}.`;
+    if(Math.min(...nDag.filter(x => x > 0)) < 4) conclusie += " Met nog maar een paar dagen per weekdag is dit vooral een eerste indruk.";
+  }
+  document.getElementById("s-weekdag").innerHTML = `
+    <h2>Gemiddelde per weekdag</h2>
+    <p class="toel">Hoe geler, hoe sneller binnen die rij. Omkaderd is de snelste dag. Onder de dag staat hoe vaak die dag gespeeld is.</p>
+    <div class="scroll"><table class="tbl"><thead><tr><th></th>${DAGEN.map((d, i) => `<th>${d}<small>${nDag[i]}×</small></th>`).join("")}</tr></thead>
+    <tbody>${[...rijen, ritRij].map(r => `<tr${r.som ? ' class="som"' : ""}><td>${esc(r.label)}</td>${r.w.map(v => cel(v, r)).join("")}</tr>`).join("")}</tbody></table></div>
+    ${conclusie ? `<p class="conclusie">${conclusie}</p>` : ""}`;
+
+  /* spelersprofielen */
+  const groepGem = {}; alleSpellen.forEach(sp => groepGem[sp] = gem(resultaten.filter(r => r.spel === sp).map(r => r.t)));
+  const rz = ritzeges(etappes);
+  const sz = {}; alleSpellen.forEach(sp => sz[sp] = spelzeges(etappes, sp));
+  const profiel = p => {
+    const rt = ritTijden.filter(r => r.p === p);
+    const eigen = alleSpellen.map(sp => { const v = gem(resultaten.filter(r => r.spel === sp && r.p === p).map(r => r.t)); return { sp, v, ratio: v === null ? null : v / groepGem[sp] }; }).filter(x => x.v !== null);
+    const sorted = eigen.slice().sort((a, b) => a.ratio - b.ratio);
+    const gewonnen = alleSpellen.reduce((a, sp) => a + sz[sp][p], 0);
+    const beste = rt.slice().sort((a, b) => a.t - b.t)[0];
+    let vorm = "";
+    if(rt.length >= 5){
+      const g3 = gem(rt.slice(-3).map(r => r.t)), ga = gem(rt.map(r => r.t));
+      vorm = Math.abs(g3 / ga - 1) < .03 ? "Vorm: stabiel, de laatste 3 ritten zitten rond het eigen gemiddelde." : `Vorm: laatste 3 ritten ${verschil(g3, ga)} dan normaal.`;
+    }
+    const sterk = sorted[0], zwak = sorted[sorted.length - 1];
+    return `<div class="prof"><div class="kop2">${bibG(p)} ${esc(p)}</div>
+      <div class="mini">
+        <div><b>${rt.length ? fmt(gem(rt.map(r => r.t))) : "–"}</b><span>Gemiddelde etappe</span></div>
+        <div><b>${beste ? fmt(beste.t) : "–"}</b><span>Beste etappe${beste ? ", " + datumKort(beste.datum) : ""}</span></div>
+        <div><b>${rz[p]}</b><span>Ritzeges</span></div>
+        <div><b>${gewonnen}</b><span>Keer snelst in een spel</span></div>
+      </div>
+      ${sterk ? `<p>Sterkste spel: <b>${esc(sterk.sp)}</b>, ${sterk.ratio > 1 ? "al is dat nog " : ""}${verschil(sterk.v, groepGem[sterk.sp])} dan gemiddeld.</p>` : ""}
+      ${zwak && zwak !== sterk ? `<p>Minst sterke spel: <b>${esc(zwak.sp)}</b>, ${zwak.ratio < 1 ? "maar ook daar " : ""}${verschil(zwak.v, groepGem[zwak.sp])} dan gemiddeld.</p>` : ""}
+      ${rt.length > 1 ? `<p>Wisselvalligheid: gemiddeld ${fmt(spreiding(rt.map(r => r.t)))} afwijking per etappe.</p>` : ""}
+      ${vorm ? `<p>${vorm}</p>` : ""}
+    </div>`;
+  };
+  const perSpel = f ? `<div class="scroll"><table class="tbl vrij"><thead><tr><th>Spel</th><th>${esc(f)}</th><th>Groep</th><th>Verschil</th><th>Keer snelst</th></tr></thead><tbody>${alleSpellen.map(sp => {
+      const v = gem(resultaten.filter(r => r.spel === sp && r.p === f).map(r => r.t));
+      return `<tr><td>${esc(sp)}</td><td>${v === null ? "–" : fmt(v)}</td><td>${fmt(groepGem[sp])}</td><td>${v === null ? "–" : verschil(v, groepGem[sp])}</td><td>${sz[sp][f]}</td></tr>`;
+    }).join("")}</tbody></table></div>` : "";
+  document.getElementById("s-spelers").innerHTML = `
+    <h2>${f ? "Profiel van " + esc(f) : "Spelersprofielen"}</h2>
+    <p class="toel">"Gemiddeld" is het gemiddelde van de hele groep in dat spel.</p>
+    <div class="profielen">${(f ? [f] : spelers).map(profiel).join("")}</div>${perSpel}`;
+
+  /* onderling */
+  const tegen = (a, b) => etappes.reduce((w, e) => {
+    const ta = ritVan.get(a + "|" + e.nr), tb = ritVan.get(b + "|" + e.nr);
+    return w + (ta !== undefined && tb !== undefined && ta < tb ? 1 : 0);
+  }, 0);
+  document.getElementById("s-onderling").innerHTML = `
+    <h2>Onderling</h2>
+    <p class="toel">Lees per rij: hoe vaak die speler sneller was dan de speler in de kolom, op etappes die ze allebei volledig speelden.</p>
+    <div class="scroll"><table class="tbl matrix"><thead><tr><th></th>${spelers.map(p => `<th>${esc(p)}</th>`).join("")}</tr></thead><tbody>
+    ${spelers.map(a => `<tr${f === a ? ' class="gekozen"' : ""}><td>${esc(a)}</td>${spelers.map(b => {
+      if(a === b) return `<td class="d">–</td>`;
+      const w = tegen(a, b), l = tegen(b, a);
+      return `<td class="${w > l ? "voor" : ""}">${w}–${l}</td>`;
+    }).join("")}</tr>`).join("")}</tbody></table></div>`;
+
+  /* verloop */
+  const box = document.getElementById("s-verloop");
+  box.innerHTML = `<h2>Verloop</h2><p class="toel">Etappetijd per speler. Een onderbroken lijn betekent dat die dag niet volledig gespeeld is.</p><div id="grafiek"></div>
+    <div class="legenda">${spelers.map(p => `<span style="opacity:${f && p !== f ? .4 : 1}"><i style="background:${kleurVan(p)}"></i>${esc(p)}</span>`).join("")}</div>`;
+  document.getElementById("grafiek").innerHTML = verloopSvg(f);
+
+  /* opvallend */
+  const feiten = [];
+  const snelsteRit = ritTijden.slice().sort((a, b) => a.t - b.t)[0];
+  if(snelsteRit) feiten.push(`Snelste etappe ooit: <b>${esc(snelsteRit.p)}</b> in ${fmt(snelsteRit.t)}, op ${datumNL(snelsteRit.datum)}.`);
+  const traagst = resultaten.slice().sort((a, b) => b.t - a.t)[0];
+  if(traagst) feiten.push(`Langste worsteling: <b>${esc(traagst.p)}</b> deed ${fmt(traagst.t)} over ${esc(traagst.spel)}, op ${datumNL(traagst.datum)}.`);
+  etappes.forEach(e => e.spellen.forEach(g => {
+    const v = spelers.map(p => g.raw[p]).filter(x => x !== null);
+    if(v.length === spelers.length && v.every(x => x === v[0])) feiten.push(`Fotofinish: op ${datumNL(e.datum)} deed iedereen ${esc(g.spel)} in precies ${fmt(v[0])}.`);
+  }));
+  const perRit = etappes.map(e => ({ e, g:gem(ritTijden.filter(r => r.nr === e.nr).map(r => r.t)) })).filter(x => x.g !== null).sort((a, b) => a.g - b.g);
+  if(perRit.length > 1){
+    const m = perRit[0], z = perRit[perRit.length - 1];
+    feiten.push(`Makkelijkste etappe: nummer ${m.e.nr} op ${datumNL(m.e.datum)}, gemiddeld ${fmt(m.g)}.`);
+    feiten.push(`Zwaarste etappe: nummer ${z.e.nr} op ${datumNL(z.e.datum)}, gemiddeld ${fmt(z.g)}.`);
+  }
+  const gaten = etappes.map(e => {
+    const v = ritTijden.filter(r => r.nr === e.nr).sort((a, b) => a.t - b.t);
+    return v.length > 1 ? { e, w:v[0], l:v[v.length - 1], d:v[v.length - 1].t - v[0].t } : null;
+  }).filter(Boolean).sort((a, b) => b.d - a.d);
+  if(gaten[0]) feiten.push(`Grootste gat in één etappe: ${fmt(gaten[0].d)} tussen ${esc(gaten[0].w.p)} en ${esc(gaten[0].l.p)} in etappe ${gaten[0].e.nr}.`);
+  const zwaarsteSpel = alleSpellen.slice().sort((a, b) => groepGem[b] - groepGem[a])[0];
+  if(zwaarsteSpel) feiten.push(`Het zwaarste spel is ${esc(zwaarsteSpel)}, met gemiddeld ${fmt(groepGem[zwaarsteSpel])} per poging.`);
+  document.getElementById("s-opvallend").innerHTML = `<h2>Opvallend</h2>${feiten.map(t => `<div class="feit">${t}</div>`).join("")}`;
+}
+
+/* ===== renderen ===== */
+let sel = etappes.length - 1;
+let tab = "tour";
+let klas = "ak";
+document.getElementById("regel").textContent = ALLEEN_VOLLEDIG ? "Een spel telt alleen mee als iedereen het gespeeld heeft." : `Heb je een spel niet gespeeld, dan krijg je de langzaamste tijd van die dag plus ${STRAFSECONDEN} seconden.`;
+const kies = document.getElementById("kies");
+kies.innerHTML = etappes.map((e, i) => `<option value="${i}">Etappe ${e.nr}, ${datumKort(e.datum)}</option>`).join("");
+kies.onchange = () => { sel = Number(kies.value); render(); };
+document.getElementById("vorige").onclick = () => { if(sel > 0){ sel--; render(); } };
+document.getElementById("volgende").onclick = () => { if(sel < etappes.length-1){ sel++; render(); } };
+
+function render(){
+  kies.value = sel;
+  document.getElementById("vorige").disabled = sel === 0;
+  document.getElementById("volgende").disabled = sel === etappes.length - 1;
+
+  const e = etappes[sel];
+  const tot = etappes.slice(0, sel + 1);
+  const mk = maandKey(e.datum), wk = isoWeek(e.datum).key;
+  const tour = tot.filter(x => maandKey(x.datum) === mk);
+  const week = tot.filter(x => isoWeek(x.datum).key === wk);
+
+  const wieTour = deelnemers(tour);
+  const tourRang = rangschik(som(tour), wieTour);
+  const spellenTour = [...new Set(tour.flatMap(x => x.spellen.map(g => g.spel)))];
+  const draagt = {}; spelers.forEach(p => draagt[p] = []);
+  const truien = [{ kleur:"geel", naam:"Gele trui", sub:"Algemeen klassement", drager:tourRang[0].p, tijd:tourRang[0].t, dag:null, naar:"ak" }];
+  draagt[tourRang[0].p].push("geel");
+  spellenTour.forEach(s => {
+    const r = rangschik(som(tour, s), wieTour);
+    const info = truiVoor(s);
+    const g = e.spellen.find(x => x.spel === s);
+    let dag = null;
+    if(g){
+      const best = Math.min(...spelers.map(p => g.raw[p]).filter(v => v !== null));
+      dag = { wie: spelers.filter(p => g.raw[p] === best), tijd: best };
+    }
+    truien.push({ kleur:info.kleur, naam:info.naam, sub:s, drager:r[0].p, tijd:r[0].t, dag, naar:s });
+    draagt[r[0].p].push(info.kleur);
+  });
+  if(tourRang.length > 1){
+    const l = tourRang[tourRang.length - 1];
+    truien.push({ kleur:"lantaarn", naam:"Rode lantaarn", sub:"Laatste in het klassement", drager:l.p, tijd:l.t, dag:null });
+    draagt[l.p].push("lantaarn");
+  }
+  const icoontjes = p => draagt[p].length ? `<span class="truitjes">${draagt[p].map(k => truiSvg(k, 18)).join("")}</span>` : "";
+  const bib = p => `<span class="bib">${spelers.indexOf(p) + 1}</span>`;
+  const buitenRijen = (wie, label) => wie.map(p => `
+      <div class="renner buiten">
+        <span class="pos">–</span>
+        ${bib(p)}
+        <div><div class="naam"><s>${esc(p)}</s></div>
+          <div class="sub2">${label}, doet mee sinds ${datumKort(eerste[p] || etappes[etappes.length - 1].datum)}</div></div>
+        <span class="tijd"></span>
+      </div>`).join("");
+
+  // hero
+  const ritRang = rangschik(e.totaal, deelnemers([e]));
+  const winnaars = ritRang.filter(r => r.pos === 1).map(r => r.p);
+  const tweede = ritRang.find(r => r.pos > 1);
+  const geel = tourRang[0].p;
+  const geelNieuw = tour.length > 1 && rangschik(som(tour.slice(0, -1)), wieTour)[0].p !== geel;
+  let detail = `In <b>${fmt(ritRang[0].t)}</b>`;
+  if(tweede) detail += `, ${fmt(tweede.t - ritRang[0].t)} sneller dan ${esc(tweede.p)}`;
+  detail += ". " + (tour.length === 1
+    ? `${esc(geel)} trekt de eerste gele trui van de Tour van ${maandNaam(mk)} aan.`
+    : geelNieuw ? `${esc(geel)} neemt de gele trui over.` : `${esc(geel)} blijft in het geel.`);
+  document.getElementById("hero").innerHTML = `
+    <div class="finish"></div>
+    <div class="hero-in">
+      <p class="kop">Etappe ${e.nr}, ${datumNL(e.datum)}</p>
+      <p class="winnaar">${esc(namen(winnaars))} ${winnaars.length > 1 ? "winnen samen" : "wint"}</p>
+      <p class="detail">${detail}</p>
+    </div>
+    ${profielSvg(e)}`;
+
+  // uitslag
+  const best = {};
+  e.spellen.forEach(g => best[g.spel] = Math.min(...spelers.map(p => g.raw[p]).filter(v => v !== null)));
+  document.getElementById("uitslag").innerHTML = `
+    <h2>Uitslag etappe ${e.nr}</h2>
+    <p class="toel">Geel is de snelste tijd per spel.</p>
+    ${ritRang.map(r => `
+      <div class="renner">
+        <span class="pos${r.pos === 1 ? " een" : ""}">${r.pos}</span>
+        ${bib(r.p)}
+        <div>
+          <div class="naam">${esc(r.p)} ${icoontjes(r.p)}</div>
+          <div class="splits">${e.spellen.map(g => {
+            const v = g.raw[r.p];
+            if(v === null) return `<span class="split mis" title="Niet gespeeld, straftijd">${esc(g.spel)} ${fmt(g.eff[r.p])}</span>`;
+            return `<span class="split${v === best[g.spel] ? " best" : ""}">${esc(g.spel)} ${fmt(v)}</span>`;
+          }).join("")}</div>
+        </div>
+        <span class="tijd">${fmt(r.t)}<small>${r.pos === 1 ? "&nbsp;" : "+" + fmt(r.t - ritRang[0].t)}</small></span>
+      </div>`).join("")}
+    ${buitenRijen(buiten([e]), "Nog niet gestart")}`;
+
+  // truien
+  document.getElementById("truien").innerHTML = `
+    <h2>Truien</h2>
+    <p class="toel">Dragers na etappe ${e.nr}, gerekend over de Tour van ${maandNaam(mk)}. Tik op een trui voor het klassement.</p>
+    <div class="truien">${truien.map(t => `
+      <${t.naar ? `button type="button" data-naar="${esc(t.naar)}" aria-label="Bekijk klassement ${esc(t.naam)}"` : "div"} class="trui">
+        ${truiSvg(t.kleur, 52)}
+        <div>
+          <div class="t-naam">${t.naam}</div>
+          <div class="t-spel">${esc(t.sub)}</div>
+          <div class="t-drager">${esc(t.drager)}, ${fmt(t.tijd)}</div>
+          ${t.dag ? `<div class="t-dag">Vandaag snelst: ${esc(namen(t.dag.wie))}, ${fmt(t.dag.tijd)}</div>` : ""}
+        </div>
+      </${t.naar ? "button" : "div"}>`).join("")}</div>`;
+
+  // klassement
+  const sets = {
+    week:{ lijst:week, titel:`Week ${isoWeek(e.datum).nr}` },
+    tour:{ lijst:tour, titel:`Tour van ${maandNaam(mk)}` },
+    alles:{ lijst:tot, titel:"Aller tijden" }
+  };
+  const sindsLijst = tot.filter(x => x.datum >= laatsteStart);
+  if(laatsteStart > etappes[0].datum && sindsLijst.length) sets.sinds = { lijst:sindsLijst, titel:`Sinds ${namen(laatkomers)} ${laatkomers.length > 1 ? "meedoen" : "meedoet"}` };
+  if(!sets[tab]) tab = "tour";
+  const spellenTot = [...new Set(tot.flatMap(x => x.spellen.map(g => g.spel)))];
+  if(klas !== "ak" && !spellenTot.includes(klas)) klas = "ak";
+  const cur = sets[tab];
+  const spelFilter = klas === "ak" ? undefined : klas;
+  const rang = rangschik(som(cur.lijst, spelFilter), deelnemers(cur.lijst));
+  const zeges = spelFilter ? spelzeges(cur.lijst, spelFilter) : ritzeges(cur.lijst);
+  const zegeTekst = n => spelFilter
+    ? (n ? `${n} keer snelst` : "Nog nooit snelst")
+    : (n ? n + (n === 1 ? " ritzege" : " ritzeges") : "Nog geen ritzege");
+  const truiKnop = (k, label, kleur) => `<button data-klas="${esc(k)}" aria-pressed="${k === klas}">${truiSvg(kleur, 18)} ${esc(label)}</button>`;
+  const titel = klas === "ak" ? "Algemeen klassement" : `${truiVoor(klas).naam}, ${klas}`;
+  document.getElementById("klassement").innerHTML = `
+    <h2>Klassement</h2>
+    <div class="tabs truikeuze" role="group" aria-label="Kies trui">
+      ${truiKnop("ak", "Algemeen", "geel")}
+      ${spellenTot.map(sp => truiKnop(sp, sp, truiVoor(sp).kleur)).join("")}
+    </div>
+    <div class="tabs" role="group" aria-label="Kies periode">
+      ${Object.entries(sets).map(([k, v]) => `<button data-tab="${k}" aria-pressed="${k === tab}">${v.titel}</button>`).join("")}
+    </div>
+    <p class="toel">${titel}, ${cur.lijst.length} ${cur.lijst.length === 1 ? "etappe" : "etappes"} gereden.</p>
+    ${rang.map(r => `
+      <div class="renner">
+        <span class="pos${r.pos === 1 ? " een" : ""}">${r.pos}</span>
+        ${bib(r.p)}
+        <div><div class="naam">${esc(r.p)} ${icoontjes(r.p)}</div>
+          <div class="sub2">${zegeTekst(zeges[r.p])}</div></div>
+        <span class="tijd">${fmt(r.t)}<small>${r.pos === 1 ? "&nbsp;" : "+" + fmt(r.t - rang[0].t)}</small></span>
+      </div>`).join("")}
+    ${buitenRijen(buiten(cur.lijst), "Buiten klassement")}`;
+  document.querySelectorAll("#klassement [data-tab]").forEach(b => b.onclick = () => {
+    tab = b.dataset.tab; render();
+    document.querySelector(`#klassement [data-tab="${tab}"]`).focus();
+  });
+  document.querySelectorAll("#klassement [data-klas]").forEach(b => b.onclick = () => {
+    klas = b.dataset.klas; render();
+    document.querySelector(`#klassement [data-klas="${CSS.escape(klas)}"]`).focus();
+  });
+  document.querySelectorAll("#truien [data-naar]").forEach(b => b.onclick = () => {
+    klas = b.dataset.naar; tab = "tour"; render();
+    document.getElementById("klassement").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  });
+
+  // erelijst
+  const groepeer = fn => {
+    const m = new Map();
+    tot.forEach(x => { const k = fn(x); if(!m.has(k)) m.set(k, []); m.get(k).push(x); });
+    return [...m.entries()].sort((a,b) => b[0].localeCompare(a[0]));
+  };
+  const winnaarVan = l => namen(rangschik(som(l), deelnemers(l)).filter(r => r.pos === 1).map(r => r.p));
+  const lijst = (items, label, huidig) => `<ol>${items.slice(0, 8).map(([k, l]) => `
+      <li><span>${label(k, l)}${k === huidig ? ' <span class="bezig">(bezig)</span>' : ""}</span><b>${esc(winnaarVan(l))}</b></li>`).join("")}</ol>`;
+  document.getElementById("erelijst").innerHTML = `
+    <h2>Erelijst</h2>
+    <div class="ere">
+      <div><h3>Weekwinnaars</h3>${lijst(groepeer(x => isoWeek(x.datum).key), (k, l) => `Week ${isoWeek(l[0].datum).nr}`, wk)}</div>
+      <div><h3>Tourwinnaars</h3>${lijst(groepeer(x => maandKey(x.datum)), k => { const t = maandJaar(k); return t[0].toUpperCase() + t.slice(1); }, mk)}</div>
+    </div>`;
+}
+
+let view = "tour";
+function toonView(v){
+  view = v;
+  document.getElementById("tourView").hidden = v !== "tour";
+  document.getElementById("statView").hidden = v !== "stats";
+  document.querySelector(".nav").hidden = v !== "tour";
+  document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === v));
+  try{ history.replaceState(null, "", v === "stats" ? "#statistieken" : "#tour"); }catch(err){}
+  v === "stats" ? renderStats() : render();
+}
+document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => toonView(b.dataset.view));
+toonView(location.hash === "#statistieken" ? "stats" : "tour");
+let breedte = window.innerWidth;
+window.addEventListener("resize", () => { clearTimeout(window._rt); window._rt = setTimeout(() => { if(window.innerWidth !== breedte){ breedte = window.innerWidth; view === "stats" ? renderStats() : render(); } }, 200); });
+</script>
+</body>
+</html>

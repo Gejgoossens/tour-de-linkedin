@@ -1,0 +1,20 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Apps Script (clasp) – bevat persoonlijke project-ID
+.clasp.json
+.clasprc.json
+
+# Lokale bronbestanden en geheimen
+*.xlsx
+*.xlsm
+.env
