@@ -48,8 +48,8 @@ Tab **Spelers**: `Naam | Startnummer | Actief`. Dit bepaalt de volgorde en de ru
 
 - Laagste totaaltijd per etappe (dag) wint.
 - Elke maand is een Tour. Een week hoort bij de maand waarin de donderdag valt (ISO-week), net als in de mock-up.
-- **Gemist spel:** de straftijd is `max(langzaamste tijd van die dag voor dat spel, 10 s)`. *Nog bevestigen, zie open vragen.*
-- Een speler telt mee vanaf zijn eerste gespeelde dag. Dat geldt bijvoorbeeld voor Giyo en Cas.
+- **Gemist spel:** de straftijd is de langzaamste tijd van die dag voor dat spel + 10 s.
+- Een speler telt mee vanaf zijn eerste gespeelde dag (Giyo vanaf 4 september, Cas vanaf 25 oktober). Daarna krijgt een niet-gespeelde dag de straftijd, ook bij vakantie.
 
 ## Repo-structuur
 
@@ -83,8 +83,7 @@ tour-de-linkedin/
 - [x] GitHub Actions-workflow voor Pages (draait pas na de eerste push)
 
 ### Fase 1: Lokaal dashboard met echte data
-- [ ] `scripts/excel_naar_csv.py`: de Excel (tab `Tabular`) omzetten naar het lange formaat
-- [ ] De 6 nieuwe dagen uit de screenshots toevoegen, inclusief Cas
+- [ ] `scripts/excel_naar_csv.py`: de Excel (tab `Tabular`) omzetten naar het lange formaat, met "Mathijs" hernoemd naar "Matta"
 - [ ] Mock-up opsplitsen in `index.html`, `style.css`, `app.js` en `config.js`
 - [ ] Data laden uit lang formaat (lokaal uit `data/*.csv`, later uit Apps Script)
 - [ ] Spelers dynamisch laden, zodat Cas er gewoon bij komt
@@ -98,18 +97,22 @@ tour-de-linkedin/
 - [ ] De web-app-URL in `config.js` zetten en de hele flow testen
 
 ### Fase 3: Online via GitHub
-- [ ] Repo aanmaken op GitHub (openbaar) en pushen
-- [ ] Pages aanzetten (Settings, Pages, Source: GitHub Actions)
+- [x] GitHub CLI installeren, repo aanmaken (openbaar) en pushen
+- [x] Pages aanzetten (Source: GitHub Actions)
 - [ ] Link delen in de groep
 
 ### Later (optioneel)
 - Foto uploaden en Claude de tijden laten uitlezen
 - Melding in de groep bij een nieuwe gele trui
 
-## Open vragen
+## Besluiten
 
-1. **Straftijd.** Klopt `max(langzaamste tijd, 10 s)`? Voorbeeld: de langzaamste Zip-tijd is 14 s, dan krijgt wie Zip mist 14 s. Is de langzaamste 6 s, dan wordt het 10 s. Of bedoel je `langzaamste + 10 s`?
-2. **Matta of Mathijs.** In de nieuwe screenshots staat "Matta", in de Excel "Mathijs". Is dat dezelfde persoon, en welke naam wil je op het dashboard?
-3. **Datums van de screenshots.** De Excel loopt tot en met ma 19 oktober. Volgens jou is de screenshot met Giyo 336 de eerste die niet in de Excel staat, en die met Giyo 164 is van vandaag (za 7 november). Welke datums horen bij de 6 screenshots? Zijn er dagen tussendoor niet gespeeld?
-4. **Cas.** Sinds welke datum speelt Cas mee?
-5. **Jari 6 t/m 18 oktober.** In de Excel ontbreken de scores van Jari voor die dagen. Heeft hij toen niet gespeeld, of zijn ze niet ingevuld?
+| Onderwerp | Besluit |
+|-----------|---------|
+| Straftijd gemist spel | langzaamste tijd van die dag + 10 s |
+| Naam | "Matta" (was "Mathijs" in de Excel) |
+| Startdata | alleen de Excel. De dagen na 19 oktober vullen we later aan via het dashboard |
+| Cas | doet mee vanaf 25 oktober 2026 |
+| Jari 6 t/m 18 oktober | niet gespeeld (vakantie), dus straftijd |
+| Openbaar | ja, openbare repo en GitHub Pages |
+| Invoer | door iedereen, ook voor anderen |
