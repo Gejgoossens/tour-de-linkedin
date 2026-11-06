@@ -49,7 +49,7 @@ Tab **Spelers**: `Naam | Startnummer | Actief`. Dit bepaalt de volgorde en de ru
 - Laagste totaaltijd per etappe (dag) wint.
 - Elke maand is een Tour. Een week hoort bij de maand waarin de donderdag valt (ISO-week), net als in de mock-up.
 - **Gemist spel:** de straftijd is de langzaamste tijd van die dag voor dat spel + 10 s.
-- Een speler telt mee vanaf zijn eerste gespeelde dag (Giyo vanaf 4 september, Cas vanaf 25 oktober). Daarna krijgt een niet-gespeelde dag de straftijd, ook bij vakantie.
+- Een speler telt mee vanaf zijn eerste gespeelde dag (Giyo vanaf 4 september, Cas vanaf 24 oktober). Daarna krijgt een niet-gespeelde dag de straftijd, ook bij vakantie.
 
 ## Repo-structuur
 
@@ -112,7 +112,7 @@ tour-de-linkedin/
 | Straftijd gemist spel | langzaamste tijd van die dag + 10 s |
 | Naam | "Matta" (was "Mathijs" in de Excel) |
 | Startdata | alleen de Excel. De dagen na 19 oktober vullen we later aan via het dashboard |
-| Cas | doet mee vanaf 25 oktober 2026 |
+| Cas | doet mee vanaf 24 oktober 2026 |
 | Jari 6 t/m 18 oktober | niet gespeeld (vakantie), dus straftijd |
 | Openbaar | ja, openbare repo en GitHub Pages |
 | Invoer | door iedereen, ook voor anderen |
