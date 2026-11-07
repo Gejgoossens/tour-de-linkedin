@@ -67,13 +67,21 @@ const datumKort = ds => new Date(ds + "T12:00:00").toLocaleDateString("nl-NL", {
 const namen = a => a.length === 1 ? a[0] : a.slice(0,-1).join(", ") + " en " + a[a.length-1];
 
 /* ===== data inlezen (lang formaat: Datum, Speler, Spel, Tijd, IngevoerdOp) ===== */
-async function haalRijen(){
-  if(CFG.APPS_SCRIPT_URL){
-    const r = await fetch(CFG.APPS_SCRIPT_URL + (CFG.APPS_SCRIPT_URL.includes("?") ? "&" : "?") + "action=scores", { cache:"no-store" });
-    if(!r.ok) throw new Error(`Apps Script gaf status ${r.status}`);
-    const j = await r.json();
-    return (j.scores || j).map(s => ({ datum:s.Datum ?? s.datum, speler:s.Speler ?? s.speler, spel:s.Spel ?? s.spel, tijd:s.Tijd ?? s.tijd, op:s.IngevoerdOp ?? s.ingevoerdOp ?? "" }));
-  }
+/* Spelers-tab uit de Sheet ([{Naam, Startnummer, Actief}]); leeg zolang we uit de CSV lezen */
+let spelerLijst = [];
+let bronMelding = "";
+
+async function haalApi(){
+  const url = CFG.APPS_SCRIPT_URL + (CFG.APPS_SCRIPT_URL.includes("?") ? "&" : "?") + "action=scores";
+  const r = await fetch(url, { cache:"no-store" });
+  if(!r.ok) throw new Error(`Apps Script gaf status ${r.status}`);
+  const j = await r.json();
+  if(j.ok === false) throw new Error(j.fout || "Apps Script gaf een fout");
+  spelerLijst = j.spelers || [];
+  return (j.scores || []).map(s => ({ datum:s.Datum, speler:s.Speler, spel:s.Spel, tijd:s.Tijd, op:s.IngevoerdOp || "" }));
+}
+
+async function haalCsv(){
   for(const url of CFG.CSV_BRONNEN || ["data/scores.csv"]){
     let r;
     try{ r = await fetch(url, { cache:"no-store" }); }catch(err){ continue; }
@@ -86,8 +94,23 @@ async function haalRijen(){
   throw new Error("geen scorebestand gevonden");
 }
 
+/* eerst de Google Sheet; lukt dat niet, dan de CSV uit de repo (kan achterlopen) */
+async function haalRijen(){
+  bronMelding = "";
+  if(CFG.APPS_SCRIPT_URL){
+    try{ return await haalApi(); }
+    catch(err){
+      console.error(err);
+      bronMelding = "De Google Sheet is nu niet bereikbaar. Je ziet een oudere kopie van de scores.";
+    }
+  }
+  return haalCsv();
+}
+
 let spelers = [], etappes = [], alleSpellen = [], eerste = {}, laatsteStart = "", laatkomers = [];
 let resultaten = [], ritTijden = [], ritVan = new Map();
+/* ingevoerde tijden per "datum|speler|spel", gebruikt door het invoerscherm */
+let tijdVan = new Map();
 
 function verwerk(invoer){
   /* opschonen; bij dubbele (datum, speler, spel) wint de laatst ingevoerde */
@@ -105,11 +128,12 @@ function verwerk(invoer){
     if(!vorig || rij.op > vorig.op || (rij.op === vorig.op && i > vorig.i)) uniek.set(key, rij);
   });
   const lijst = [...uniek.values()].filter(r => r.tijd !== null);
+  tijdVan = new Map(lijst.map(r => [`${r.datum}|${r.speler}|${r.spel}`, r.tijd]));
 
   /* volgorde uit config.js, nieuwe namen/spellen achteraan (spelers op volgorde van eerste dag) */
   const volgorde = (voorkeur, gezien) => [...voorkeur.filter(x => gezien.includes(x)), ...gezien.filter(x => !voorkeur.includes(x))];
   const opDatum = lijst.slice().sort((a, b) => a.datum.localeCompare(b.datum));
-  spelers = volgorde(CFG.SPELERS || [], [...new Set(opDatum.map(r => r.speler))]);
+  spelers = volgorde(spelerLijst.length ? spelerLijst.map(s => s.Naam) : CFG.SPELERS || [], [...new Set(opDatum.map(r => r.speler))]);
   alleSpellen = volgorde(CFG.SPELLEN || [], [...new Set(lijst.map(r => r.spel))]);
 
   const perDag = new Map();
@@ -471,6 +495,9 @@ function render(){
   detail += ". " + (tour.length === 1
     ? `${esc(geel)} trekt de eerste gele trui van de Tour van ${maandNaam(mk)} aan.`
     : geelNieuw ? `${esc(geel)} neemt de gele trui over.` : `${esc(geel)} blijft in het geel.`);
+  const nu = new Date(), vandaagIso = `${nu.getFullYear()}-${String(nu.getMonth() + 1).padStart(2, "0")}-${String(nu.getDate()).padStart(2, "0")}`;
+  const nogNiet = deelnemers([e]).filter(p => e.spellen.every(g => g.raw[p] === null));
+  if(e.datum === vandaagIso && nogNiet.length) detail += ` Voorlopige uitslag: nog geen tijden van ${esc(namen(nogNiet))}.`;
   document.getElementById("hero").innerHTML = `
     <div class="finish"></div>
     <div class="hero-in">
@@ -617,7 +644,8 @@ async function laad(){
     sel = opLaatste ? etappes.length - 1 : Math.min(sel, etappes.length - 1);
     kies.innerHTML = etappes.map((e, i) => `<option value="${i}">Etappe ${e.nr}, ${datumKort(e.datum)}</option>`).join("");
     document.getElementById("bijgewerkt").textContent = `Bijgewerkt tot en met ${datumNL(etappes[etappes.length - 1].datum)}.`;
-    status.hidden = true;
+    status.hidden = !bronMelding;
+    status.textContent = bronMelding;
     document.getElementById("inhoud").hidden = false;
     toonView(view);
   }catch(err){
@@ -625,6 +653,7 @@ async function laad(){
     status.textContent = `Kon de scores niet laden: ${err.message}.`;
     console.error(err);
   }
+  document.dispatchEvent(new CustomEvent("scores-geladen"));
 }
 
 document.getElementById("regel").textContent = ALLEEN_VOLLEDIG ? "Een spel telt alleen mee als iedereen het gespeeld heeft." : `Heb je een spel niet gespeeld, dan krijg je de langzaamste tijd van die dag plus ${STRAFSECONDEN} seconden. Dat geldt vanaf je eerste gespeelde dag, ook als je op vakantie bent.`;

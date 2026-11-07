@@ -91,9 +91,9 @@ tour-de-linkedin/
 - [x] Lokaal testen met `python -m http.server`, ook op telefoonbreedte
 
 ### Fase 2: Invoer en Google-koppeling *(volgende)*
-- [ ] `apps-script/Code.gs`: `doGet` (alle scores als JSON) en `doPost` (upsert met een lock en controle van de groepscode)
-- [ ] Invoerscherm in het dashboard
-- [ ] `docs/SETUP-GOOGLE.md`: Sheet aanmaken, CSV importeren, script plakken, groepscode instellen, deployen als web-app (*Uitvoeren als: ik*, *Toegang: iedereen*)
+- [x] `apps-script/Code.gs`: `doGet` (alle scores als JSON) en `doPost` (upsert met een lock en controle van de groepscode)
+- [x] Invoerscherm in het dashboard
+- [x] `docs/SETUP-GOOGLE.md`: Sheet aanmaken, CSV importeren, script plakken, groepscode instellen, deployen als web-app (*Uitvoeren als: ik*, *Toegang: iedereen*)
 - [ ] De web-app-URL in `config.js` zetten en de hele flow testen
 
 ### Fase 3: Online via GitHub

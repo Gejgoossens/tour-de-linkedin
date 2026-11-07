@@ -121,3 +121,27 @@ button.trui:hover{border-color:var(--asfalt)}
 [hidden]{display:none!important}
 footer{color:var(--sub);font-size:13px;margin-top:22px;max-width:62ch}
 .status{background:var(--wit);border:1px solid var(--lijn);border-radius:6px;padding:18px;color:var(--sub)}
+
+/* invoerscherm */
+.tabs .invoer-knop{margin-left:auto;font:700 18px/1 var(--cond);padding:8px 16px;border-radius:4px;border:1.5px solid var(--asfalt);background:var(--geel);color:var(--asfalt);cursor:pointer}
+dialog#invoer{width:min(440px,calc(100% - 32px));max-height:calc(100% - 32px);border:0;border-radius:6px;padding:0;background:var(--wit);color:var(--asfalt);box-shadow:0 12px 40px rgba(0,0,0,.25)}
+dialog#invoer::backdrop{background:rgba(35,38,43,.55)}
+#invoerForm{padding:18px}
+.in-kop{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.in-kop h2{font:700 24px/1.1 var(--cond);margin:0}
+.in-sluit{width:36px;height:36px;border:0;background:none;font-size:28px;line-height:1;cursor:pointer;color:var(--sub)}
+.in-rij{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+#invoerForm label{display:block;font-weight:600;font-size:14px}
+#invoerForm select,#invoerForm input{display:block;width:100%;margin-top:4px;height:42px;border:1.5px solid var(--asfalt);border-radius:4px;background:var(--wit);padding:0 10px;font:16px Barlow,system-ui,sans-serif;color:var(--asfalt)}
+.in-tijden{display:grid;gap:8px;margin-bottom:12px}
+#invoerForm .in-tijd{display:grid;grid-template-columns:22px 1fr 110px;align-items:center;gap:10px}
+#invoerForm .in-tijd input{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+#invoerForm input[aria-invalid="true"]{border-color:#D7263D;box-shadow:0 0 0 2px #F6C6CD}
+.in-code small{display:block;font-weight:400;color:var(--sub);margin-top:4px}
+.in-code{margin-bottom:10px}
+.in-melding{min-height:1.5em;font-size:14px;margin:0 0 10px}
+.in-melding.fout{color:#B01E31}
+.in-melding.goed{color:#17693A}
+.in-knoppen{display:flex;justify-content:flex-end}
+.in-opslaan{font:700 18px/1 var(--cond);padding:10px 22px;border:0;border-radius:4px;background:var(--asfalt);color:var(--wit);cursor:pointer}
+.in-opslaan:disabled{opacity:.5;cursor:default}

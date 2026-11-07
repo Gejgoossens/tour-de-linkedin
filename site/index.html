@@ -26,6 +26,7 @@
   <div class="tabs views" role="group" aria-label="Kies weergave">
     <button data-view="tour" aria-pressed="true">Tour</button>
     <button data-view="stats" aria-pressed="false">Statistieken</button>
+    <button type="button" id="invoerKnop" class="invoer-knop" hidden>+ Scores invoeren</button>
   </div>
 
   <div id="tourView">
@@ -51,7 +52,28 @@
   <footer><span id="bijgewerkt" style="display:block;margin-bottom:6px"></span>Tijden in seconden, per etappe opgeteld over alle spellen. Laagste tijd wint. Elke maand is een nieuwe Tour, opgebouwd uit hele weken: een week hoort bij de maand waarin de donderdag valt. <span id="regel"></span></footer>
 </div>
 
+<dialog id="invoer" aria-labelledby="inTitel">
+  <form id="invoerForm" novalidate>
+    <div class="in-kop">
+      <h2 id="inTitel">Scores invoeren</h2>
+      <button type="button" id="inSluit" class="in-sluit" aria-label="Sluiten">&times;</button>
+    </div>
+    <div class="in-rij">
+      <label>Speler<select id="inSpeler"></select></label>
+      <label>Datum<input type="date" id="inDatum" required></label>
+    </div>
+    <p class="toel">Tijden als 32 of 0:32. Niet gespeeld? Laat het veld leeg.</p>
+    <div id="inTijden" class="in-tijden"></div>
+    <label id="inCodeRij" class="in-code" hidden>Groepscode<input id="inCode" type="password" autocomplete="off"><small>Eenmalig; deze browser onthoudt hem daarna.</small></label>
+    <p id="inMelding" class="in-melding" role="status" aria-live="polite"></p>
+    <div class="in-knoppen">
+      <button type="submit" id="inOpslaan" class="in-opslaan">Opslaan</button>
+    </div>
+  </form>
+</dialog>
+
 <script src="config.js"></script>
 <script src="app.js"></script>
+<script src="invoer.js"></script>
 </body>
 </html>

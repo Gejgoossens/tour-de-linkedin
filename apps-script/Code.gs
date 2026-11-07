@@ -1,0 +1,178 @@
+/**
+ * Tour de LinkedIn: kleine API op de Google Sheet.
+ *
+ *   GET  ?action=scores   → { ok, scores:[{Datum,Speler,Spel,Tijd,IngevoerdOp}], spelers:[{Naam,Startnummer,Actief}], spellen:[...] }
+ *   POST (JSON als text/plain) { code, datum, speler, tijden:{ Wend:26, Zip:null, ... } }
+ *        getal = opslaan/overschrijven, null = bestaande tijd wissen, ontbrekend = niet aanraken.
+ *
+ * De groepscode staat in Projectinstellingen → Scripteigenschappen als GROEPSCODE, nooit in de code.
+ * Eenmalig: voer `installeer` uit vanuit de editor (maakt de tabs en haalt de scores van GitHub).
+ */
+
+var SPELLEN = ['Wend', 'Zip', 'Patches', 'Tango', 'Queens'];
+var STANDAARD_SPELERS = ['Matta', 'Bouw', 'Corne', 'Jari', 'Giyo', 'Cas'];
+var CSV_URL = 'https://raw.githubusercontent.com/Gejgoossens/tour-de-linkedin/main/data/scores.csv';
+var KOP_SCORES = ['Datum', 'Speler', 'Spel', 'Tijd', 'IngevoerdOp'];
+var KOP_SPELERS = ['Naam', 'Startnummer', 'Actief'];
+var MAX_TIJD = 3600;
+
+/* ===== web-app ===== */
+
+function doGet(e) {
+  var actie = (e && e.parameter && e.parameter.action) || 'scores';
+  if (actie !== 'scores') return json_({ ok: false, fout: 'Onbekende actie' });
+  return json_({ ok: true, scores: leesScores_(), spelers: leesSpelers_(), spellen: SPELLEN });
+}
+
+function doPost(e) {
+  var invoer;
+  try {
+    invoer = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+  } catch (err) {
+    return json_({ ok: false, fout: 'Ongeldige invoer' });
+  }
+
+  var code = PropertiesService.getScriptProperties().getProperty('GROEPSCODE');
+  if (!code) return json_({ ok: false, fout: 'Er is nog geen groepscode ingesteld in het script' });
+  if (String(invoer.code || '').trim() !== code) return json_({ ok: false, fout: 'Verkeerde groepscode', code: 'groepscode' });
+
+  var datum = String(invoer.datum || '');
+  if (!/^\d{4}-\d\d-\d\d$/.test(datum) || isNaN(new Date(datum + 'T12:00:00').getTime())) {
+    return json_({ ok: false, fout: 'Ongeldige datum' });
+  }
+  if (datum > vandaag_()) return json_({ ok: false, fout: 'De datum ligt in de toekomst' });
+
+  var speler = String(invoer.speler || '').trim();
+  var bekend = leesSpelers_().filter(function (s) { return s.Actief; }).map(function (s) { return s.Naam; });
+  if (bekend.indexOf(speler) < 0) return json_({ ok: false, fout: 'Onbekende speler: ' + speler });
+
+  var tijden = invoer.tijden || {};
+  var wijzigingen = [];
+  for (var spel in tijden) {
+    if (SPELLEN.indexOf(spel) < 0) return json_({ ok: false, fout: 'Onbekend spel: ' + spel });
+    var t = tijden[spel];
+    if (t === null || t === '') { wijzigingen.push({ spel: spel, tijd: null }); continue; }
+    t = Number(t);
+    if (!(t >= 1 && t <= MAX_TIJD) || Math.round(t) !== t) {
+      return json_({ ok: false, fout: spel + ': tijd moet een heel getal tussen 1 en ' + MAX_TIJD + ' seconden zijn' });
+    }
+    wijzigingen.push({ spel: spel, tijd: t });
+  }
+  if (!wijzigingen.length) return json_({ ok: false, fout: 'Geen tijden ingevuld' });
+
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) return json_({ ok: false, fout: 'Het is even druk, probeer het opnieuw' });
+  try {
+    var resultaat = schrijf_(datum, speler, wijzigingen);
+    return json_({ ok: true, opgeslagen: resultaat.opgeslagen, gewist: resultaat.gewist });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/* ===== Sheet lezen en schrijven ===== */
+
+function schrijf_(datum, speler, wijzigingen) {
+  var blad = blad_('Scores', KOP_SCORES);
+  var nu = new Date().toISOString();
+  var laatste = blad.getLastRow();
+  var data = laatste > 1 ? blad.getRange(2, 1, laatste - 1, 3).getValues() : [];
+  var rijVan = {};
+  data.forEach(function (r, i) {
+    if (datumTekst_(r[0]) === datum && String(r[1]) === speler) rijVan[String(r[2])] = i + 2;
+  });
+
+  var opgeslagen = 0, gewist = [], nieuw = [];
+  wijzigingen.forEach(function (w) {
+    var rij = rijVan[w.spel];
+    if (w.tijd === null) {
+      if (rij) gewist.push(rij);
+    } else if (rij) {
+      blad.getRange(rij, 4, 1, 2).setValues([[w.tijd, nu]]);
+      opgeslagen++;
+    } else {
+      nieuw.push([datum, speler, w.spel, w.tijd, nu]);
+    }
+  });
+  if (nieuw.length) {
+    var start = blad.getLastRow() + 1;
+    var bereik = blad.getRange(start, 1, nieuw.length, KOP_SCORES.length);
+    blad.getRange(start, 1, nieuw.length, 1).setNumberFormat('@');
+    bereik.setValues(nieuw);
+    opgeslagen += nieuw.length;
+  }
+  gewist.sort(function (a, b) { return b - a; }).forEach(function (rij) { blad.deleteRow(rij); });
+  return { opgeslagen: opgeslagen, gewist: gewist.length };
+}
+
+function leesScores_() {
+  var blad = blad_('Scores', KOP_SCORES);
+  var laatste = blad.getLastRow();
+  if (laatste < 2) return [];
+  return blad.getRange(2, 1, laatste - 1, KOP_SCORES.length).getValues()
+    .filter(function (r) { return r[0] !== '' && r[1] !== '' && r[2] !== '' && r[3] !== ''; })
+    .map(function (r) {
+      var op = r[4] instanceof Date ? r[4].toISOString() : String(r[4] || '');
+      return { Datum: datumTekst_(r[0]), Speler: String(r[1]).trim(), Spel: String(r[2]).trim(), Tijd: Number(r[3]), IngevoerdOp: op };
+    });
+}
+
+function leesSpelers_() {
+  var blad = blad_('Spelers', KOP_SPELERS);
+  var laatste = blad.getLastRow();
+  if (laatste < 2) return [];
+  return blad.getRange(2, 1, laatste - 1, KOP_SPELERS.length).getValues()
+    .filter(function (r) { return String(r[0]).trim(); })
+    .map(function (r) {
+      var actief = r[2] === '' || r[2] === true || /^(ja|true|1|x)$/i.test(String(r[2]).trim());
+      return { Naam: String(r[0]).trim(), Startnummer: Number(r[1]) || null, Actief: actief };
+    })
+    .sort(function (a, b) { return (a.Startnummer || 999) - (b.Startnummer || 999); });
+}
+
+/* ===== eenmalige installatie (uitvoeren vanuit de editor) ===== */
+
+function installeer() {
+  var scores = blad_('Scores', KOP_SCORES);
+  if (scores.getLastRow() > 1) throw new Error('Tab Scores bevat al data. Leeg hem eerst als je opnieuw wilt importeren.');
+  var tekst = UrlFetchApp.fetch(CSV_URL).getContentText('UTF-8');
+  var rijen = Utilities.parseCsv(tekst).slice(1).filter(function (r) { return r[0]; })
+    .map(function (r) { return [r[0], r[1], r[2], Number(r[3]), r[4] || '']; });
+  scores.getRange('A:A').setNumberFormat('@');
+  scores.getRange('E:E').setNumberFormat('@');
+  if (rijen.length) scores.getRange(2, 1, rijen.length, KOP_SCORES.length).setValues(rijen);
+
+  var spelers = blad_('Spelers', KOP_SPELERS);
+  if (spelers.getLastRow() < 2) {
+    var lijst = STANDAARD_SPELERS.map(function (n, i) { return [n, i + 1, true]; });
+    spelers.getRange(2, 1, lijst.length, 3).setValues(lijst);
+    spelers.getRange(2, 3, lijst.length, 1).insertCheckboxes();
+  }
+  Logger.log(rijen.length + ' scores geïmporteerd. Vergeet niet GROEPSCODE in te stellen bij Scripteigenschappen.');
+}
+
+/* ===== hulpjes ===== */
+
+function blad_(naam, kop) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var blad = ss.getSheetByName(naam);
+  if (!blad) {
+    blad = ss.insertSheet(naam);
+    blad.getRange(1, 1, 1, kop.length).setValues([kop]).setFontWeight('bold');
+    blad.setFrozenRows(1);
+  }
+  return blad;
+}
+
+function datumTekst_(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  return String(v).trim().slice(0, 10);
+}
+
+function vandaag_() {
+  return Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+}
+
+function json_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
