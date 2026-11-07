@@ -165,3 +165,23 @@ dialog#invoer::backdrop{background:rgba(35,38,43,.55)}
 .in-modus{margin:0 0 12px}
 #invoerForm .in-tijd .bib{width:30px;height:24px;font-size:15px}
 #invoerForm .in-tijd{grid-template-columns:30px 1fr 110px}
+
+/* uitslag als tabel, zoals de foto's in de groepsapp */
+.uitslag-tbl{width:100%;min-width:330px;table-layout:fixed;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:17px}
+.uitslag-tbl th,.uitslag-tbl td{padding:6px 6px;text-align:right;white-space:nowrap}
+.uitslag-tbl thead th{font:700 17px/1.1 var(--cond);vertical-align:bottom}
+.uitslag-tbl thead th{white-space:normal}
+.uitslag-tbl thead th .truitjes{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:1px;margin-top:3px}
+.uitslag-tbl tr>:first-child{width:76px}
+.uitslag-tbl tbody th,.uitslag-tbl tfoot th{text-align:left;font-weight:500;padding-left:0}
+.uitslag-tbl tbody tr+tr td,.uitslag-tbl tbody tr+tr th{border-top:1px solid var(--pagina)}
+.uitslag-tbl td.snel{font-weight:700;background:#FFF3B0}
+.uitslag-tbl td.traag,.lg-traag{color:#C21F32}
+.uitslag-tbl td.straf{color:var(--sub);font-style:italic}
+.uitslag-tbl tr.tot td,.uitslag-tbl tr.tot th{border-top:2px solid var(--asfalt);font-size:18px}
+.uitslag-tbl tr.tot td{font-weight:600}
+.uitslag-tbl tr.tot td.snel{font-weight:800}
+.uitslag-tbl tr.plek td,.uitslag-tbl tr.plek th{font-size:13px;color:var(--sub);padding-top:2px}
+.uitslag-tbl tr.plek td small{display:block;font-size:12px}
+.lg-snel{font-weight:700;background:#FFF3B0;padding:0 3px}
+@media (max-width:480px){.uitslag-tbl{min-width:0;font-size:15px}.uitslag-tbl tr>:first-child{width:58px}.uitslag-tbl th,.uitslag-tbl td{padding:6px 3px}.uitslag-tbl thead th{font-size:15px}.uitslag-tbl thead th .truitjes{display:none}.uitslag-tbl tr.tot td,.uitslag-tbl tr.tot th{font-size:16px}}

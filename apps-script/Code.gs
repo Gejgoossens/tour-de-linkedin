@@ -10,7 +10,7 @@
  * Eenmalig: voer `installeer` uit vanuit de editor (maakt de tabs en haalt de scores van GitHub).
  */
 
-var SPELLEN = ['Wend', 'Zip', 'Patches', 'Tango', 'Queens'];
+var SPELLEN = ['Wend', 'Patches', 'Zip', 'Tango', 'Queens'];
 var STANDAARD_SPELERS = ['Matta', 'Bouw', 'Corne', 'Jari', 'Giyo', 'Cas'];
 var CSV_URL = 'https://raw.githubusercontent.com/Gejgoossens/tour-de-linkedin/main/data/scores.csv';
 var KOP_SCORES = ['Datum', 'Speler', 'Spel', 'Tijd', 'IngevoerdOp'];

@@ -17,6 +17,6 @@ window.TOUR_CONFIG = {
   START_DATUM: "",
 
   /* Volgorde van spellen en rugnummers. Onbekende spellen/spelers komen er vanzelf achteraan bij. */
-  SPELLEN: ["Wend", "Zip", "Patches", "Tango", "Queens"],
+  SPELLEN: ["Wend", "Patches", "Zip", "Tango", "Queens"], // volgorde zoals op de foto's in de groepsapp
   SPELERS: ["Matta", "Bouw", "Corne", "Jari", "Giyo", "Cas"]
 };

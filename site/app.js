@@ -627,26 +627,37 @@ function render(){
     <p id="tourUitleg" class="d tv-uitleg">Wijs een etappe aan (of gebruik de pijltjestoetsen) voor de stand op die dag.</p>`;
   tourGrafiek(mk, tour, wieTour);
 
-  // uitslag
-  const best = {};
-  e.spellen.forEach(g => best[g.spel] = Math.min(...spelers.map(p => g.raw[p]).filter(v => v !== null)));
+  // uitslag: tabel zoals de foto's in de groepsapp (spellen als rijen, spelers als kolommen, tijden in seconden)
+  const wieRit = spelers.filter(p => deelnemers([e]).includes(p));
+  const uiterst = waarden => {
+    const v = waarden.filter(x => x !== null);
+    const mn = Math.min(...v), mx = Math.max(...v);
+    return { mn, mx: mx > mn ? mx : null };
+  };
+  const posVan = {}; ritRang.forEach(r => posVan[r.p] = r);
+  const heeftStraf = e.spellen.some(g => wieRit.some(p => g.raw[p] === null));
+  const cel = (v, u, extra = "") => {
+    const kl = [v === u.mn ? "snel" : v === u.mx ? "traag" : "", extra].filter(Boolean).join(" ");
+    return `<td${kl ? ` class="${kl}"` : ""}>${Math.round(v)}${extra === "straf" ? "*" : ""}</td>`;
+  };
+  const rijenSpel = e.spellen.map(g => {
+    const u = uiterst(wieRit.map(p => g.raw[p]));
+    return `<tr><th scope="row">${esc(g.spel)}</th>${wieRit.map(p => g.raw[p] === null
+      ? `<td class="straf" title="Niet gespeeld: langzaamste tijd + ${STRAFSECONDEN} s">${Math.round(g.eff[p])}*</td>`
+      : cel(g.raw[p], u)).join("")}</tr>`;
+  }).join("");
+  const uTot = uiterst(wieRit.map(p => e.totaal[p]));
   document.getElementById("uitslag").innerHTML = `
     <h2>Uitslag etappe ${e.tourNr}</h2>
-    <p class="toel">Geel is de snelste tijd per spel.</p>
-    ${ritRang.map(r => `
-      <div class="renner">
-        <span class="pos${r.pos === 1 ? " een" : ""}">${r.pos}</span>
-        ${bib(r.p)}
-        <div>
-          <div class="naam">${esc(r.p)} ${icoontjes(r.p)}</div>
-          <div class="splits">${e.spellen.map(g => {
-            const v = g.raw[r.p];
-            if(v === null) return `<span class="split mis" title="Niet gespeeld, straftijd">${esc(g.spel)} ${fmt(g.eff[r.p])}</span>`;
-            return `<span class="split${v === best[g.spel] ? " best" : ""}">${esc(g.spel)} ${fmt(v)}</span>`;
-          }).join("")}</div>
-        </div>
-        <span class="tijd">${fmt(r.t)}<small>${r.pos === 1 ? "&nbsp;" : "+" + fmt(r.t - ritRang[0].t)}</small></span>
-      </div>`).join("")}
+    <p class="toel">Tijden in seconden. <b class="lg-snel">Vet</b> is de snelste tijd, <span class="lg-traag">rood</span> de langzaamste.${heeftStraf ? ` * is een straftijd (niet gespeeld).` : ""}</p>
+    <div class="scroll"><table class="uitslag-tbl">
+      <thead><tr><th></th>${wieRit.map(p => `<th scope="col">${esc(p)}${icoontjes(p)}</th>`).join("")}</tr></thead>
+      <tbody>${rijenSpel}</tbody>
+      <tfoot>
+        <tr class="tot"><th scope="row">Totaal</th>${wieRit.map(p => cel(e.totaal[p], uTot)).join("")}</tr>
+        <tr class="plek"><th scope="row">Plaats</th>${wieRit.map(p => `<td>${posVan[p].pos}${posVan[p].pos === 1 ? "" : `<small>+${Math.round(posVan[p].t - ritRang[0].t)}</small>`}</td>`).join("")}</tr>
+      </tfoot>
+    </table></div>
     ${buitenRijen(buiten([e]), "Nog niet gestart")}`;
 
   // truien
