@@ -94,7 +94,8 @@ tour-de-linkedin/
 - [x] `apps-script/Code.gs`: `doGet` (alle scores als JSON) en `doPost` (upsert met een lock en controle van de groepscode)
 - [x] Invoerscherm in het dashboard
 - [x] `docs/SETUP-GOOGLE.md`: Sheet aanmaken, CSV importeren, script plakken, groepscode instellen, deployen als web-app (*Uitvoeren als: ik*, *Toegang: iedereen*)
-- [ ] De web-app-URL in `config.js` zetten en de hele flow testen
+- [x] De web-app-URL in `config.js` zetten (lezen en groepscodecontrole getest)
+- [ ] Echte invoer met de groepscode testen
 
 ### Fase 3: Online via GitHub
 - [x] GitHub CLI installeren, repo aanmaken (openbaar) en pushen

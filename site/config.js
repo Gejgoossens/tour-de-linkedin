@@ -1,7 +1,7 @@
 /* Instellingen voor Tour de LinkedIn. Aanpassen mag, het dashboard leest dit bij het laden. */
 window.TOUR_CONFIG = {
   /* Web-app-URL van Apps Script (fase 2). Leeg = scores uit de CSV-bestanden hieronder. */
-  APPS_SCRIPT_URL: "",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbycVtt1JRE5cYHAta0fZI_qNhFE4HDe3ND9A3AjAm9UY3npjnDsMrMTxnWvLZMamcHptA/exec",
 
   /* CSV in lang formaat (Datum,Speler,Spel,Tijd,IngevoerdOp). De eerste die bestaat wordt gebruikt:
      "data/scores.csv" op GitHub Pages, "../data/scores.csv" lokaal vanuit de repo-map. */
