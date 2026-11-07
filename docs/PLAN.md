@@ -47,7 +47,7 @@ Tab **Spelers**: `Naam | Startnummer | Actief`. Dit bepaalt de volgorde en de ru
 ### Spelregels (in te stellen in `site/config.js`)
 
 - Laagste totaaltijd per etappe (dag) wint.
-- Elke maand is een Tour. Een week hoort bij de maand waarin de donderdag valt (ISO-week), net als in de mock-up.
+- Elke kalendermaand is een Tour, van de 1e t/m de laatste dag. (Eerst gold de ISO-weekregel uit de mock-up; op 7 november 2026 omgezet.) Weekklassementen lopen van maandag t/m zondag.
 - **Gemist spel:** de straftijd is de langzaamste tijd van die dag voor dat spel + 10 s.
 - Een speler telt mee vanaf zijn eerste gespeelde dag (Giyo vanaf 4 september, Cas vanaf 24 oktober). Daarna krijgt een niet-gespeelde dag de straftijd, ook bij vakantie.
 
@@ -117,4 +117,5 @@ tour-de-linkedin/
 | Jari 6 t/m 18 oktober | niet gespeeld (vakantie), dus straftijd |
 | Openbaar | ja, openbare repo en GitHub Pages |
 | Invoer | door iedereen, ook voor anderen; standaard per spel |
+| Tour-periode | kalendermaand (1e t/m laatste dag), besloten 7 november 2026 |
 | Tour centraal | sectie "Tour van <maand>" direct onder de etappewinnaar, met etappekalender en het verloop van de achterstand op de gele trui |

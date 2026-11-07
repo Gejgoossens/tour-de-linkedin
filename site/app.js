@@ -59,7 +59,7 @@ function isoWeek(ds){
   const w = 1 + Math.round(((t - jan4)/86400000 - 3 + ((jan4.getDay()+6)%7)) / 7);
   return { key:`${t.getFullYear()}-${String(w).padStart(2,"0")}`, nr:w, maand:`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}` };
 }
-const maandKey = ds => isoWeek(ds).maand;
+const maandKey = ds => ds.slice(0, 7); // een Tour loopt van de 1e t/m de laatste dag van de maand
 const maandNaam = key => new Date(key + "-15T12:00:00").toLocaleDateString("nl-NL", { month:"long" });
 const maandJaar = key => new Date(key + "-15T12:00:00").toLocaleDateString("nl-NL", { month:"long", year:"numeric" });
 const datumNL = ds => new Date(ds + "T12:00:00").toLocaleDateString("nl-NL", { weekday:"long", day:"numeric", month:"long" });
@@ -444,14 +444,11 @@ function renderStats(){
 
 /* ===== Tour-verloop: achterstand op de gele trui per etappe ===== */
 const isoDatum = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-/* alle dagen van een Tour: van de maandag van de eerste tot de zondag van de laatste week waarvan de donderdag in de maand valt */
+/* alle dagen van een Tour: de 1e t/m de laatste dag van de maand */
 function tourDagen(mk){
   const [j, m] = mk.split("-").map(Number);
-  const d = new Date(j, m - 1, 1, 12);
-  while(d.getDay() !== 4) d.setDate(d.getDate() + 1);
-  d.setDate(d.getDate() - 3);
-  const dagen = [];
-  while(maandKey(isoDatum(d)) === mk){ dagen.push(isoDatum(d)); d.setDate(d.getDate() + 1); }
+  const d = new Date(j, m - 1, 1, 12), dagen = [];
+  while(d.getMonth() === m - 1){ dagen.push(isoDatum(d)); d.setDate(d.getDate() + 1); }
   return dagen;
 }
 
