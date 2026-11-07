@@ -3,16 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#14161A">
 <title>Tour de LinkedIn</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,700;0,800;1,800;1,900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=dev">
 </head>
 <body>
+<header class="omroep">
+  <canvas id="peloton" aria-hidden="true"></canvas>
+  <h1 class="merk">Tour de <em>LinkedIn</em></h1>
+  <div class="ticker" id="ticker">
+    <span class="live" id="liveLabel"><i></i><span>Live</span></span>
+    <div class="baan"><div class="loop" id="tickerLoop" aria-hidden="true"></div></div>
+  </div>
+</header>
 <div class="wrap">
   <div class="top">
-    <h1 class="merk">Tour de LinkedIn</h1>
     <div class="nav">
       <button id="vorige" aria-label="Vorige etappe">&#8249;</button>
       <select id="kies" aria-label="Kies etappe"></select>
@@ -78,6 +86,7 @@
 </dialog>
 
 <script src="config.js?v=dev"></script>
+<script src="peloton.js?v=dev"></script>
 <script src="app.js?v=dev"></script>
 <script src="invoer.js?v=dev"></script>
 </body>

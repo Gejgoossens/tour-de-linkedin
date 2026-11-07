@@ -20,7 +20,7 @@ const SHIRT = "M10 4 L13 3 Q16 7 19 3 L22 4 L30 10 L26 15 L23 13 L23 29 L9 29 L9
 
 function truiSvg(kleur, size){
   if(kleur === "lantaarn"){
-    return `<svg viewBox="0 0 32 32" width="${size}" height="${size}" aria-hidden="true"><path d="M12 5 Q16 1 20 5" fill="none" stroke="#23262B" stroke-width="1.6"/><rect x="10" y="6" width="12" height="3" rx="1" fill="#23262B"/><rect x="11" y="9" width="10" height="15" rx="2" fill="#D7263D" stroke="#7A1420" stroke-width="1.2"/><rect x="10" y="24" width="12" height="3" rx="1" fill="#23262B"/></svg>`;
+    return `<svg viewBox="0 0 32 32" width="${size}" height="${size}" aria-hidden="true"><path d="M12 5 Q16 1 20 5" fill="none" stroke="#A3A9B3" stroke-width="1.6"/><rect x="10" y="6" width="12" height="3" rx="1" fill="#A3A9B3"/><rect x="11" y="9" width="10" height="15" rx="2" fill="#D7263D" stroke="#7A1420" stroke-width="1.2"/><rect x="10" y="24" width="12" height="3" rx="1" fill="#A3A9B3"/></svg>`;
   }
   const [f, s] = KLEUR[kleur] || KLEUR.wit;
   let dots = "";
@@ -268,7 +268,7 @@ const DAGEN = ["Ma","Di","Wo","Do","Vr","Za","Zo"];
 const DAGEN_LANG = ["maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag","zondag"];
 const weekdag = ds => (new Date(ds + "T12:00:00").getDay() + 6) % 7;
 /* gevalideerd categorisch palet (vaste volgorde); in grafieken staan namen erbij, dus kleur is nooit het enige kenmerk */
-const SPELER_KLEUR = ["#2a78d6","#eb6834","#1baf7a","#eda100","#e87ba4","#008300","#6250d6","#e34948"];
+const SPELER_KLEUR = ["#3987e5","#d95926","#199e70","#c98500","#d55181","#9085e9","#e66767","#4fa83d"];
 const kleurVan = p => SPELER_KLEUR[spelers.indexOf(p) % SPELER_KLEUR.length];
 const gem = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
 const spreiding = a => { const m = gem(a); return a.length > 1 ? Math.sqrt(gem(a.map(v => (v - m) ** 2))) : 0; };
@@ -290,9 +290,9 @@ function verloopSvg(f){
   y0 = Math.floor(y0 / stap) * stap; y1 = Math.ceil(y1 / stap) * stap; if(y1 === y0) y1 += stap;
   const y = v => T + (H - T - B) * (1 - (v - y0) / (y1 - y0));
   let grid = "";
-  for(let v = y0; v <= y1; v += stap) grid += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#D5D9DD"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" font-size="12" fill="#5A6068">${fmt(v)}</text>`;
+  for(let v = y0; v <= y1; v += stap) grid += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#2E333B"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" font-size="12" fill="#A3A9B3">${fmt(v)}</text>`;
   const elk = Math.max(1, Math.ceil(n / Math.floor((W - L) / 34)));
-  const xl = etappes.map((e, i) => i % elk === 0 || i === n - 1 ? `<text x="${xs[i]}" y="${H - 10}" text-anchor="middle" font-size="12" fill="#5A6068">${e.nr}</text>` : "").join("");
+  const xl = etappes.map((e, i) => i % elk === 0 || i === n - 1 ? `<text x="${xs[i]}" y="${H - 10}" text-anchor="middle" font-size="12" fill="#A3A9B3">${e.nr}</text>` : "").join("");
   const volgorde = spelers.filter(p => p !== f).concat(f ? [f] : []);
   const lijnen = volgorde.map(p => {
     let d = "", vorig = false, punten = "";
@@ -304,10 +304,10 @@ function verloopSvg(f){
       vorig = true;
     });
     const op = f && p !== f ? .15 : 1;
-    return `<g opacity="${op}"><path d="${d}" fill="none" stroke="${kleurVan(p)}" stroke-width="${p === f ? 3 : 2}" stroke-linejoin="round"/>${punten}</g>`;
+    return `<g opacity="${op}"><path class="teken" pathLength="1" d="${d}" fill="none" stroke="${kleurVan(p)}" stroke-width="${p === f ? 3 : 2}" stroke-linejoin="round"/>${punten}</g>`;
   }).join("");
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Etappetijd per speler per etappe">${grid}${xl}${lijnen}
-    <text x="${W - R}" y="${H - 10}" text-anchor="end" font-size="12" fill="#5A6068"> </text></svg>`;
+    <text x="${W - R}" y="${H - 10}" text-anchor="end" font-size="12" fill="#A3A9B3"> </text></svg>`;
 }
 
 function renderStats(){
@@ -341,7 +341,8 @@ function renderStats(){
     if(v === null) return `<td class="d">–</td>`;
     const vs = rij.w.filter(x => x !== null), mn = Math.min(...vs), mx = Math.max(...vs);
     const t = mx > mn ? (v - mn) / (mx - mn) : 0;
-    return `<td class="${v === mn && vs.length > 1 ? "best" : ""}" style="background:color-mix(in srgb, #FFD300 ${Math.round((1 - t) * 85 + 5)}%, #FFFFFF)">${fmt(v)}</td>`;
+    const pct = Math.round((1 - t) * 85 + 5);
+    return `<td class="${v === mn && vs.length > 1 ? "best" : ""}" style="background:color-mix(in srgb, #FFD300 ${pct}%, #1E2127);color:${pct > 45 ? "#14161A" : "#F2F3F5"}">${fmt(v)}</td>`;
   };
   const geldig = ritRij.w.map((v, i) => ({ v, i })).filter(x => x.v !== null).sort((a, b) => a.v - b.v);
   let conclusie = "";
@@ -480,20 +481,20 @@ function tourGrafiek(mk, lijst, wie){
   const y = v => T + (H - T - B) * (v / yMax);
 
   let grid = "";
-  for(let v = 0; v <= yMax; v += stap) grid += `<line x1="${L}" x2="${W - R + 4}" y1="${y(v)}" y2="${y(v)}" stroke="#D5D9DD"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" font-size="12" fill="#5A6068">${achter(v)}</text>`;
+  for(let v = 0; v <= yMax; v += stap) grid += `<line x1="${L}" x2="${W - R + 4}" y1="${y(v)}" y2="${y(v)}" stroke="#2E333B"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" font-size="12" fill="#A3A9B3">${achter(v)}</text>`;
   /* weken: dun lijntje en datum bij elke maandag */
   /* x-as: elke dag zolang het past, anders alleen de maandagen */
   const perDag = (W - L - R) / Math.max(1, dagen.length - 1) >= 26;
   const xl = dagen.map((ds, i) => perDag || weekdag(ds) === 0
-    ? `${weekdag(ds) === 0 && i ? `<line x1="${xVan(ds)}" x2="${xVan(ds)}" y1="${T}" y2="${H - B}" stroke="#ECEEF0"/>` : ""}<text x="${xVan(ds)}" y="${H - 8}" text-anchor="middle" font-size="12" fill="#5A6068">${i === 0 || (!smal && weekdag(ds) === 0) ? datumKort(ds) : Number(ds.slice(8))}</text>` : "").join("");
+    ? `${weekdag(ds) === 0 && i ? `<line x1="${xVan(ds)}" x2="${xVan(ds)}" y1="${T}" y2="${H - B}" stroke="#262A31"/>` : ""}<text x="${xVan(ds)}" y="${H - 8}" text-anchor="middle" font-size="12" fill="#A3A9B3">${i === 0 || (!smal && weekdag(ds) === 0) ? datumKort(ds) : Number(ds.slice(8))}</text>` : "").join("");
   const toekomst = "";
 
   const lijnen = wie.slice().reverse().map(p => {
     const pts = standen.map(s => [xVan(s.e.datum), y(s.gap[p])]);
     const d = pts.map((q, i) => (i ? "L" : "M") + q[0].toFixed(1) + " " + q[1].toFixed(1)).join(" ");
     const eind = pts[pts.length - 1];
-    return `<g data-p="${esc(p)}"><path d="${d}" fill="none" stroke="${kleurVan(p)}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-      <circle cx="${eind[0].toFixed(1)}" cy="${eind[1].toFixed(1)}" r="4" fill="${kleurVan(p)}" stroke="#FFFFFF" stroke-width="2"/></g>`;
+    return `<g data-p="${esc(p)}"><path class="teken" pathLength="1" d="${d}" fill="none" stroke="${kleurVan(p)}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle class="eindpunt" cx="${eind[0].toFixed(1)}" cy="${eind[1].toFixed(1)}" r="4" fill="${kleurVan(p)}" stroke="#1E2127" stroke-width="2"/></g>`;
   }).join("");
 
   /* eindlabels: naam + achterstand, uit elkaar geschoven zodat ze niet overlappen */
@@ -504,12 +505,12 @@ function tourGrafiek(mk, lijst, wie){
   if(over > 0) labels.forEach(l => l.y = Math.max(T, l.y - over));
   for(let i = labels.length - 2; i >= 0; i--) labels[i].y = Math.min(labels[i].y, labels[i + 1].y - 15);
   const lx = xVan(laatste) + 10;
-  const eindLabels = labels.map(l => `<line x1="${lx}" x2="${lx + 10}" y1="${l.y}" y2="${l.y}" stroke="${kleurVan(l.p)}" stroke-width="3" stroke-linecap="round"/>
-    <text x="${lx + 15}" y="${l.y + 4}" font-size="${smal ? 12 : 13}" fill="#23262B"><tspan font-weight="600">${esc(l.p)}</tspan><tspan fill="#5A6068"> ${l.gap ? achter(l.gap) : "geel"}</tspan></text>`).join("");
+  const eindLabels = labels.map(l => `<g class="eindpunt"><line x1="${lx}" x2="${lx + 10}" y1="${l.y}" y2="${l.y}" stroke="${kleurVan(l.p)}" stroke-width="3" stroke-linecap="round"/>
+    <text x="${lx + 15}" y="${l.y + 4}" font-size="${smal ? 12 : 13}" fill="#F2F3F5"><tspan font-weight="600">${esc(l.p)}</tspan><tspan fill="#A3A9B3"> ${l.gap ? achter(l.gap) : "geel"}</tspan></text></g>`).join("");
 
   box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Achterstand op de gele trui na elke etappe van de Tour van ${maandNaam(mk)}">
     ${toekomst}${grid}${xl}${lijnen}${eindLabels}
-    <line class="tv-kruis" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="#23262B" stroke-width="1" visibility="hidden"/></svg>
+    <line class="tv-kruis" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="#F2F3F5" stroke-width="1" visibility="hidden"/></svg>
     <div class="tv-tip" hidden></div>`;
 
   /* hover en toetsenbord: kruisdraad springt naar de dichtstbijzijnde etappe */
@@ -541,6 +542,41 @@ function tourGrafiek(mk, lijst, wie){
   };
   box.onblur = () => toon(null);
   return { dagen, standen };
+}
+
+/* ===== omroep: bewegend peloton en live-balk ===== */
+function omroep(e, mk, tour, tourRang, wieTour, ritRang, winnaars){
+  const leider = tourRang[0], laatste = tourRang.length > 1 ? tourRang[tourRang.length - 1] : null;
+  const queens = alleSpellen.includes("Queens") ? rangschik(som(tour, "Queens"), wieTour)[0].p : null;
+  if(window.Peloton) Peloton.zet([
+    ...tourRang.map(r => ({ naam:r.p, bib:spelers.indexOf(r.p) + 1, kleur:kleurVan(r.p), gap:r.t - leider.t,
+      geel:r.p === leider.p, bol:r.p === queens && r.p !== leider.p, lantaarn:laatste && r.p === laatste.p })),
+    ...spelers.filter(p => !wieTour.includes(p)).map(p => ({ naam:p, bib:spelers.indexOf(p) + 1, kleur:kleurVan(p), gap:0, buiten:true }))
+  ]);
+
+  const isLaatste = sel === etappes.length - 1;
+  const live = document.getElementById("liveLabel");
+  live.classList.toggle("herhaling", !isLaatste);
+  live.querySelector("span").textContent = isLaatste ? "Live" : "Herhaling";
+  const items = [
+    `Tour van ${maandNaam(mk)} · na ${tour.length} ${tour.length === 1 ? "etappe" : "etappes"}`,
+    ...tourRang.map((r, i) => i === 0 ? `<b>${r.pos} ${esc(r.p)}</b> geel` : `${r.pos} ${esc(r.p)} +${fmt(r.t - leider.t)}${laatste && r.p === laatste.p ? " · rode lantaarn" : ""}`),
+    `<span class="sep">◆</span> Etappe ${e.tourNr}: <b>${esc(namen(winnaars))}</b> ${winnaars.length > 1 ? "winnen" : "wint"} in ${fmt(ritRang[0].t)}`,
+    ...e.spellen.map(g => {
+      const best = Math.min(...spelers.map(p => g.raw[p]).filter(v => v !== null));
+      return `${esc(g.spel)}: ${esc(namen(spelers.filter(p => g.raw[p] === best)))} ${fmt(best)}`;
+    })
+  ];
+  const nogNiet = deelnemers([e]).filter(p => e.spellen.every(g => g.raw[p] === null));
+  if(isLaatste && nogNiet.length) items.push(`<span class="sep">◆</span> Nog geen tijden van ${esc(namen(nogNiet))}`);
+  const loop = document.getElementById("tickerLoop");
+  const html = items.map(t => `<span>${t}</span>`).join("");
+  if(loop.dataset.html !== html){
+    loop.dataset.html = html;
+    loop.innerHTML = html + html; // twee keer, zodat de lus naadloos doorloopt
+    loop.style.setProperty("--duur", Math.max(20, loop.scrollWidth / 2 / 70) + "s");
+  }
+  document.getElementById("ticker").setAttribute("aria-label", `Tour van ${maandNaam(mk)}: ${tourRang.map(r => `${r.pos} ${r.p}`).join(", ")}`);
 }
 
 /* ===== renderen ===== */
@@ -612,10 +648,13 @@ function render(){
     </div>
     ${profielSvg(e)}`;
 
+  // omroep: peloton op volgorde van het klassement en de live-balk
+  omroep(e, mk, tour, tourRang, wieTour, ritRang, winnaars);
+
   // tour: verloop van het algemeen klassement over de maand
   const dagen = tourDagen(mk);
   const gereden = new Set(etappes.map(x => x.datum));
-  const kalender = dagen.map(ds => `<span class="${ds === e.datum ? "nu" : ds < e.datum ? (gereden.has(ds) ? "af" : "mis") : "nog"}${weekdag(ds) === 0 ? " ma" : ""}" title="${datumKort(ds)}"></span>`).join("");
+  const kalender = dagen.map((ds, i) => `<span style="--i:${i}" class="${ds === e.datum ? "nu" : ds < e.datum ? (gereden.has(ds) ? "af" : "mis") : "nog"}${weekdag(ds) === 0 ? " ma" : ""}" title="${datumKort(ds)}"></span>`).join("");
   document.getElementById("tourSectie").innerHTML = `
     <h2>Tour van ${maandNaam(mk)}</h2>
     <div class="tv-kalender" aria-hidden="true">${kalender}</div>
@@ -702,8 +741,8 @@ function render(){
       ${Object.entries(sets).map(([k, v]) => `<button data-tab="${k}" aria-pressed="${k === tab}">${v.titel}</button>`).join("")}
     </div>
     <p class="toel">${titel}, ${cur.lijst.length} ${cur.lijst.length === 1 ? "etappe" : "etappes"} gereden.</p>
-    ${rang.map(r => `
-      <div class="renner">
+    ${rang.map((r, i) => `
+      <div class="renner" style="--i:${i}">
         <span class="pos${r.pos === 1 ? " een" : ""}">${r.pos}</span>
         ${bib(r.p)}
         <div><div class="naam">${esc(r.p)} ${icoontjes(r.p)}</div>
@@ -759,6 +798,8 @@ function toonView(v){
   document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === v));
   try{ history.replaceState(null, "", v === "stats" ? "#statistieken" : "#tour"); }catch(err){}
   v === "stats" ? renderStats() : render();
+  const doel = document.getElementById(v === "stats" ? "statView" : "tourView");
+  doel.classList.remove("instroom"); void doel.offsetWidth; doel.classList.add("instroom");
 }
 document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => toonView(b.dataset.view));
 
