@@ -579,6 +579,70 @@ function omroep(e, mk, tour, tourRang, wieTour, ritRang, winnaars){
   document.getElementById("ticker").setAttribute("aria-label", `Tour van ${maandNaam(mk)}: ${tourRang.map(r => `${r.pos} ${r.p}`).join(", ")}`);
 }
 
+/* ===== huldiging: per spel de binnenkomst, dan de rode lantaarn en het podium van de dag ===== */
+const GRAPPEN = [
+  "De bezemwagen stond al met draaiende motor te wachten.",
+  "Onderweg nog even een terrasje gepakt?",
+  "De verzorgers waren al naar huis, de lichten gingen bijna uit.",
+  "De finishfoto moest uit het archief komen.",
+  "Zelfs de bezemwagen keek op zijn horloge.",
+  "Er was al een zoekactie gestart. Gelukkig met goede afloop.",
+  "Het publiek was naar huis, op één trouwe fan na.",
+  "De jury twijfelde even of dit nog dezelfde etappe was.",
+  "Morgen gewoon iets eerder vertrekken."
+];
+/* rode lantaarn van de dag: de laatste(n), alleen als die niet ook op het podium staan */
+function rodeLantaarn(ritRang){
+  if(ritRang.length < 4) return null;
+  const laatst = ritRang[ritRang.length - 1].pos;
+  return laatst > 3 ? ritRang.filter(r => r.pos === laatst) : null;
+}
+function huldigingData(i){
+  const e = etappes[i], mk = maandKey(e.datum), wie = deelnemers([e]);
+  const ritRang = rangschik(e.totaal, wie);
+  const rij = p => ({ p, bib:spelers.indexOf(p) + 1, kleur:kleurVan(p) });
+  const tour = etappes.slice(0, i + 1).filter(x => maandKey(x.datum) === mk), wieTour = deelnemers(tour);
+  const geel = rangschik(som(tour), wieTour)[0].p;
+  const geelNieuw = tour.length > 1 && rangschik(som(tour.slice(0, -1)), wieTour)[0].p !== geel;
+  const lantaarn = rodeLantaarn(ritRang);
+  const hash = [...e.datum].reduce((a, ch) => a * 31 + ch.charCodeAt(0) >>> 0, 7);
+  return {
+    kop:`Tour van ${maandNaam(mk)} · etappe ${e.tourNr} · ${datumNL(e.datum)}`,
+    spellen:e.spellen.map(g => ({
+      spel:g.spel, trui:truiSvg(truiVoor(g.spel).kleur, 48), truiNaam:truiVoor(g.spel).naam,
+      uitslag:rangschik(g.eff, wie).map(r => ({ ...rij(r.p), t:r.t, pos:r.pos, straf:g.raw[r.p] === null }))
+    })),
+    lantaarn:lantaarn && { wie:lantaarn.map(r => rij(r.p)), achter:lantaarn[0].t - ritRang[0].t, grap:GRAPPEN[hash % GRAPPEN.length], icoon:truiSvg("lantaarn", 64) },
+    podium:ritRang.map(r => ({ ...rij(r.p), t:r.t, pos:r.pos, gap:r.t - ritRang[0].t })),
+    slot:tour.length === 1 ? `${geel} trekt de eerste gele trui van de Tour van ${maandNaam(mk)} aan.`
+      : geelNieuw ? `${geel} neemt de gele trui over.` : `${geel} blijft in het geel.`
+  };
+}
+/* Automatisch afspelen bij het eerste bezoek: de laatste etappe die af is (een eerdere dag,
+   of vandaag als iedereen al iets gespeeld heeft). Komen er later tijden bij, dan speelt hij opnieuw. */
+const HULD_KEY = "tdl-huldiging";
+function huldigingAuto(){
+  if(!window.Huldiging || Huldiging.bezig() || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const dlg = document.getElementById("invoer");
+  if(dlg && dlg.open){ dlg.addEventListener("close", huldigingAuto, { once:true }); return; }
+  const nu = new Date(), vandaag = `${nu.getFullYear()}-${String(nu.getMonth() + 1).padStart(2, "0")}-${String(nu.getDate()).padStart(2, "0")}`;
+  let i = etappes.length - 1;
+  while(i >= 0){
+    const e = etappes[i];
+    if(e.datum < vandaag) break;
+    if(e.datum === vandaag && e.spellen.length === alleSpellen.length && deelnemers([e]).every(p => e.spellen.some(g => g.raw[p] !== null))) break;
+    i--;
+  }
+  if(i < 0) return;
+  const e = etappes[i];
+  const sleutel = `${e.datum}|${e.spellen.reduce((a, g) => a + spelers.filter(p => g.raw[p] !== null).length, 0)}`;
+  let gezien = null;
+  try{ gezien = localStorage.getItem(HULD_KEY); }catch(err){}
+  if(gezien === sleutel) return;
+  try{ localStorage.setItem(HULD_KEY, sleutel); }catch(err){}
+  Huldiging.speel(huldigingData(i));
+}
+
 /* ===== renderen ===== */
 function render(){
   kies.value = sel;
@@ -638,15 +702,24 @@ function render(){
     : geelNieuw ? `${esc(geel)} neemt de gele trui over.` : `${esc(geel)} blijft in het geel.`);
   const nu = new Date(), vandaagIso = `${nu.getFullYear()}-${String(nu.getMonth() + 1).padStart(2, "0")}-${String(nu.getDate()).padStart(2, "0")}`;
   const nogNiet = deelnemers([e]).filter(p => e.spellen.every(g => g.raw[p] === null));
+  const lantaarn = rodeLantaarn(ritRang);
+  if(lantaarn) detail += ` Rode lantaarn voor ${esc(namen(lantaarn.map(r => r.p)))}, +${fmt(lantaarn[0].t - ritRang[0].t)}.`;
   if(e.datum === vandaagIso && nogNiet.length) detail += ` Voorlopige uitslag: nog geen tijden van ${esc(namen(nogNiet))}.`;
+  const podPlek = p => `<div class="pod p${p}">${ritRang.filter(r => r.pos === p).map(r => `
+      <span class="pod-naam">${esc(r.p)}</span><span class="pod-tijd">${p === 1 ? fmt(r.t) : "+" + fmt(r.t - ritRang[0].t)}</span>`).join("")}
+      <div class="pod-blok">${p}</div></div>`;
   document.getElementById("hero").innerHTML = `
     <div class="finish"></div>
     <div class="hero-in">
-      <p class="kop">Tour van ${maandNaam(mk)}, etappe ${e.tourNr} · ${datumNL(e.datum)}</p>
-      <p class="winnaar">${esc(namen(winnaars))} ${winnaars.length > 1 ? "winnen samen" : "wint"}</p>
+      <div class="hero-kopregel">
+        <p class="kop">Tour van ${maandNaam(mk)}, etappe ${e.tourNr} · ${datumNL(e.datum)}</p>
+        <button type="button" class="huld-knop" id="huldKnop"><span aria-hidden="true">&#9654;</span> Huldiging</button>
+      </div>
+      <div class="podium" aria-label="Podium: ${esc(ritRang.filter(r => r.pos <= 3).map(r => `${r.pos} ${r.p}`).join(", "))}">${[2, 1, 3].map(podPlek).join("")}</div>
       <p class="detail">${detail}</p>
     </div>
     ${profielSvg(e)}`;
+  document.getElementById("huldKnop").onclick = () => window.Huldiging && Huldiging.speel(huldigingData(sel));
 
   // omroep: peloton op volgorde van het klassement en de live-balk
   omroep(e, mk, tour, tourRang, wieTour, ritRang, winnaars);
@@ -819,6 +892,7 @@ async function laad(){
     status.textContent = bronMelding;
     document.getElementById("inhoud").hidden = false;
     toonView(view);
+    huldigingAuto();
   }catch(err){
     status.hidden = false;
     status.textContent = `Kon de scores niet laden: ${err.message}.`;
