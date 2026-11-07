@@ -3,7 +3,7 @@ name: Deploy naar GitHub Pages
 on:
   push:
     branches: [main]
-    paths: ["site/**", ".github/workflows/pages.yml"]
+    paths: ["site/**", "data/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -24,6 +24,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      # tot de Apps Script-koppeling er is, leest het dashboard data/scores.csv
+      - run: mkdir -p site/data && cp data/scores.csv site/data/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

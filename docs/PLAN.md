@@ -67,7 +67,7 @@ tour-de-linkedin/
 ├── scripts/
 │   └── excel_naar_csv.py # eenmalige migratie van de oude Excel
 ├── data/
-│   └── voorbeeld.csv     # testdata voor lokaal ontwikkelen
+│   └── scores.csv        # alle scores tot nu toe (lang formaat)
 ├── docs/
 │   ├── PLAN.md           # dit document
 │   ├── SETUP-GOOGLE.md   # stappenplan Sheet + Apps Script
@@ -77,20 +77,20 @@ tour-de-linkedin/
 
 ## Fases
 
-### Fase 0: Repo en plan *(nu)*
+### Fase 0: Repo en plan
 - [x] Lokale git-repo met de mappenstructuur, README, .gitignore en .editorconfig
 - [x] Plan vastgelegd
 - [x] GitHub Actions-workflow voor Pages (draait pas na de eerste push)
 
-### Fase 1: Lokaal dashboard met echte data
-- [ ] `scripts/excel_naar_csv.py`: de Excel (tab `Tabular`) omzetten naar het lange formaat, met "Mathijs" hernoemd naar "Matta"
-- [ ] Mock-up opsplitsen in `index.html`, `style.css`, `app.js` en `config.js`
-- [ ] Data laden uit lang formaat (lokaal uit `data/*.csv`, later uit Apps Script)
-- [ ] Spelers dynamisch laden, zodat Cas er gewoon bij komt
-- [ ] De nieuwe straftijdregel toepassen
-- [ ] Lokaal testen met `python -m http.server`, ook op telefoonbreedte
+### Fase 1: Lokaal dashboard met echte data *(klaar)*
+- [x] `scripts/excel_naar_csv.py`: de Excel (tab `Tabular`) omzetten naar het lange formaat, met "Mathijs" hernoemd naar "Matta"
+- [x] Mock-up opsplitsen in `index.html`, `style.css`, `app.js` en `config.js`
+- [x] Data laden uit lang formaat (lokaal uit `data/*.csv`, later uit Apps Script)
+- [x] Spelers dynamisch laden, zodat Cas er gewoon bij komt
+- [x] De nieuwe straftijdregel toepassen
+- [x] Lokaal testen met `python -m http.server`, ook op telefoonbreedte
 
-### Fase 2: Invoer en Google-koppeling
+### Fase 2: Invoer en Google-koppeling *(volgende)*
 - [ ] `apps-script/Code.gs`: `doGet` (alle scores als JSON) en `doPost` (upsert met een lock en controle van de groepscode)
 - [ ] Invoerscherm in het dashboard
 - [ ] `docs/SETUP-GOOGLE.md`: Sheet aanmaken, CSV importeren, script plakken, groepscode instellen, deployen als web-app (*Uitvoeren als: ik*, *Toegang: iedereen*)

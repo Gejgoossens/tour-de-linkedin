@@ -11,17 +11,19 @@ Zie [docs/PLAN.md](docs/PLAN.md) voor de opzet en de planning.
 | `site/` | Statisch dashboard, wordt gepubliceerd op GitHub Pages |
 | `apps-script/` | Google Apps Script dat de Sheet leest en beschrijft |
 | `scripts/` | Hulpscripts, zoals de eenmalige Excel-migratie |
-| `data/` | Voorbeelddata voor lokaal ontwikkelen |
+| `data/` | `scores.csv` met alle scores; de Pages-workflow zet een kopie in de site |
 | `docs/` | Plan, setup-handleiding en het oorspronkelijke ontwerp |
 
 ## Lokaal draaien
 
+Start de server vanuit de repo-map (niet vanuit `site/`), zodat het dashboard `data/scores.csv` kan vinden:
+
 ```bash
-python -m http.server 8000 --directory site
+python -m http.server 8000 --bind 127.0.0.1
 ```
 
-Open daarna <http://localhost:8000>.
+Open daarna <http://127.0.0.1:8000/site/>. Instellingen (straftijd, volgorde van spelers en spellen, later de Apps Script-URL) staan in `site/config.js`.
 
 ## Deployen
 
-Elke push naar `main` publiceert `site/` automatisch via GitHub Actions naar GitHub Pages.
+Elke push naar `main` die `site/` of `data/` raakt, publiceert `site/` (plus `data/scores.csv`) automatisch via GitHub Actions naar GitHub Pages.
