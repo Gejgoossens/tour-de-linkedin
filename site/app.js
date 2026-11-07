@@ -168,8 +168,11 @@ function verwerk(invoer){
     });
   });
   etappes = etappes.filter(e => e.spellen.length);
+  const perMaand = {};
   etappes.forEach((e, i) => {
     e.nr = i + 1;
+    const mk = maandKey(e.datum);
+    e.tourNr = perMaand[mk] = (perMaand[mk] || 0) + 1;
     e.totaal = {};
     spelers.forEach(p => e.totaal[p] = e.spellen.reduce((a, g) => a + g.eff[p], 0));
   });
@@ -264,7 +267,8 @@ function profielSvg(e){
 const DAGEN = ["Ma","Di","Wo","Do","Vr","Za","Zo"];
 const DAGEN_LANG = ["maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag","zondag"];
 const weekdag = ds => (new Date(ds + "T12:00:00").getDay() + 6) % 7;
-const SPELER_KLEUR = ["#23262B","#2563C9","#D7263D","#1E8A4C","#F07A1A","#6D4BC4","#1A9C9C","#8A6A00"];
+/* gevalideerd categorisch palet (vaste volgorde); in grafieken staan namen erbij, dus kleur is nooit het enige kenmerk */
+const SPELER_KLEUR = ["#2a78d6","#eb6834","#1baf7a","#eda100","#e87ba4","#008300","#6250d6","#e34948"];
 const kleurVan = p => SPELER_KLEUR[spelers.indexOf(p) % SPELER_KLEUR.length];
 const gem = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
 const spreiding = a => { const m = gem(a); return a.length > 1 ? Math.sqrt(gem(a.map(v => (v - m) ** 2))) : 0; };
@@ -438,6 +442,110 @@ function renderStats(){
   document.getElementById("s-opvallend").innerHTML = `<h2>Opvallend</h2>${feiten.map(t => `<div class="feit">${t}</div>`).join("")}`;
 }
 
+/* ===== Tour-verloop: achterstand op de gele trui per etappe ===== */
+const isoDatum = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+/* alle dagen van een Tour: van de maandag van de eerste tot de zondag van de laatste week waarvan de donderdag in de maand valt */
+function tourDagen(mk){
+  const [j, m] = mk.split("-").map(Number);
+  const d = new Date(j, m - 1, 1, 12);
+  while(d.getDay() !== 4) d.setDate(d.getDate() + 1);
+  d.setDate(d.getDate() - 3);
+  const dagen = [];
+  while(maandKey(isoDatum(d)) === mk){ dagen.push(isoDatum(d)); d.setDate(d.getDate() + 1); }
+  return dagen;
+}
+
+/* stand na elke etappe: cumulatieve tijd, achterstand op de leider en positie */
+function tourStanden(lijst, wie){
+  const cum = {}; wie.forEach(p => cum[p] = 0);
+  return lijst.map(e => {
+    wie.forEach(p => cum[p] += e.totaal[p]);
+    const rang = rangschik({ ...cum }, wie);
+    const gap = {}; rang.forEach(r => gap[r.p] = r.t - rang[0].t);
+    return { e, rang, gap };
+  });
+}
+
+let tourHover = null;
+function tourGrafiek(mk, lijst, wie){
+  const box = document.getElementById("tourGrafiek");
+  const laatste = lijst[lijst.length - 1].datum;
+  const dagen = tourDagen(mk).filter(ds => ds <= laatste); // alleen tot en met de getoonde etappe
+  const standen = tourStanden(lijst, wie);
+  const smal = box.clientWidth < 520;
+  const W = Math.max(300, Math.round(box.clientWidth)), H = smal ? 230 : 260;
+  const L = 46, R = smal ? 104 : 116, T = 12, B = 28;
+  const achter = v => v ? `+${Math.floor(v / 60)}:${String(Math.round(v % 60)).padStart(2, "0")}` : "0:00"; // in minuten, ook boven het uur
+  const xVan = ds => L + (W - L - R) * (dagen.length === 1 ? .5 : dagen.indexOf(ds) / (dagen.length - 1));
+  const maxGap = Math.max(1, ...standen.flatMap(s => wie.map(p => s.gap[p])));
+  const stap = [10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600].find(s => maxGap / s <= 4) || 7200;
+  const yMax = Math.ceil(maxGap / stap) * stap;
+  const y = v => T + (H - T - B) * (v / yMax);
+
+  let grid = "";
+  for(let v = 0; v <= yMax; v += stap) grid += `<line x1="${L}" x2="${W - R + 4}" y1="${y(v)}" y2="${y(v)}" stroke="#D5D9DD"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" font-size="12" fill="#5A6068">${achter(v)}</text>`;
+  /* weken: dun lijntje en datum bij elke maandag */
+  /* x-as: elke dag zolang het past, anders alleen de maandagen */
+  const perDag = (W - L - R) / Math.max(1, dagen.length - 1) >= 26;
+  const xl = dagen.map((ds, i) => perDag || weekdag(ds) === 0
+    ? `${weekdag(ds) === 0 && i ? `<line x1="${xVan(ds)}" x2="${xVan(ds)}" y1="${T}" y2="${H - B}" stroke="#ECEEF0"/>` : ""}<text x="${xVan(ds)}" y="${H - 8}" text-anchor="middle" font-size="12" fill="#5A6068">${i === 0 || (!smal && weekdag(ds) === 0) ? datumKort(ds) : Number(ds.slice(8))}</text>` : "").join("");
+  const toekomst = "";
+
+  const lijnen = wie.slice().reverse().map(p => {
+    const pts = standen.map(s => [xVan(s.e.datum), y(s.gap[p])]);
+    const d = pts.map((q, i) => (i ? "L" : "M") + q[0].toFixed(1) + " " + q[1].toFixed(1)).join(" ");
+    const eind = pts[pts.length - 1];
+    return `<g data-p="${esc(p)}"><path d="${d}" fill="none" stroke="${kleurVan(p)}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${eind[0].toFixed(1)}" cy="${eind[1].toFixed(1)}" r="4" fill="${kleurVan(p)}" stroke="#FFFFFF" stroke-width="2"/></g>`;
+  }).join("");
+
+  /* eindlabels: naam + achterstand, uit elkaar geschoven zodat ze niet overlappen */
+  const nu = standen[standen.length - 1];
+  const labels = nu.rang.map(r => ({ p:r.p, gap:nu.gap[r.p], y0:y(nu.gap[r.p]) }));
+  labels.forEach((l, i) => l.y = i ? Math.max(l.y0, labels[i - 1].y + 15) : l.y0);
+  const over = labels.length ? labels[labels.length - 1].y - (H - B + 4) : 0;
+  if(over > 0) labels.forEach(l => l.y = Math.max(T, l.y - over));
+  for(let i = labels.length - 2; i >= 0; i--) labels[i].y = Math.min(labels[i].y, labels[i + 1].y - 15);
+  const lx = xVan(laatste) + 10;
+  const eindLabels = labels.map(l => `<line x1="${lx}" x2="${lx + 10}" y1="${l.y}" y2="${l.y}" stroke="${kleurVan(l.p)}" stroke-width="3" stroke-linecap="round"/>
+    <text x="${lx + 15}" y="${l.y + 4}" font-size="${smal ? 12 : 13}" fill="#23262B"><tspan font-weight="600">${esc(l.p)}</tspan><tspan fill="#5A6068"> ${l.gap ? achter(l.gap) : "geel"}</tspan></text>`).join("");
+
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Achterstand op de gele trui na elke etappe van de Tour van ${maandNaam(mk)}">
+    ${toekomst}${grid}${xl}${lijnen}${eindLabels}
+    <line class="tv-kruis" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="#23262B" stroke-width="1" visibility="hidden"/></svg>
+    <div class="tv-tip" hidden></div>`;
+
+  /* hover en toetsenbord: kruisdraad springt naar de dichtstbijzijnde etappe */
+  const svg = box.querySelector("svg"), kruis = box.querySelector(".tv-kruis"), tip = box.querySelector(".tv-tip");
+  const xs = standen.map(s => xVan(s.e.datum));
+  const toon = i => {
+    if(i == null){ kruis.setAttribute("visibility", "hidden"); tip.hidden = true; tourHover = null; return; }
+    tourHover = i;
+    const s = standen[i], x = xs[i];
+    kruis.setAttribute("x1", x); kruis.setAttribute("x2", x); kruis.setAttribute("visibility", "visible");
+    tip.innerHTML = `<div class="tv-tip-kop">Etappe ${s.e.tourNr}, ${datumKort(s.e.datum)}</div>` + s.rang.map(r =>
+      `<div class="tv-tip-rij"><span class="d">${r.pos}</span><i style="background:${kleurVan(r.p)}"></i><span>${esc(r.p)}</span><b>${s.gap[r.p] ? achter(s.gap[r.p]) : fmt(r.t)}</b></div>`).join("");
+    tip.hidden = false;
+    const schaal = box.clientWidth / W, links = x * schaal;
+    tip.style.left = (links + tip.offsetWidth + 16 > box.clientWidth ? links - tip.offsetWidth - 10 : links + 10) + "px";
+  };
+  svg.addEventListener("pointermove", ev => {
+    const r = svg.getBoundingClientRect(), x = (ev.clientX - r.left) * W / r.width;
+    let best = 0; xs.forEach((v, i) => { if(Math.abs(v - x) < Math.abs(xs[best] - x)) best = i; });
+    toon(best);
+  });
+  svg.addEventListener("pointerleave", () => toon(null));
+  box.onkeydown = ev => {
+    if(ev.key !== "ArrowLeft" && ev.key !== "ArrowRight" && ev.key !== "Escape") return;
+    ev.preventDefault();
+    if(ev.key === "Escape") return toon(null);
+    const i = tourHover == null ? standen.length - 1 : tourHover + (ev.key === "ArrowRight" ? 1 : -1);
+    toon(Math.max(0, Math.min(standen.length - 1, i)));
+  };
+  box.onblur = () => toon(null);
+  return { dagen, standen };
+}
+
 /* ===== renderen ===== */
 function render(){
   kies.value = sel;
@@ -501,17 +609,29 @@ function render(){
   document.getElementById("hero").innerHTML = `
     <div class="finish"></div>
     <div class="hero-in">
-      <p class="kop">Etappe ${e.nr}, ${datumNL(e.datum)}</p>
+      <p class="kop">Tour van ${maandNaam(mk)}, etappe ${e.tourNr} · ${datumNL(e.datum)}</p>
       <p class="winnaar">${esc(namen(winnaars))} ${winnaars.length > 1 ? "winnen samen" : "wint"}</p>
       <p class="detail">${detail}</p>
     </div>
     ${profielSvg(e)}`;
 
+  // tour: verloop van het algemeen klassement over de maand
+  const dagen = tourDagen(mk);
+  const gereden = new Set(etappes.map(x => x.datum));
+  const kalender = dagen.map(ds => `<span class="${ds === e.datum ? "nu" : ds < e.datum ? (gereden.has(ds) ? "af" : "mis") : "nog"}${weekdag(ds) === 0 ? " ma" : ""}" title="${datumKort(ds)}"></span>`).join("");
+  document.getElementById("tourSectie").innerHTML = `
+    <h2>Tour van ${maandNaam(mk)}</h2>
+    <div class="tv-kalender" aria-hidden="true">${kalender}</div>
+    <p class="toel">Etappe ${e.tourNr} van ${dagen.length}, ${datumKort(dagen[0])} t/m ${datumKort(dagen[dagen.length - 1])}. De lijnen tonen de achterstand op de gele trui na elke etappe: hoe lager, hoe verder achter.</p>
+    <div id="tourGrafiek" class="tv-grafiek" tabindex="0" aria-describedby="tourUitleg"></div>
+    <p id="tourUitleg" class="d tv-uitleg">Wijs een etappe aan (of gebruik de pijltjestoetsen) voor de stand op die dag.</p>`;
+  tourGrafiek(mk, tour, wieTour);
+
   // uitslag
   const best = {};
   e.spellen.forEach(g => best[g.spel] = Math.min(...spelers.map(p => g.raw[p]).filter(v => v !== null)));
   document.getElementById("uitslag").innerHTML = `
-    <h2>Uitslag etappe ${e.nr}</h2>
+    <h2>Uitslag etappe ${e.tourNr}</h2>
     <p class="toel">Geel is de snelste tijd per spel.</p>
     ${ritRang.map(r => `
       <div class="renner">
@@ -532,7 +652,7 @@ function render(){
   // truien
   document.getElementById("truien").innerHTML = `
     <h2>Truien</h2>
-    <p class="toel">Dragers na etappe ${e.nr}, gerekend over de Tour van ${maandNaam(mk)}. Tik op een trui voor het klassement.</p>
+    <p class="toel">Dragers na etappe ${e.tourNr}, gerekend over de Tour van ${maandNaam(mk)}. Tik op een trui voor het klassement.</p>
     <div class="truien">${truien.map(t => `
       <${t.naar ? `button type="button" data-naar="${esc(t.naar)}" aria-label="Bekijk klassement ${esc(t.naam)}"` : "div"} class="trui">
         ${truiSvg(t.kleur, 52)}
@@ -642,7 +762,9 @@ async function laad(){
     verwerk(await haalRijen());
     if(!etappes.length) throw new Error("nog geen scores");
     sel = opLaatste ? etappes.length - 1 : Math.min(sel, etappes.length - 1);
-    kies.innerHTML = etappes.map((e, i) => `<option value="${i}">Etappe ${e.nr}, ${datumKort(e.datum)}</option>`).join("");
+    const tours = [...new Set(etappes.map(e => maandKey(e.datum)))].reverse();
+    kies.innerHTML = tours.map(mk => `<optgroup label="Tour van ${maandNaam(mk)}">${etappes.map((e, i) => maandKey(e.datum) === mk
+      ? `<option value="${i}">${datumKort(e.datum)}, etappe ${e.tourNr}</option>` : "").reverse().join("")}</optgroup>`).join("");
     document.getElementById("bijgewerkt").textContent = `Bijgewerkt tot en met ${datumNL(etappes[etappes.length - 1].datum)}.`;
     status.hidden = !bronMelding;
     status.textContent = bronMelding;

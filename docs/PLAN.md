@@ -36,10 +36,10 @@ Tab **Spelers**: `Naam | Startnummer | Actief`. Dit bepaalt de volgorde en de ru
 ### Invoer op het dashboard
 
 1. Klik op de knop "Scores invoeren".
-2. Kies een speler. Je kunt ook voor iemand anders invullen.
+2. Kies **per spel** (standaard: alle spelers voor één spel, zoals LinkedIn de uitslag per spel toont) of **per speler** (alle spellen van één speler).
 3. De datum staat standaard op vandaag en is aan te passen.
-4. Vul de 5 tijden in, als `32` of `0:32`. Laat een veld leeg als je dat spel niet gespeeld hebt.
-5. Sla op. Daarna kun je meteen een volgende speler invullen, zodat ook één persoon de hele groep kan doen.
+4. Vul de tijden in, als `32` of `0:32`. Laat een veld leeg als die speler dat spel niet gespeeld heeft. Bestaande tijden staan al ingevuld; een veld leegmaken wist de tijd.
+5. Sla op. Het scherm springt naar het volgende spel (of de volgende speler) dat nog niet compleet is.
 6. Het dashboard herlaadt de data en toont de nieuwe uitslag.
 
 **Beveiliging.** Het dashboard is openbaar, dus voor schrijven is een **groepscode** nodig. Die code staat alleen in de Script Properties van Apps Script en nooit in de repo. De browser onthoudt de code na de eerste keer (`localStorage`). Lezen kan zonder code. Het script controleert ook of de invoer klopt: de speler en het spel moeten bestaan, de tijd moet tussen 1 en 3600 seconden liggen, en de datum mag niet in de toekomst liggen.
@@ -115,4 +115,5 @@ tour-de-linkedin/
 | Cas | doet mee vanaf 24 oktober 2026 |
 | Jari 6 t/m 18 oktober | niet gespeeld (vakantie), dus straftijd |
 | Openbaar | ja, openbare repo en GitHub Pages |
-| Invoer | door iedereen, ook voor anderen |
+| Invoer | door iedereen, ook voor anderen; standaard per spel |
+| Tour centraal | sectie "Tour van <maand>" direct onder de etappewinnaar, met etappekalender en het verloop van de achterstand op de gele trui |

@@ -59,6 +59,7 @@ Plak de nieuwe code in de editor en kies **Implementeren → Implementaties behe
 
 ## Goed om te weten
 
-- **Corrigeren** kan op twee manieren: in het invoerscherm (dezelfde speler en datum kiezen, tijd aanpassen of het veld leegmaken) of direct in de Sheet.
+- **Invoeren** gaat het snelst **per spel**: open op LinkedIn de uitslag van één spel en neem de tijden van iedereen in één keer over. Met **per speler** vul je juist al je eigen spellen in.
+- **Corrigeren** kan op twee manieren: in het invoerscherm (dezelfde datum en hetzelfde spel of dezelfde speler kiezen, de tijd aanpassen of het veld leegmaken) of direct in de Sheet.
 - **Datums** staan in de Sheet als tekst `2026-11-07`. Typ je ze zelf in, gebruik dan ook dat formaat.
 - De CSV in de repo (`data/scores.csv`) is vanaf nu alleen nog een **reservekopie**. Het dashboard valt daarop terug als Google even niet bereikbaar is, en zegt dat er dan bij.

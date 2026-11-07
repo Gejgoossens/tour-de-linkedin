@@ -2,8 +2,9 @@
  * Tour de LinkedIn: kleine API op de Google Sheet.
  *
  *   GET  ?action=scores   → { ok, scores:[{Datum,Speler,Spel,Tijd,IngevoerdOp}], spelers:[{Naam,Startnummer,Actief}], spellen:[...] }
- *   POST (JSON als text/plain) { code, datum, speler, tijden:{ Wend:26, Zip:null, ... } }
- *        getal = opslaan/overschrijven, null = bestaande tijd wissen, ontbrekend = niet aanraken.
+ *   POST (JSON als text/plain) { code, datum, scores:[{ speler:"Giyo", spel:"Wend", tijd:26 }, ...] }
+ *        tijd getal = opslaan/overschrijven, null = bestaande tijd wissen. Wat er niet in staat, blijft zoals het was.
+ *        Zo kan het dashboard per spel (alle spelers) of per speler (alle spellen) opslaan.
  *
  * De groepscode staat in Projectinstellingen → Scripteigenschappen als GROEPSCODE, nooit in de code.
  * Eenmalig: voer `installeer` uit vanuit de editor (maakt de tabs en haalt de scores van GitHub).
@@ -42,28 +43,30 @@ function doPost(e) {
   }
   if (datum > vandaag_()) return json_({ ok: false, fout: 'De datum ligt in de toekomst' });
 
-  var speler = String(invoer.speler || '').trim();
   var bekend = leesSpelers_().filter(function (s) { return s.Actief; }).map(function (s) { return s.Naam; });
-  if (bekend.indexOf(speler) < 0) return json_({ ok: false, fout: 'Onbekende speler: ' + speler });
-
-  var tijden = invoer.tijden || {};
-  var wijzigingen = [];
-  for (var spel in tijden) {
+  var lijst = invoer.scores;
+  if (!Array.isArray(lijst) || lijst.length > 100) return json_({ ok: false, fout: 'Ongeldige invoer' });
+  var wijzigingen = [], gezien = {};
+  for (var i = 0; i < lijst.length; i++) {
+    var item = lijst[i] || {};
+    var speler = String(item.speler || '').trim(), spel = String(item.spel || '').trim(), t = item.tijd;
+    if (bekend.indexOf(speler) < 0) return json_({ ok: false, fout: 'Onbekende speler: ' + speler });
     if (SPELLEN.indexOf(spel) < 0) return json_({ ok: false, fout: 'Onbekend spel: ' + spel });
-    var t = tijden[spel];
-    if (t === null || t === '') { wijzigingen.push({ spel: spel, tijd: null }); continue; }
+    if (gezien[speler + '|' + spel]) return json_({ ok: false, fout: speler + ' staat dubbel bij ' + spel });
+    gezien[speler + '|' + spel] = true;
+    if (t === null || t === '' || t === undefined) { wijzigingen.push({ speler: speler, spel: spel, tijd: null }); continue; }
     t = Number(t);
     if (!(t >= 1 && t <= MAX_TIJD) || Math.round(t) !== t) {
-      return json_({ ok: false, fout: spel + ': tijd moet een heel getal tussen 1 en ' + MAX_TIJD + ' seconden zijn' });
+      return json_({ ok: false, fout: speler + ', ' + spel + ': tijd moet een heel getal tussen 1 en ' + MAX_TIJD + ' seconden zijn' });
     }
-    wijzigingen.push({ spel: spel, tijd: t });
+    wijzigingen.push({ speler: speler, spel: spel, tijd: t });
   }
   if (!wijzigingen.length) return json_({ ok: false, fout: 'Geen tijden ingevuld' });
 
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) return json_({ ok: false, fout: 'Het is even druk, probeer het opnieuw' });
   try {
-    var resultaat = schrijf_(datum, speler, wijzigingen);
+    var resultaat = schrijf_(datum, wijzigingen);
     return json_({ ok: true, opgeslagen: resultaat.opgeslagen, gewist: resultaat.gewist });
   } finally {
     lock.releaseLock();
@@ -72,26 +75,26 @@ function doPost(e) {
 
 /* ===== Sheet lezen en schrijven ===== */
 
-function schrijf_(datum, speler, wijzigingen) {
+function schrijf_(datum, wijzigingen) {
   var blad = blad_('Scores', KOP_SCORES);
   var nu = new Date().toISOString();
   var laatste = blad.getLastRow();
   var data = laatste > 1 ? blad.getRange(2, 1, laatste - 1, 3).getValues() : [];
   var rijVan = {};
   data.forEach(function (r, i) {
-    if (datumTekst_(r[0]) === datum && String(r[1]) === speler) rijVan[String(r[2])] = i + 2;
+    if (datumTekst_(r[0]) === datum) rijVan[String(r[1]).trim() + '|' + String(r[2]).trim()] = i + 2;
   });
 
   var opgeslagen = 0, gewist = [], nieuw = [];
   wijzigingen.forEach(function (w) {
-    var rij = rijVan[w.spel];
+    var rij = rijVan[w.speler + '|' + w.spel];
     if (w.tijd === null) {
       if (rij) gewist.push(rij);
     } else if (rij) {
       blad.getRange(rij, 4, 1, 2).setValues([[w.tijd, nu]]);
       opgeslagen++;
     } else {
-      nieuw.push([datum, speler, w.spel, w.tijd, nu]);
+      nieuw.push([datum, w.speler, w.spel, w.tijd, nu]);
     }
   });
   if (nieuw.length) {

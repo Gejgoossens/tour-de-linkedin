@@ -31,6 +31,7 @@
 
   <div id="tourView">
     <div class="hero" id="hero"></div>
+    <section id="tourSectie"></section>
     <section id="uitslag"></section>
     <section id="truien"></section>
     <section id="klassement"></section>
@@ -58,11 +59,15 @@
       <h2 id="inTitel">Scores invoeren</h2>
       <button type="button" id="inSluit" class="in-sluit" aria-label="Sluiten">&times;</button>
     </div>
+    <div class="tabs in-modus" id="inModus" role="group" aria-label="Invoeren per">
+      <button type="button" data-modus="spel" aria-pressed="true">Per spel</button>
+      <button type="button" data-modus="speler" aria-pressed="false">Per speler</button>
+    </div>
     <div class="in-rij">
-      <label>Speler<select id="inSpeler"></select></label>
+      <label><span id="inKiesLabel">Spel</span><select id="inKies"></select></label>
       <label>Datum<input type="date" id="inDatum" required></label>
     </div>
-    <p class="toel">Tijden als 32 of 0:32. Niet gespeeld? Laat het veld leeg.</p>
+    <p class="toel" id="inUitleg"></p>
     <div id="inTijden" class="in-tijden"></div>
     <label id="inCodeRij" class="in-code" hidden>Groepscode<input id="inCode" type="password" autocomplete="off"><small>Eenmalig; deze browser onthoudt hem daarna.</small></label>
     <p id="inMelding" class="in-melding" role="status" aria-live="polite"></p>

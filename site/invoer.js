@@ -1,13 +1,15 @@
-/* Invoerscherm: tijden van één speler voor één dag opslaan in de Google Sheet via Apps Script. */
+/* Invoerscherm: tijden opslaan in de Google Sheet via Apps Script.
+   Per spel (alle spelers tegelijk, zoals LinkedIn de uitslag per spel toont) of per speler (alle spellen). */
 (() => {
   const knop = document.getElementById("invoerKnop");
   if(!CFG.APPS_SCRIPT_URL) return; // zonder koppeling geen invoer; knop blijft verborgen
   knop.hidden = false;
 
-  const CODE_SLEUTEL = "tdl-groepscode";
+  const CODE_SLEUTEL = "tdl-groepscode", MODUS_SLEUTEL = "tdl-invoer-modus";
   const dlg = document.getElementById("invoer");
   const form = document.getElementById("invoerForm");
-  const kiesSpeler = document.getElementById("inSpeler");
+  const kies = document.getElementById("inKies");
+  const kiesLabel = document.getElementById("inKiesLabel");
   const kiesDatum = document.getElementById("inDatum");
   const velden = document.getElementById("inTijden");
   const codeRij = document.getElementById("inCodeRij");
@@ -16,11 +18,14 @@
   const opslaan = document.getElementById("inOpslaan");
   let origineel = {};
 
-  const leesCode = () => { try{ return localStorage.getItem(CODE_SLEUTEL) || ""; }catch(err){ return ""; } };
-  const bewaarCode = c => { try{ c ? localStorage.setItem(CODE_SLEUTEL, c) : localStorage.removeItem(CODE_SLEUTEL); }catch(err){} };
-  const vandaag = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+  const lees = k => { try{ return localStorage.getItem(k) || ""; }catch(err){ return ""; } };
+  const bewaar = (k, v) => { try{ v ? localStorage.setItem(k, v) : localStorage.removeItem(k); }catch(err){} };
+  let modus = lees(MODUS_SLEUTEL) === "speler" ? "speler" : "spel";
+
+  const vandaag = () => isoDatum(new Date());
   const spellenLijst = () => alleSpellen.length ? alleSpellen : (CFG.SPELLEN || []);
   const actieveSpelers = () => spelerLijst.length ? spelerLijst.filter(s => s.Actief).map(s => s.Naam) : spelers;
+  const sleutel = (speler, spel) => `${kiesDatum.value}|${speler}|${spel}`;
 
   /* "32", "0:32" of "1:05" → seconden; leeg → null; onzin → NaN */
   function leesTijd(v){
@@ -38,68 +43,88 @@
     melding.className = "in-melding" + (soort ? " " + soort : "");
   }
 
+  /* de rijen van het formulier: per spel één rij per speler, per speler één rij per spel */
+  function rijen(){
+    const k = kies.value;
+    return modus === "spel"
+      ? actieveSpelers().map(p => ({ speler:p, spel:k, label:p, icoon:`<span class="bib">${spelers.indexOf(p) + 1 || "–"}</span>` }))
+      : spellenLijst().map(sp => ({ speler:k, spel:sp, label:sp, icoon:truiSvg(truiVoor(sp).kleur, 22) }));
+  }
+
   function vulVelden(){
-    const datum = kiesDatum.value, speler = kiesSpeler.value;
     origineel = {};
-    velden.innerHTML = spellenLijst().map(sp => {
-      const t = tijdVan.get(`${datum}|${speler}|${sp}`);
-      if(t !== undefined) origineel[sp] = t;
-      const id = "in-" + sp.replace(/\W/g, "");
-      return `<label class="in-tijd" for="${id}">${truiSvg(truiVoor(sp).kleur, 22)}<span>${esc(sp)}</span>
-        <input id="${id}" data-spel="${esc(sp)}" inputmode="numeric" autocomplete="off" placeholder="–" value="${t !== undefined ? fmt(t) : ""}"></label>`;
+    velden.innerHTML = rijen().map((r, i) => {
+      const t = tijdVan.get(sleutel(r.speler, r.spel));
+      if(t !== undefined) origineel[r.speler + "|" + r.spel] = t;
+      return `<label class="in-tijd" for="in-${i}">${r.icoon}<span>${esc(r.label)}</span>
+        <input id="in-${i}" data-speler="${esc(r.speler)}" data-spel="${esc(r.spel)}" inputmode="numeric" autocomplete="off" placeholder="–" value="${t !== undefined ? fmt(t) : ""}"></label>`;
     }).join("");
     const al = Object.keys(origineel).length;
-    toon(al ? `${speler} heeft voor deze dag al ${al} ${al === 1 ? "tijd" : "tijden"}. Pas aan of maak een veld leeg om te wissen.` : "");
+    toon(al ? `Er ${al === 1 ? "staat al 1 tijd" : `staan al ${al} tijden`} voor ${kies.value} op deze dag. Pas aan of maak een veld leeg om te wissen.` : "");
   }
 
-  function vulSpelers(voorkeur){
-    const lijst = actieveSpelers();
-    kiesSpeler.innerHTML = lijst.map(p => `<option>${esc(p)}</option>`).join("");
-    if(voorkeur && lijst.includes(voorkeur)) kiesSpeler.value = voorkeur;
+  /* is deze keuze (spel of speler) op deze datum al compleet? */
+  function compleet(k){
+    return modus === "spel"
+      ? actieveSpelers().filter(p => !eerste[p] || eerste[p] <= kiesDatum.value).every(p => tijdVan.has(sleutel(p, k)))
+      : spellenLijst().some(sp => tijdVan.has(sleutel(k, sp)));
   }
-
-  /* eerstvolgende speler die op deze datum nog niets heeft */
-  function volgendeSpeler(na){
-    const lijst = actieveSpelers(), datum = kiesDatum.value;
-    const leeg = p => !spellenLijst().some(sp => tijdVan.has(`${datum}|${p}|${sp}`));
+  function volgende(na){
+    const lijst = modus === "spel" ? spellenLijst() : actieveSpelers();
     const i = lijst.indexOf(na);
-    return [...lijst.slice(i + 1), ...lijst.slice(0, i + 1)].find(leeg);
+    return [...lijst.slice(i + 1), ...lijst.slice(0, i + 1)].find(k => !compleet(k));
   }
+
+  function vulKeuze(voorkeur){
+    const lijst = modus === "spel" ? spellenLijst() : actieveSpelers();
+    kiesLabel.textContent = modus === "spel" ? "Spel" : "Speler";
+    kies.innerHTML = lijst.map(k => `<option>${esc(k)}</option>`).join("");
+    kies.value = voorkeur && lijst.includes(voorkeur) ? voorkeur : (lijst.find(k => !compleet(k)) || lijst[0]);
+    document.querySelectorAll("#inModus button").forEach(b => b.setAttribute("aria-pressed", b.dataset.modus === modus));
+    document.getElementById("inUitleg").textContent = modus === "spel"
+      ? "Neem de uitslag van één spel over uit LinkedIn. Tijden als 32 of 0:32; niet gespeeld? Laat leeg."
+      : "Tijden als 32 of 0:32. Niet gespeeld? Laat het veld leeg.";
+  }
+
+  document.querySelectorAll("#inModus button").forEach(b => b.onclick = () => {
+    modus = b.dataset.modus; bewaar(MODUS_SLEUTEL, modus);
+    vulKeuze(); vulVelden();
+  });
 
   knop.onclick = () => {
-    vulSpelers(kiesSpeler.value);
     kiesDatum.max = vandaag();
     if(!kiesDatum.value || kiesDatum.value > kiesDatum.max) kiesDatum.value = vandaag();
-    codeRij.hidden = !!leesCode();
+    codeRij.hidden = !!lees(CODE_SLEUTEL);
+    vulKeuze(kies.value);
     vulVelden();
     dlg.showModal();
-    kiesSpeler.focus();
+    (velden.querySelector("input") || kies).focus();
   };
   document.getElementById("inSluit").onclick = () => dlg.close();
   dlg.addEventListener("click", e => { if(e.target === dlg) dlg.close(); });
-  kiesSpeler.onchange = vulVelden;
-  kiesDatum.onchange = vulVelden;
+  kies.onchange = vulVelden;
+  kiesDatum.onchange = () => { vulKeuze(kies.value); vulVelden(); };
 
   form.onsubmit = async e => {
     e.preventDefault();
-    const speler = kiesSpeler.value, datum = kiesDatum.value;
+    const datum = kiesDatum.value, keuze = kies.value;
     if(!datum || datum > vandaag()) return toon("Kies een datum van vandaag of eerder.", "fout");
 
-    const tijden = {};
+    const scores = [];
     for(const inp of velden.querySelectorAll("input")){
-      const sp = inp.dataset.spel, t = leesTijd(inp.value);
+      const { speler, spel } = inp.dataset, t = leesTijd(inp.value), oud = origineel[speler + "|" + spel];
       inp.removeAttribute("aria-invalid");
       if(Number.isNaN(t) || (t !== null && (t < 1 || t > 3600))){
         inp.setAttribute("aria-invalid", "true");
         inp.focus();
-        return toon(`${sp}: vul een tijd in als 32 of 0:32 (maximaal 60:00).`, "fout");
+        return toon(`${modus === "spel" ? speler : spel}: vul een tijd in als 32 of 0:32 (maximaal 60:00).`, "fout");
       }
-      if(t === null && origineel[sp] !== undefined) tijden[sp] = null;
-      else if(t !== null && t !== origineel[sp]) tijden[sp] = t;
+      if(t === null && oud !== undefined) scores.push({ speler, spel, tijd:null });
+      else if(t !== null && t !== oud) scores.push({ speler, spel, tijd:t });
     }
-    if(!Object.keys(tijden).length) return toon(Object.keys(origineel).length ? "Er is niets veranderd." : "Vul minstens één tijd in.", "fout");
+    if(!scores.length) return toon(Object.keys(origineel).length ? "Er is niets veranderd." : "Vul minstens één tijd in.", "fout");
 
-    const code = codeRij.hidden ? leesCode() : codeVeld.value.trim();
+    const code = codeRij.hidden ? lees(CODE_SLEUTEL) : codeVeld.value.trim();
     if(!code){ codeRij.hidden = false; codeVeld.focus(); return toon("Vul de groepscode in.", "fout"); }
 
     opslaan.disabled = true;
@@ -109,7 +134,7 @@
       const r = await fetch(CFG.APPS_SCRIPT_URL, {
         method:"POST",
         headers:{ "Content-Type":"text/plain;charset=utf-8" }, // text/plain voorkomt een CORS-preflight
-        body:JSON.stringify({ code, datum, speler, tijden })
+        body:JSON.stringify({ code, datum, scores })
       });
       antwoord = await r.json();
     }catch(err){
@@ -119,22 +144,22 @@
     opslaan.disabled = false;
 
     if(!antwoord.ok){
-      if(antwoord.code === "groepscode"){ bewaarCode(""); codeVeld.value = ""; codeRij.hidden = false; codeVeld.focus(); }
+      if(antwoord.code === "groepscode"){ bewaar(CODE_SLEUTEL, ""); codeVeld.value = ""; codeRij.hidden = false; codeVeld.focus(); }
       return toon(antwoord.fout || "Opslaan is mislukt.", "fout");
     }
-    bewaarCode(code);
+    bewaar(CODE_SLEUTEL, code);
     codeRij.hidden = true;
     const delen = [];
     if(antwoord.opgeslagen) delen.push(`${antwoord.opgeslagen} ${antwoord.opgeslagen === 1 ? "tijd" : "tijden"} opgeslagen`);
     if(antwoord.gewist) delen.push(`${antwoord.gewist} gewist`);
-    const klaar = `${speler}: ${delen.join(", ")}.`;
+    const klaar = `${keuze}: ${delen.join(", ")}.`;
 
     toon(klaar + " Dashboard bijwerken…", "goed");
     await laad();
-    const volgende = volgendeSpeler(speler);
-    vulSpelers(volgende || speler);
+    const nu = volgende(keuze);
+    vulKeuze(nu || keuze);
     vulVelden();
-    toon(volgende ? `${klaar} Nu ${volgende}?` : `${klaar} Iedereen heeft voor deze dag tijden.`, "goed");
-    (velden.querySelector("input") || kiesSpeler).focus();
+    toon(nu ? `${klaar} Nu ${nu}?` : `${klaar} Alles is ingevuld voor deze dag.`, "goed");
+    (velden.querySelector("input") || kies).focus();
   };
 })();
