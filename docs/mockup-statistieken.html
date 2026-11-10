@@ -60,6 +60,15 @@ section h2::before{content:"";display:inline-block;width:9px;height:.72em;backgr
 .hero .delta b{font-weight:700}
 .hero .rang{font-size:14px;margin:2px 0 0;color:var(--geel-d)}
 .meter{width:100%;height:auto;display:block}
+.uitleg-knop{display:inline-flex;align-items:center;gap:6px;margin-top:10px;background:none;border:1.5px solid var(--inkt);color:var(--inkt);border-radius:20px;padding:3px 12px 3px 4px;font:600 14px/1.4 var(--tekst);cursor:pointer}
+.uitleg-knop:hover{background:rgba(20,22,26,.1)}
+.uitleg-knop .i{width:20px;height:20px;border-radius:50%;background:var(--inkt);color:var(--geel);display:inline-flex;align-items:center;justify-content:center;font:800 italic 14px/1 var(--cond)}
+.watt-uitleg{background:var(--inkt);color:var(--asfalt);margin:0 20px 18px;padding:14px 16px;border-radius:4px;font-size:14px}
+.watt-uitleg h3{font:800 italic 20px/1.1 var(--cond);text-transform:uppercase;color:var(--geel);margin:0 0 8px}
+.watt-uitleg ul{margin:0;padding-left:18px;display:grid;gap:5px}
+.watt-uitleg b{color:var(--geel);font-weight:600}
+.watt-uitleg .vb{margin:10px 0 0;padding-top:10px;border-top:1px solid var(--lijn);color:var(--sub)}
+.watt-uitleg .vb b{color:var(--asfalt)}
 .spellen{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:12px}
 .spelkaart{background:var(--wit);border:1px solid var(--lijn);border-radius:4px;padding:10px 10px 6px;min-width:0;cursor:pointer;text-align:left}
 .spelkaart:hover,.spelkaart[aria-pressed="true"]{border-color:var(--geel)}
@@ -1985,7 +1994,7 @@ const glijdend = (p, g) => dates.map((_, d) => { const s = serie(p, g); if(!s[d]
 /* ===== status ===== */
 let tab = ["ik","peloton","weetje"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "ik";
 let speler = players.includes(lezen("tdl-stat-speler")) ? lezen("tdl-stat-speler") : players[players.length - 2] || players[0];
-let spelKeus = ETAPPE, modus = "puzzel", kalSpel = "Queens", wDag = D - 1;
+let wattOpen = false, spelKeus = ETAPPE, modus = "puzzel", kalSpel = "Queens", wDag = D - 1;
 $("#mockLabel").textContent = `Mock-up · echte data t/m ${datumKort(dates[D - 1])}`;
 
 /* ===== tooltip ===== */
@@ -2064,9 +2073,23 @@ function renderHero(){
       <p class="naam">${esc(p)}</p>
       <div class="watt">${nu ? Math.round(nu.watt) : "–"}<small>W</small></div>
       <p class="delta">${deltaZin}</p>
+      <button type="button" class="uitleg-knop" id="wattKnop" aria-expanded="${wattOpen}" aria-controls="wattUitleg"><span class="i" aria-hidden="true">i</span>Wat betekent watt?</button>
       <p class="rang">${nu ? `${tijdF >= 0 ? `${pctTxt(tijdF)} minder tijd nodig` : `${pctTxt(tijdF)} meer tijd nodig`} dan een gemiddelde renner op dezelfde puzzels. ` : ""}${plek >= 0 ? `Nummer ${plek + 1} van ${rang.length} in vorm.` : ""}</p>
     </div>
-    <div>${nu ? meter(nu.watt) : ""}</div></div>`;
+    <div>${nu ? meter(nu.watt) : ""}</div></div>
+    <div class="watt-uitleg" id="wattUitleg" ${wattOpen ? "" : "hidden"}>
+      <h3>Wat betekent watt?</h3>
+      <ul>
+        <li><b>300 W</b> is wat een gemiddelde renner uit de groep op <i>dezelfde puzzel</i> zou trappen. Daarboven ben je sneller, daaronder trager.</li>
+        <li>Zo tellen makkelijke maandagen en zware zondagen eerlijk mee: je wordt altijd gemeten tegen hoe zwaar die puzzel was.</li>
+        <li>Hoe zwaar een puzzel was, halen we uit de tijden van de <i>anderen</i> die dag, rekening houdend met hun eigen niveau. Jouw tijd telt niet mee in je eigen maatstaf.</li>
+        <li>Rekensom: 300 × verwachte tijd ÷ jouw tijd. 360 W = 17% minder tijd nodig, 240 W = 25% meer tijd nodig.</li>
+        <li>Spel gemist? Dan telt de straftijd (langzaamste tijd van die dag + 10 s). Er zijn is ook een kwaliteit.</li>
+        <li>Je <b>vorm</b> is je gemiddelde over de laatste 14 dagen.</li>
+      </ul>
+      <p class="vb">Voorbeeld: een gemiddelde renner doet de zondag-Queens in <b>1:30</b>, jij in <b>1:15</b>. Dan trap je 300 × 90 ÷ 75 = <b>360 W</b>. Geen echte watt, wel een eerlijke vergelijking.</p>
+    </div>`;
+  $("#wattKnop").onclick = () => { wattOpen = !wattOpen; $("#wattKnop").setAttribute("aria-expanded", wattOpen); $("#wattUitleg").hidden = !wattOpen; };
   $("#spelKaarten").innerHTML = games.map(g => {
     const v = vorm(p, g), t = vorigEind >= 0 ? vorm(p, g, vorigEind) : null;
     const lijn = glijdend(p, g).map(x => x && x.watt);
