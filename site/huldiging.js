@@ -8,7 +8,7 @@
      podium:[{ p, bib, kleur, t, pos, gap }]  (alle renners, op volgorde) } */
 (() => {
   const RUSTIG = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const DUUR = { spel:3.4, lantaarn:4.8, podium:7.4 };
+  const DUUR = { spel:3.4, lantaarn:4.8, podium:7.4, weetje:4.2 };
   const ROEP = ["Wakker worden!", "Hup, doortrappen!", "Is het rustdag?", "Bel de bezemwagen!", "Bijna thuis!", "Nog één bocht!"];
   const esc = s => String(s).replace(/[&<>"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
   const fmt = sec => { sec = Math.round(sec); return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`; };
@@ -62,6 +62,7 @@
     });
     if(d.lantaarn) s.push({ soort:"lantaarn", duur:DUUR.lantaarn });
     s.push({ soort:"podium", duur:DUUR.podium });
+    if(d.weetje) s.push({ soort:"weetje", duur:DUUR.weetje });
     return s;
   }
   const PODIUM_A = { 3:.7, 2:2.0, 1:3.3 }, LAND = 1.25; // aankomst per trede, tijd tot de renner op de trede staat
@@ -82,6 +83,12 @@
           <div><p class="huld-groot" data-a=".9">${esc(namen(l.wie.map(r => r.p)))}</p>
             <p class="huld-sub" data-a="1.3">+${fmt(l.achter)} op de dagwinnaar</p>
             <p class="huld-grap" data-a="2.1">${esc(l.grap)}</p></div></div>`;
+    } else if(sc.soort === "weetje"){
+      const w = data.weetje;
+      titel.innerHTML = `<span>Wist je dat…</span>`;
+      paneel.innerHTML = `<p class="huld-sub" data-a=".3">Weetje van de dag · ${esc(w.cat)}</p>
+        <p class="huld-weetje" data-a=".8">${esc(w.tekst)}</p>
+        <p class="huld-zeld" data-a="1.8"><span>${esc(w.zeld)}</span></p>`;
     } else {
       titel.innerHTML = `<span>Dagetappe</span>`;
       const later = PODIUM_A[1] + LAND + .6;
@@ -92,7 +99,7 @@
     sc.onthul = [...paneel.querySelectorAll("[data-a]")].map(n => [n, Number(n.dataset.a)]);
     const verder = el.querySelector(".huld-verder"), na = scenes[i + 1];
     verder.classList.remove("klaar");
-    verder.innerHTML = !na ? "Sluiten" : `Volgende: ${esc(na.soort === "spel" ? na.g.spel : na.soort === "lantaarn" ? "rode lantaarn" : "dagetappe")} <span aria-hidden="true">&#8250;</span>`;
+    verder.innerHTML = !na ? "Sluiten" : `Volgende: ${esc(na.soort === "spel" ? na.g.spel : na.soort === "lantaarn" ? "rode lantaarn" : na.soort === "weetje" ? "weetje van de dag" : "dagetappe")} <span aria-hidden="true">&#8250;</span>`;
     if(el.contains(document.activeElement)) verder.focus();
     el.querySelectorAll(".huld-balk b").forEach((b, k) => b.style.width = k < i ? "100%" : "0");
   }
@@ -106,6 +113,7 @@
     if(W && H){
       if(sc.soort === "spel") tekenSpel(sc, ut, t);
       else if(sc.soort === "lantaarn") tekenLantaarn(ut, t);
+      else if(sc.soort === "weetje") tekenWeetje(ut, t);
       else tekenPodium(ut, t, dt);
     }
     sc.onthul.forEach(([n, a]) => n.classList.toggle("in", ut >= a));
@@ -185,6 +193,25 @@
         c.beginPath(); c.arc(x + 24 * s + f * 10 * s, y - 70 * s + f * 18 * s + d * 3, 2.2 * s, 0, 7); c.fill();
       }
     });
+  }
+
+  /* weetje: opstijgende vraag- en uitroeptekens, en de hoofdrolspeler fietst juichend het beeld in */
+  function tekenWeetje(u, t){
+    const hor = H * .42, s = schaal();
+    Fiets.decor(c, W, H, 0, hor, t);
+    c.fillStyle = "rgba(8,9,11,.45)"; c.fillRect(0, 0, W, H);
+    c.font = `900 italic 34px "Barlow Condensed", sans-serif`; c.textAlign = "center"; c.textBaseline = "middle";
+    for(let k = 0; k < 9; k++){
+      const f = ((RUSTIG ? .5 : t * .22) + k / 9) % 1;
+      c.fillStyle = `rgba(255,211,0,${(.55 * (1 - f)).toFixed(3)})`;
+      c.fillText(k % 3 ? "?" : "!", W * (.08 + .84 * ((k * 37) % 100) / 100), hor + (H - hor) * .1 - f * hor * .9 + (H - hor) * .5);
+    }
+    c.textAlign = "start";
+    const r = data.weetje.rij;
+    if(r){
+      const x = W * (-.15 + .65 * uit(u / 2.2)), grond = hor + (H - hor) * .62 + 12 * s;
+      Fiets.renner(c, x, grond, s, u < 2.2 ? u * 2.4 : 2.2 * 2.4, x / (12 * s), opties(r, { juich:u > 2.4, label:"#FFD300", tekst:r.p.toUpperCase() }));
+    }
   }
 
   function tekenPodium(u, t, dt){

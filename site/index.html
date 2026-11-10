@@ -39,6 +39,7 @@
 
   <div id="tourView">
     <div class="hero" id="hero"></div>
+    <div id="weetje"></div>
     <section id="uitslag"></section>
     <section id="tourSectie"></section>
     <section id="truien"></section>
@@ -47,6 +48,14 @@
   </div>
 
   <div id="statView" hidden>
+    <div class="tabs vm-sub" id="statSub" role="group" aria-label="Kies onderdeel">
+      <button data-sub="ik" aria-pressed="true">Ik</button>
+      <button data-sub="peloton" aria-pressed="false">Peloton</button>
+    </div>
+    <div id="statIk"></div>
+    <div id="statPeloton" hidden>
+    <section id="p-vorm"></section>
+    <section id="p-kal"></section>
     <div class="tabs" id="statFilter" role="group" aria-label="Kies speler"></div>
     <section id="s-records"></section>
     <section id="s-weekdag"></section>
@@ -54,6 +63,7 @@
     <section id="s-onderling"></section>
     <section id="s-verloop"></section>
     <section id="s-opvallend"></section>
+    </div>
   </div>
 
   </div>
@@ -89,6 +99,7 @@
 <script src="fiets.js?v=dev"></script>
 <script src="peloton.js?v=dev"></script>
 <script src="huldiging.js?v=dev"></script>
+<script src="statistiek.js?v=dev"></script>
 <script src="app.js?v=dev"></script>
 <script src="invoer.js?v=dev"></script>
 </body>

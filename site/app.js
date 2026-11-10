@@ -189,6 +189,8 @@ function verwerk(invoer){
     if(e.spellen.every(g => g.raw[p] !== null)) ritTijden.push({ p, t:e.spellen.reduce((a, g) => a + g.raw[p], 0), datum:e.datum, nr:e.nr });
   }));
   ritVan = new Map(ritTijden.map(r => [r.p + "|" + r.nr, r.t]));
+  if(window.Stat) Stat.bereken({ etappes, spelers, spellen:alleSpellen, eerste, straf:STRAFSECONDEN,
+    kleurVan:p => kleurVan(p), trui:(sp, size) => truiSvg(truiVoor(sp).kleur, size), bib:p => spelers.indexOf(p) + 1 });
 }
 
 function truiVoor(spel){
@@ -276,6 +278,19 @@ const verschil = (v, ref) => `${Math.round(Math.abs(v / ref - 1) * 100)}% ${v < 
 const bibG = p => `<span class="bib">${spelers.indexOf(p) + 1}</span>`;
 
 let statSpeler = "";
+const SUB_KEY = "tdl-stat-sub";
+let statSub = (() => { try{ return localStorage.getItem(SUB_KEY) === "peloton" ? "peloton" : "ik"; }catch(err){ return "ik"; } })();
+/* Statistieken: "Ik" (persoonlijk, statistiek.js) of "Peloton" (vorm, puzzelkalender en de groepsstatistieken) */
+function renderStatView(){
+  document.querySelectorAll("#statSub [data-sub]").forEach(b => {
+    b.setAttribute("aria-pressed", b.dataset.sub === statSub);
+    b.onclick = () => { statSub = b.dataset.sub; try{ localStorage.setItem(SUB_KEY, statSub); }catch(err){} renderStatView(); b.focus(); };
+  });
+  document.getElementById("statIk").hidden = statSub !== "ik";
+  document.getElementById("statPeloton").hidden = statSub !== "peloton";
+  if(statSub === "ik"){ if(window.Stat) Stat.renderIk(document.getElementById("statIk")); }
+  else { if(window.Stat) Stat.renderPeloton(document.getElementById("p-vorm"), document.getElementById("p-kal")); renderStats(); }
+}
 
 function verloopSvg(f){
   const box = document.getElementById("s-verloop");
@@ -614,6 +629,7 @@ function huldigingData(i){
     })),
     lantaarn:lantaarn && { wie:lantaarn.map(r => rij(r.p)), achter:lantaarn[0].t - ritRang[0].t, grap:GRAPPEN[hash % GRAPPEN.length], icoon:truiSvg("lantaarn", 64) },
     podium:ritRang.map(r => ({ ...rij(r.p), t:r.t, pos:r.pos, gap:r.t - ritRang[0].t })),
+    weetje:(() => { const w = window.Stat && Stat.weetjeVoorHuldiging(e.datum); return w && { ...w, rij:w.wie && spelers.includes(w.wie) ? rij(w.wie) : null }; })(),
     slot:tour.length === 1 ? `${geel} trekt de eerste gele trui van de Tour van ${maandNaam(mk)} aan.`
       : geelNieuw ? `${geel} neemt de gele trui over.` : `${geel} blijft in het geel.`
   };
@@ -704,6 +720,7 @@ function render(){
   const nogNiet = deelnemers([e]).filter(p => e.spellen.every(g => g.raw[p] === null));
   const lantaarn = rodeLantaarn(ritRang);
   if(lantaarn) detail += ` Rode lantaarn voor ${esc(namen(lantaarn.map(r => r.p)))}, +${fmt(lantaarn[0].t - ritRang[0].t)}.`;
+  document.getElementById("weetje").innerHTML = window.Stat ? Stat.weetjeHtml(e.datum, e.datum === vandaagIso && nogNiet.length > 0) : "";
   if(e.datum === vandaagIso && nogNiet.length) detail += ` Voorlopige uitslag: nog geen tijden van ${esc(namen(nogNiet))}.`;
   const podPlek = p => `<div class="pod p${p}">${ritRang.filter(r => r.pos === p).map(r => `
       <span class="pod-naam">${esc(r.p)}</span><span class="pod-tijd">${p === 1 ? fmt(r.t) : "+" + fmt(r.t - ritRang[0].t)}</span>`).join("")}
@@ -870,7 +887,7 @@ function toonView(v){
   document.querySelector(".nav").hidden = v !== "tour";
   document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === v));
   try{ history.replaceState(null, "", v === "stats" ? "#statistieken" : "#tour"); }catch(err){}
-  v === "stats" ? renderStats() : render();
+  v === "stats" ? renderStatView() : render();
   const doel = document.getElementById(v === "stats" ? "statView" : "tourView");
   doel.classList.remove("instroom"); void doel.offsetWidth; doel.classList.add("instroom");
 }
@@ -905,4 +922,4 @@ document.getElementById("regel").textContent = ALLEEN_VOLLEDIG ? "Een spel telt 
 view = location.hash === "#statistieken" ? "stats" : "tour";
 laad();
 let breedte = window.innerWidth;
-window.addEventListener("resize", () => { clearTimeout(window._rt); window._rt = setTimeout(() => { if(window.innerWidth !== breedte && etappes.length){ breedte = window.innerWidth; view === "stats" ? renderStats() : render(); } }, 200); });
+window.addEventListener("resize", () => { clearTimeout(window._rt); window._rt = setTimeout(() => { if(window.innerWidth !== breedte && etappes.length){ breedte = window.innerWidth; view === "stats" ? renderStatView() : render(); } }, 200); });

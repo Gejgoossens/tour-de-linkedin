@@ -118,4 +118,9 @@ tour-de-linkedin/
 | Openbaar | ja, openbare repo en GitHub Pages |
 | Invoer | door iedereen, ook voor anderen; standaard per spel |
 | Tour-periode | kalendermaand (1e t/m laatste dag), besloten 7 november 2026 |
+| Statistieken | tabblad "Ik" (persoonlijk) en "Peloton" (groep); gekozen renner wordt per apparaat onthouden |
+| Persoonlijke maat | vermogen "tegen de puzzel": 300 W = gemiddelde renner op dezelfde puzzel; zwaarte geschat uit de tijden van de anderen, dus weekdag telt eerlijk mee |
+| Vorm | gemiddelde over de laatste 14 dagen |
+| Gemiste spellen in persoonlijke stats | tellen mee als straftijd ("er zijn is ook een kwaliteit") |
+| Weetje van de dag | het zeldzaamste van 40 controles; op de Tour-pagina en als laatste scène van de huldiging |
 | Tour centraal | sectie "Tour van <maand>" direct onder de etappewinnaar, met etappekalender en het verloop van de achterstand op de gele trui |
