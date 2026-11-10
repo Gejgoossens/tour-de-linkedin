@@ -1,0 +1,2435 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tour de LinkedIn Statistieken</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,700;0,800;1,800;1,900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: tv-uitzending van een grote ronde, één smalle kolom zoals het dashboard; het vermogen (watt) is de rode draad. */
+:root{
+  --geel:#FFD300; --geel-d:#4A3A00; --geel-zacht:rgba(255,211,0,.16);
+  --asfalt:#F2F3F5; --inkt:#14161A; --pagina:#14161A; --wit:#1E2127; --wit-2:#262A31; --lijn:#2E333B; --sub:#A3A9B3;
+  --blauw:#5AA2F0; --oranje:#F08A3C; --rood:#F0525A;
+  --cond:'Barlow Condensed','Arial Narrow',sans-serif; --tekst:Barlow,system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--pagina);color:var(--asfalt);font:16px/1.5 var(--tekst)}
+button,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--blauw);outline-offset:2px}
+.omroep{background:var(--inkt);border-bottom:3px solid var(--geel)}
+.omroep-in,.wrap{max-width:780px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.omroep-in{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding-block:14px}
+.merk{font:900 italic 30px/1 var(--cond);margin:0;text-transform:uppercase}
+.merk em{color:var(--geel);font-style:inherit}
+.mock{font:700 14px/1 var(--cond);letter-spacing:.06em;text-transform:uppercase;color:var(--inkt);background:var(--geel);padding:5px 9px;border-radius:2px;transform:skewX(-10deg)}
+.wrap{padding-block:16px 64px}
+.hoofdtabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.hoofdtabs button{font:800 italic 20px/1 var(--cond);text-transform:uppercase;padding:9px 16px;border-radius:3px;border:1.5px solid var(--lijn);background:var(--wit);cursor:pointer}
+.hoofdtabs button[aria-selected="true"]{background:var(--geel);border-color:var(--geel);color:var(--inkt)}
+.hoofdtabs button:hover{border-color:var(--geel)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}
+.tabs button{border:1.5px solid var(--asfalt);background:var(--wit);border-radius:20px;padding:4px 14px;cursor:pointer;font-weight:500;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+.tabs button[aria-pressed="true"]{background:var(--geel);border-color:var(--geel);color:var(--inkt)}
+.tabs button:hover{border-color:var(--geel)}
+.tabs .sw{width:10px;height:10px;border-radius:50%;display:inline-block}
+.uitleg{background:var(--wit-2);border-left:4px solid var(--geel);padding:10px 14px;font-size:14px;color:var(--asfalt);margin:0 0 4px;border-radius:0 4px 4px 0}
+.uitleg b{color:var(--geel)}
+section{background:var(--wit);border:1px solid var(--lijn);border-radius:6px;padding:18px 18px 12px;margin-top:16px;min-width:0}
+section h2{font:800 italic 27px/1.05 var(--cond);margin:0 0 6px;text-transform:uppercase;letter-spacing:.01em;text-wrap:balance}
+section h2::before{content:"";display:inline-block;width:9px;height:.72em;background:var(--geel);margin-right:9px;transform:skewX(-14deg)}
+.toel{color:var(--sub);font-size:14px;margin:0 0 10px;max-width:66ch}
+.conclusie{font-size:15px;margin:8px 0 6px;max-width:64ch}
+.conclusie b{color:var(--geel);font-weight:600}
+.scroll{overflow-x:auto;margin-bottom:8px}
+.num{font-variant-numeric:tabular-nums}
+
+/* vermogensmeter */
+.hero{background:var(--geel);color:var(--inkt);border-radius:3px;overflow:hidden;margin-top:12px}
+.finish{height:12px;background:repeating-conic-gradient(var(--inkt) 0 25%,#F2F3F5 0 50%) 0 0/12px 12px}
+.hero-in{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,260px);gap:6px 18px;padding:16px 20px 18px;align-items:center}
+.hero .eyebrow{font:700 15px/1.1 var(--cond);letter-spacing:.06em;text-transform:uppercase;margin:0;color:var(--geel-d)}
+.hero .naam{font:900 italic clamp(44px,10vw,76px)/.9 var(--cond);text-transform:uppercase;margin:6px 0 4px}
+.hero .watt{font:800 clamp(40px,9vw,60px)/1 var(--cond);font-variant-numeric:tabular-nums}
+.hero .watt small{font-size:.5em;margin-left:3px}
+.hero .delta{font-weight:600;font-size:15px;margin:4px 0 0}
+.hero .delta b{font-weight:700}
+.hero .rang{font-size:14px;margin:2px 0 0;color:var(--geel-d)}
+.meter{width:100%;height:auto;display:block}
+.spellen{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:12px}
+.spelkaart{background:var(--wit);border:1px solid var(--lijn);border-radius:4px;padding:10px 10px 6px;min-width:0;cursor:pointer;text-align:left}
+.spelkaart:hover,.spelkaart[aria-pressed="true"]{border-color:var(--geel)}
+.spelkaart .sk-kop{display:flex;align-items:center;gap:5px;font:700 16px/1 var(--cond);text-transform:uppercase}
+.spelkaart .sk-w{font:800 26px/1.1 var(--cond);font-variant-numeric:tabular-nums;margin-top:6px}
+.spelkaart .sk-w small{font-size:14px;color:var(--sub);margin-left:2px}
+.spelkaart .sk-d{font-size:12px;color:var(--sub);white-space:nowrap}
+.spelkaart svg.spark{display:block;width:100%;height:30px;margin-top:4px}
+.op{color:var(--blauw)} .neer{color:var(--oranje)}
+
+/* grafiek */
+.grafiek{position:relative}
+.grafiek svg{display:block;touch-action:pan-y}
+.as text,.grafiek text{font-family:var(--tekst);font-size:12px;fill:var(--sub)}
+.legenda{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;margin:8px 0 2px;color:var(--sub)}
+.legenda span{display:inline-flex;align-items:center;gap:6px}
+.legenda i{display:inline-block;width:12px;height:12px;border-radius:50%}
+.legenda i.lijn{width:18px;height:3px;border-radius:2px}
+.legenda i.ring{background:transparent;border:2px solid var(--rood)}
+.tip{position:fixed;z-index:20;pointer-events:none;background:#0B0C0E;border:1px solid var(--lijn);border-radius:4px;padding:8px 10px;font-size:13px;line-height:1.4;max-width:240px;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+.tip b{font-weight:600;color:var(--asfalt)}
+.tip .t-k{font:700 15px/1.1 var(--cond);text-transform:uppercase;color:var(--geel);display:block;margin-bottom:2px}
+.tip .t-s{color:var(--sub)}
+
+/* tabellen */
+.tbl{width:100%;min-width:480px;border-collapse:separate;border-spacing:3px;table-layout:fixed;font-size:13px;font-variant-numeric:tabular-nums}
+.tbl th{font:700 15px/1.1 var(--cond);padding:4px 2px;text-align:center}
+.tbl th small{display:block;font:400 11px/1.3 var(--tekst);color:var(--sub)}
+.tbl td{padding:7px 2px;text-align:center;border-radius:3px;background:var(--wit-2)}
+.tbl td:first-child,.tbl th:first-child{text-align:left;width:76px;font-weight:600;background:none;padding-left:0}
+.tbl td .pijl{display:block;font-size:11px;line-height:1.1}
+.tbl tr.som td{font-weight:700}
+.tbl tr.som td:first-child{color:var(--geel)}
+.tbl td.ster{box-shadow:inset 0 0 0 2px var(--geel)}
+.tbl td.leeg{color:var(--sub);background:transparent}
+.schaal{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--sub);margin:4px 0 6px;flex-wrap:wrap}
+.schaal .balk{width:150px;height:10px;border-radius:5px;background:linear-gradient(90deg,color-mix(in srgb,var(--oranje) 55%,var(--wit-2)),var(--wit-2),color-mix(in srgb,var(--blauw) 55%,var(--wit-2)))}
+.lijst{list-style:none;margin:0;padding:0}
+.lijst li{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--lijn);font-size:14px}
+.lijst li:first-child{border-top:0}
+.lijst .pos{font:700 18px/1 var(--cond);color:var(--sub)}
+.lijst .w{font:800 20px/1 var(--cond);font-variant-numeric:tabular-nums;color:var(--geel)}
+.lijst .s{color:var(--sub);font-size:13px}
+.tegels{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:8px}
+.tegel{background:var(--wit-2);border-radius:4px;padding:10px 12px}
+.tegel b{display:block;font:800 26px/1.05 var(--cond);font-variant-numeric:tabular-nums}
+.tegel span{font-size:13px;color:var(--sub)}
+.feit{padding:9px 0;border-top:1px solid var(--lijn);font-size:15px;display:grid;grid-template-columns:26px minmax(0,1fr);gap:8px}
+.feit:first-of-type{border-top:0}
+.feit .ic{font:800 18px/1.3 var(--cond);color:var(--geel)}
+.feit b{font-weight:600}
+
+/* peloton */
+.vorm-rij{display:grid;grid-template-columns:22px 40px minmax(0,1fr) 110px 74px;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--lijn)}
+.vorm-rij:first-of-type{border-top:0}
+.vorm-rij .pos{font:700 20px/1 var(--cond);color:var(--sub);text-align:center}
+.vorm-rij .nm{font-weight:600;min-width:0}
+.vorm-rij .nm small{display:block;color:var(--sub);font-weight:400;font-size:12px}
+.vorm-rij .w{font:800 22px/1 var(--cond);text-align:right;font-variant-numeric:tabular-nums}
+.vorm-rij .w small{display:block;font:500 12px/1.4 var(--tekst)}
+.vorm-rij svg{width:110px;height:28px;display:block}
+.bib{position:relative;width:40px;height:30px;border-radius:2px;background:#F2F3F5;color:var(--inkt);display:flex;align-items:center;justify-content:center;font:800 18px/1 var(--cond)}
+.bib::before,.bib::after{content:"";position:absolute;top:3px;width:3px;height:3px;border-radius:50%;background:#8A9099}
+.bib::before{left:3px}.bib::after{right:3px}
+.kal{border-spacing:3px;border-collapse:separate;font-size:11px;font-variant-numeric:tabular-nums;margin:0 auto 0 0}
+.kal th{font:700 14px/1 var(--cond);color:var(--sub);padding:2px 0;width:60px}
+.kal th.wk{width:44px;text-align:left;font:500 11px/1 var(--tekst)}
+.kal td{height:30px;text-align:center;border-radius:3px;color:var(--inkt);font-weight:600}
+.kal td.x{background:transparent}
+.verhuis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.verhuis div{background:var(--wit-2);border-radius:4px;padding:10px 12px;font-size:14px}
+.verhuis div b{display:block;font:700 17px/1.2 var(--cond);text-transform:uppercase}
+
+/* weetje */
+.wnav{display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.wnav button{width:38px;height:38px;border:1.5px solid var(--asfalt);background:var(--wit);border-radius:4px;cursor:pointer;font-size:20px;line-height:1}
+.wnav button:disabled{opacity:.3;cursor:default}
+.wnav select{height:38px;border:1.5px solid var(--asfalt);background:var(--wit);border-radius:4px;padding:0 10px;font:700 17px var(--cond);max-width:100%}
+.weetje{position:relative;background:var(--inkt);border:1px solid var(--lijn);border-radius:4px;overflow:hidden}
+.weetje .w-band{display:flex;align-items:stretch}
+.weetje .w-label{background:var(--geel);color:var(--inkt);font:900 italic 18px/1 var(--cond);text-transform:uppercase;padding:9px 18px 8px 16px;clip-path:polygon(0 0,100% 0,calc(100% - 12px) 100%,0 100%);letter-spacing:.03em}
+.weetje .w-cat{align-self:center;font:700 14px/1 var(--cond);letter-spacing:.06em;text-transform:uppercase;color:var(--sub);padding:0 12px}
+.weetje .w-tekst{font:700 clamp(24px,5.4vw,36px)/1.1 var(--cond);margin:14px 18px 10px;text-wrap:balance}
+.weetje .w-tekst b{color:var(--geel);font-weight:800}
+.weetje .w-zeld{display:flex;gap:8px;flex-wrap:wrap;margin:0 18px 16px}
+.pill{font:700 14px/1 var(--cond);letter-spacing:.04em;text-transform:uppercase;padding:6px 10px;border-radius:20px;border:1.5px solid var(--geel);color:var(--geel)}
+.pill.vol{background:var(--geel);color:var(--inkt)}
+.zeldmeter{display:flex;gap:2px;align-items:flex-end;height:18px}
+.zeldmeter i{width:5px;background:var(--lijn);border-radius:1px}
+.zeldmeter i.aan{background:var(--geel)}
+.ook{margin-top:12px}
+.ook h3{font:700 16px/1 var(--cond);text-transform:uppercase;letter-spacing:.05em;color:var(--sub);margin:0 0 4px}
+.cat-tbl{width:100%;border-collapse:collapse;font-size:14px;min-width:440px}
+.cat-tbl th{font:700 14px/1.1 var(--cond);text-transform:uppercase;letter-spacing:.04em;color:var(--sub);text-align:left;padding:6px 6px 6px 0;border-bottom:1px solid var(--lijn)}
+.cat-tbl td{padding:7px 6px 7px 0;border-bottom:1px solid var(--lijn);vertical-align:top}
+.cat-tbl td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cat-tbl .groep{font:700 12px/1 var(--cond);text-transform:uppercase;letter-spacing:.05em;color:var(--geel)}
+.cat-tbl tr.nooit td{color:var(--sub)}
+.huld{display:grid;grid-template-columns:minmax(0,1fr);gap:0;background:#0B0C0E;border-radius:4px;overflow:hidden;margin-top:8px}
+.huld .h-baan{height:64px;background:linear-gradient(180deg,#1B1E23,#101215);position:relative}
+.huld .h-baan::after{content:"";position:absolute;left:0;right:0;bottom:0;height:8px;background:repeating-conic-gradient(var(--inkt) 0 25%,#F2F3F5 0 50%) 0 0/8px 8px}
+.huld .h-in{padding:12px 16px 14px}
+.huld .h-k{font:700 13px/1 var(--cond);text-transform:uppercase;letter-spacing:.06em;color:var(--geel);margin:0 0 6px}
+.huld p{margin:0;font:700 20px/1.2 var(--cond)}
+
+footer{color:var(--sub);font-size:13px;margin-top:22px;max-width:66ch}
+@media (max-width:620px){
+  .hero-in{grid-template-columns:1fr}
+  .meter{max-width:280px}
+  .spellen{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .vorm-rij{grid-template-columns:22px 40px minmax(0,1fr) 64px}
+  .vorm-rij svg{display:none}
+}
+@media (prefers-reduced-motion:no-preference){
+  .teken{stroke-dasharray:1;stroke-dashoffset:1;animation:teken 1.1s ease-out .1s forwards}
+  @keyframes teken{to{stroke-dashoffset:0}}
+}
+</style>
+
+<header class="omroep"><div class="omroep-in"><p class="merk">Tour de <em>LinkedIn</em></p><span class="mock" id="mockLabel">Mock-up</span></div></header>
+<div class="wrap">
+  <nav class="hoofdtabs" role="tablist" aria-label="Onderdeel">
+    <button role="tab" data-tab="ik" aria-selected="true">Ik</button>
+    <button role="tab" data-tab="peloton" aria-selected="false">Peloton</button>
+    <button role="tab" data-tab="weetje" aria-selected="false">Weetje van de dag</button>
+  </nav>
+
+  <div id="v-ik">
+    <div class="tabs" id="spelerKeus" role="group" aria-label="Kies renner"></div>
+    <div class="hero" id="hero"></div>
+    <div class="spellen" id="spelKaarten"></div>
+    <section id="s-verloop"></section>
+    <section id="s-week"></section>
+    <section id="s-toen"></section>
+    <section id="s-records"></section>
+    <section id="s-reeksen"></section>
+    <section id="s-opvallend"></section>
+  </div>
+
+  <div id="v-peloton" hidden>
+    <section id="p-vorm"></section>
+    <section id="p-kal"></section>
+    <section id="p-verhuis"></section>
+  </div>
+
+  <div id="v-weetje" hidden>
+    <p class="uitleg">Dit komt op de <b>Tour-pagina</b> naast de uitslag van de dag, en als laatste scène van de huldiging. Blader door de etappes om te zien wat er elke dag uit was gekomen.</p>
+    <section id="w-dag"></section>
+    <section id="w-cat"></section>
+  </div>
+
+  <footer id="voet"></footer>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script type="text/plain" id="scores">Datum,Speler,Spel,Tijd,IngevoerdOp
+2026-08-31,Matta,Wend,6,
+2026-08-31,Bouw,Wend,7,
+2026-08-31,Corne,Wend,11,
+2026-08-31,Jari,Wend,17,
+2026-08-31,Matta,Zip,4,
+2026-08-31,Bouw,Zip,5,
+2026-08-31,Corne,Zip,5,
+2026-08-31,Jari,Zip,7,
+2026-08-31,Matta,Patches,8,
+2026-08-31,Bouw,Patches,3,
+2026-08-31,Corne,Patches,4,
+2026-08-31,Jari,Patches,7,
+2026-08-31,Matta,Tango,33,
+2026-08-31,Bouw,Tango,33,
+2026-08-31,Corne,Tango,26,
+2026-08-31,Jari,Tango,47,
+2026-08-31,Matta,Queens,16,
+2026-08-31,Bouw,Queens,7,
+2026-08-31,Corne,Queens,7,
+2026-08-31,Jari,Queens,9,
+2026-09-01,Matta,Wend,13,
+2026-09-01,Bouw,Wend,11,
+2026-09-01,Corne,Wend,13,
+2026-09-01,Jari,Wend,23,
+2026-09-01,Matta,Zip,8,
+2026-09-01,Bouw,Zip,7,
+2026-09-01,Corne,Zip,8,
+2026-09-01,Jari,Zip,7,
+2026-09-01,Matta,Patches,3,
+2026-09-01,Bouw,Patches,4,
+2026-09-01,Corne,Patches,4,
+2026-09-01,Jari,Patches,4,
+2026-09-01,Matta,Tango,27,
+2026-09-01,Bouw,Tango,30,
+2026-09-01,Corne,Tango,31,
+2026-09-01,Jari,Tango,74,
+2026-09-01,Matta,Queens,37,
+2026-09-01,Bouw,Queens,6,
+2026-09-01,Corne,Queens,12,
+2026-09-01,Jari,Queens,11,
+2026-09-02,Matta,Wend,22,
+2026-09-02,Bouw,Wend,16,
+2026-09-02,Corne,Wend,32,
+2026-09-02,Jari,Wend,47,
+2026-09-02,Matta,Zip,23,
+2026-09-02,Bouw,Zip,7,
+2026-09-02,Corne,Zip,18,
+2026-09-02,Jari,Zip,13,
+2026-09-02,Matta,Patches,10,
+2026-09-02,Bouw,Patches,8,
+2026-09-02,Corne,Patches,6,
+2026-09-02,Jari,Patches,15,
+2026-09-02,Matta,Tango,20,
+2026-09-02,Bouw,Tango,33,
+2026-09-02,Corne,Tango,24,
+2026-09-02,Jari,Tango,45,
+2026-09-02,Matta,Queens,23,
+2026-09-02,Bouw,Queens,18,
+2026-09-02,Corne,Queens,18,
+2026-09-02,Jari,Queens,27,
+2026-09-03,Matta,Wend,35,
+2026-09-03,Bouw,Wend,90,
+2026-09-03,Corne,Wend,49,
+2026-09-03,Jari,Wend,13,
+2026-09-03,Matta,Zip,12,
+2026-09-03,Bouw,Zip,8,
+2026-09-03,Corne,Zip,16,
+2026-09-03,Jari,Zip,11,
+2026-09-03,Matta,Patches,12,
+2026-09-03,Bouw,Patches,12,
+2026-09-03,Corne,Patches,18,
+2026-09-03,Jari,Patches,124,
+2026-09-03,Matta,Tango,54,
+2026-09-03,Bouw,Tango,37,
+2026-09-03,Corne,Tango,31,
+2026-09-03,Jari,Tango,49,
+2026-09-03,Matta,Queens,57,
+2026-09-03,Bouw,Queens,62,
+2026-09-03,Corne,Queens,24,
+2026-09-03,Jari,Queens,11,
+2026-09-04,Matta,Wend,47,
+2026-09-04,Bouw,Wend,15,
+2026-09-04,Corne,Wend,51,
+2026-09-04,Jari,Wend,40,
+2026-09-04,Giyo,Wend,123,
+2026-09-04,Matta,Zip,6,
+2026-09-04,Bouw,Zip,28,
+2026-09-04,Corne,Zip,23,
+2026-09-04,Jari,Zip,17,
+2026-09-04,Giyo,Zip,11,
+2026-09-04,Matta,Patches,20,
+2026-09-04,Bouw,Patches,17,
+2026-09-04,Corne,Patches,14,
+2026-09-04,Jari,Patches,33,
+2026-09-04,Giyo,Patches,54,
+2026-09-04,Matta,Tango,58,
+2026-09-04,Bouw,Tango,54,
+2026-09-04,Corne,Tango,23,
+2026-09-04,Jari,Tango,50,
+2026-09-04,Giyo,Tango,233,
+2026-09-04,Matta,Queens,43,
+2026-09-04,Bouw,Queens,19,
+2026-09-04,Corne,Queens,40,
+2026-09-04,Jari,Queens,41,
+2026-09-04,Giyo,Queens,65,
+2026-09-05,Matta,Wend,25,
+2026-09-05,Bouw,Wend,26,
+2026-09-05,Corne,Wend,16,
+2026-09-05,Jari,Wend,61,
+2026-09-05,Giyo,Wend,53,
+2026-09-05,Matta,Zip,16,
+2026-09-05,Bouw,Zip,7,
+2026-09-05,Corne,Zip,11,
+2026-09-05,Jari,Zip,44,
+2026-09-05,Giyo,Zip,7,
+2026-09-05,Matta,Patches,26,
+2026-09-05,Bouw,Patches,84,
+2026-09-05,Corne,Patches,23,
+2026-09-05,Jari,Patches,106,
+2026-09-05,Giyo,Patches,75,
+2026-09-05,Matta,Tango,106,
+2026-09-05,Bouw,Tango,105,
+2026-09-05,Corne,Tango,25,
+2026-09-05,Jari,Tango,45,
+2026-09-05,Giyo,Tango,117,
+2026-09-05,Matta,Queens,83,
+2026-09-05,Bouw,Queens,25,
+2026-09-05,Corne,Queens,41,
+2026-09-05,Jari,Queens,51,
+2026-09-05,Giyo,Queens,91,
+2026-09-06,Matta,Wend,70,
+2026-09-06,Bouw,Wend,109,
+2026-09-06,Corne,Wend,55,
+2026-09-06,Jari,Wend,55,
+2026-09-06,Matta,Zip,20,
+2026-09-06,Bouw,Zip,23,
+2026-09-06,Corne,Zip,12,
+2026-09-06,Jari,Zip,85,
+2026-09-06,Matta,Patches,41,
+2026-09-06,Bouw,Patches,47,
+2026-09-06,Corne,Patches,24,
+2026-09-06,Jari,Patches,85,
+2026-09-06,Matta,Tango,50,
+2026-09-06,Bouw,Tango,44,
+2026-09-06,Corne,Tango,61,
+2026-09-06,Jari,Tango,67,
+2026-09-06,Matta,Queens,158,
+2026-09-06,Bouw,Queens,52,
+2026-09-06,Corne,Queens,61,
+2026-09-06,Jari,Queens,82,
+2026-09-07,Matta,Wend,16,
+2026-09-07,Bouw,Wend,29,
+2026-09-07,Corne,Wend,33,
+2026-09-07,Jari,Wend,16,
+2026-09-07,Giyo,Wend,19,
+2026-09-07,Matta,Zip,15,
+2026-09-07,Bouw,Zip,37,
+2026-09-07,Corne,Zip,12,
+2026-09-07,Jari,Zip,29,
+2026-09-07,Giyo,Zip,15,
+2026-09-07,Matta,Patches,22,
+2026-09-07,Bouw,Patches,8,
+2026-09-07,Corne,Patches,6,
+2026-09-07,Jari,Patches,18,
+2026-09-07,Giyo,Patches,15,
+2026-09-07,Matta,Tango,33,
+2026-09-07,Bouw,Tango,31,
+2026-09-07,Corne,Tango,23,
+2026-09-07,Jari,Tango,32,
+2026-09-07,Giyo,Tango,85,
+2026-09-07,Matta,Queens,15,
+2026-09-07,Bouw,Queens,7,
+2026-09-07,Corne,Queens,9,
+2026-09-07,Jari,Queens,39,
+2026-09-07,Giyo,Queens,21,
+2026-09-08,Matta,Wend,27,
+2026-09-08,Bouw,Wend,25,
+2026-09-08,Corne,Wend,17,
+2026-09-08,Jari,Wend,29,
+2026-09-08,Giyo,Wend,44,
+2026-09-08,Matta,Zip,5,
+2026-09-08,Bouw,Zip,9,
+2026-09-08,Corne,Zip,5,
+2026-09-08,Jari,Zip,27,
+2026-09-08,Giyo,Zip,16,
+2026-09-08,Matta,Patches,11,
+2026-09-08,Bouw,Patches,7,
+2026-09-08,Corne,Patches,37,
+2026-09-08,Jari,Patches,19,
+2026-09-08,Giyo,Patches,37,
+2026-09-08,Matta,Tango,35,
+2026-09-08,Bouw,Tango,27,
+2026-09-08,Corne,Tango,71,
+2026-09-08,Jari,Tango,44,
+2026-09-08,Giyo,Tango,85,
+2026-09-08,Matta,Queens,17,
+2026-09-08,Bouw,Queens,8,
+2026-09-08,Corne,Queens,11,
+2026-09-08,Jari,Queens,11,
+2026-09-08,Giyo,Queens,41,
+2026-09-09,Matta,Wend,27,
+2026-09-09,Bouw,Wend,25,
+2026-09-09,Corne,Wend,17,
+2026-09-09,Jari,Wend,29,
+2026-09-09,Giyo,Wend,44,
+2026-09-09,Matta,Zip,5,
+2026-09-09,Bouw,Zip,9,
+2026-09-09,Corne,Zip,5,
+2026-09-09,Jari,Zip,27,
+2026-09-09,Giyo,Zip,16,
+2026-09-09,Matta,Patches,11,
+2026-09-09,Bouw,Patches,7,
+2026-09-09,Corne,Patches,37,
+2026-09-09,Jari,Patches,19,
+2026-09-09,Giyo,Patches,37,
+2026-09-09,Matta,Tango,35,
+2026-09-09,Bouw,Tango,27,
+2026-09-09,Corne,Tango,71,
+2026-09-09,Jari,Tango,44,
+2026-09-09,Giyo,Tango,85,
+2026-09-09,Matta,Queens,17,
+2026-09-09,Bouw,Queens,8,
+2026-09-09,Corne,Queens,11,
+2026-09-09,Jari,Queens,11,
+2026-09-09,Giyo,Queens,41,
+2026-09-10,Matta,Wend,33,
+2026-09-10,Bouw,Wend,18,
+2026-09-10,Corne,Wend,40,
+2026-09-10,Jari,Wend,22,
+2026-09-10,Giyo,Wend,39,
+2026-09-10,Matta,Zip,7,
+2026-09-10,Bouw,Zip,5,
+2026-09-10,Corne,Zip,6,
+2026-09-10,Jari,Zip,8,
+2026-09-10,Giyo,Zip,7,
+2026-09-10,Matta,Patches,13,
+2026-09-10,Bouw,Patches,21,
+2026-09-10,Corne,Patches,13,
+2026-09-10,Jari,Patches,13,
+2026-09-10,Giyo,Patches,13,
+2026-09-10,Matta,Tango,46,
+2026-09-10,Bouw,Tango,31,
+2026-09-10,Corne,Tango,66,
+2026-09-10,Jari,Tango,43,
+2026-09-10,Giyo,Tango,80,
+2026-09-10,Matta,Queens,25,
+2026-09-10,Bouw,Queens,27,
+2026-09-10,Corne,Queens,12,
+2026-09-10,Jari,Queens,11,
+2026-09-10,Giyo,Queens,12,
+2026-09-11,Matta,Wend,33,
+2026-09-11,Bouw,Wend,11,
+2026-09-11,Corne,Wend,28,
+2026-09-11,Jari,Wend,26,
+2026-09-11,Giyo,Wend,22,
+2026-09-11,Matta,Zip,18,
+2026-09-11,Bouw,Zip,13,
+2026-09-11,Corne,Zip,18,
+2026-09-11,Jari,Zip,30,
+2026-09-11,Giyo,Zip,20,
+2026-09-11,Matta,Patches,26,
+2026-09-11,Bouw,Patches,13,
+2026-09-11,Corne,Patches,15,
+2026-09-11,Jari,Patches,44,
+2026-09-11,Giyo,Patches,37,
+2026-09-11,Matta,Tango,51,
+2026-09-11,Bouw,Tango,41,
+2026-09-11,Corne,Tango,33,
+2026-09-11,Jari,Tango,75,
+2026-09-11,Giyo,Tango,108,
+2026-09-11,Matta,Queens,34,
+2026-09-11,Bouw,Queens,29,
+2026-09-11,Corne,Queens,35,
+2026-09-11,Jari,Queens,45,
+2026-09-11,Giyo,Queens,30,
+2026-09-13,Matta,Wend,81,
+2026-09-13,Bouw,Wend,34,
+2026-09-13,Corne,Wend,45,
+2026-09-13,Jari,Wend,96,
+2026-09-13,Giyo,Wend,127,
+2026-09-13,Matta,Zip,29,
+2026-09-13,Bouw,Zip,6,
+2026-09-13,Corne,Zip,23,
+2026-09-13,Jari,Zip,28,
+2026-09-13,Giyo,Zip,17,
+2026-09-13,Matta,Patches,30,
+2026-09-13,Bouw,Patches,13,
+2026-09-13,Corne,Patches,24,
+2026-09-13,Jari,Patches,14,
+2026-09-13,Giyo,Patches,132,
+2026-09-13,Matta,Tango,73,
+2026-09-13,Bouw,Tango,56,
+2026-09-13,Corne,Tango,34,
+2026-09-13,Jari,Tango,50,
+2026-09-13,Giyo,Tango,122,
+2026-09-13,Matta,Queens,87,
+2026-09-13,Bouw,Queens,159,
+2026-09-13,Corne,Queens,70,
+2026-09-13,Jari,Queens,94,
+2026-09-13,Giyo,Queens,114,
+2026-09-14,Matta,Wend,13,
+2026-09-14,Bouw,Wend,9,
+2026-09-14,Corne,Wend,12,
+2026-09-14,Jari,Wend,6,
+2026-09-14,Giyo,Wend,18,
+2026-09-14,Matta,Zip,4,
+2026-09-14,Bouw,Zip,5,
+2026-09-14,Corne,Zip,5,
+2026-09-14,Jari,Zip,5,
+2026-09-14,Giyo,Zip,7,
+2026-09-14,Matta,Patches,7,
+2026-09-14,Bouw,Patches,5,
+2026-09-14,Corne,Patches,7,
+2026-09-14,Jari,Patches,7,
+2026-09-14,Giyo,Patches,12,
+2026-09-14,Matta,Tango,25,
+2026-09-14,Bouw,Tango,26,
+2026-09-14,Corne,Tango,22,
+2026-09-14,Jari,Tango,48,
+2026-09-14,Giyo,Tango,53,
+2026-09-14,Matta,Queens,11,
+2026-09-14,Bouw,Queens,6,
+2026-09-14,Corne,Queens,8,
+2026-09-14,Jari,Queens,7,
+2026-09-14,Giyo,Queens,13,
+2026-09-15,Matta,Wend,17,
+2026-09-15,Bouw,Wend,14,
+2026-09-15,Corne,Wend,25,
+2026-09-15,Jari,Wend,12,
+2026-09-15,Giyo,Wend,22,
+2026-09-15,Matta,Zip,10,
+2026-09-15,Bouw,Zip,9,
+2026-09-15,Corne,Zip,10,
+2026-09-15,Jari,Zip,13,
+2026-09-15,Giyo,Zip,12,
+2026-09-15,Matta,Patches,14,
+2026-09-15,Bouw,Patches,9,
+2026-09-15,Corne,Patches,8,
+2026-09-15,Jari,Patches,11,
+2026-09-15,Giyo,Patches,18,
+2026-09-15,Matta,Tango,32,
+2026-09-15,Bouw,Tango,49,
+2026-09-15,Corne,Tango,32,
+2026-09-15,Jari,Tango,52,
+2026-09-15,Giyo,Tango,76,
+2026-09-15,Matta,Queens,12,
+2026-09-15,Bouw,Queens,7,
+2026-09-15,Corne,Queens,9,
+2026-09-15,Jari,Queens,20,
+2026-09-15,Giyo,Queens,11,
+2026-09-16,Matta,Wend,30,
+2026-09-16,Bouw,Wend,20,
+2026-09-16,Corne,Wend,26,
+2026-09-16,Jari,Wend,47,
+2026-09-16,Giyo,Wend,47,
+2026-09-16,Matta,Zip,4,
+2026-09-16,Bouw,Zip,3,
+2026-09-16,Corne,Zip,4,
+2026-09-16,Jari,Zip,6,
+2026-09-16,Giyo,Zip,12,
+2026-09-16,Matta,Patches,7,
+2026-09-16,Bouw,Patches,7,
+2026-09-16,Corne,Patches,12,
+2026-09-16,Jari,Patches,16,
+2026-09-16,Giyo,Patches,24,
+2026-09-16,Matta,Tango,37,
+2026-09-16,Bouw,Tango,29,
+2026-09-16,Corne,Tango,30,
+2026-09-16,Jari,Tango,63,
+2026-09-16,Giyo,Tango,83,
+2026-09-16,Matta,Queens,7,
+2026-09-16,Bouw,Queens,7,
+2026-09-16,Corne,Queens,7,
+2026-09-16,Jari,Queens,14,
+2026-09-16,Giyo,Queens,7,
+2026-09-17,Matta,Wend,26,
+2026-09-17,Bouw,Wend,38,
+2026-09-17,Corne,Wend,47,
+2026-09-17,Jari,Wend,88,
+2026-09-17,Giyo,Wend,74,
+2026-09-17,Matta,Zip,9,
+2026-09-17,Bouw,Zip,15,
+2026-09-17,Corne,Zip,11,
+2026-09-17,Jari,Zip,29,
+2026-09-17,Giyo,Zip,21,
+2026-09-17,Matta,Patches,10,
+2026-09-17,Bouw,Patches,10,
+2026-09-17,Corne,Patches,12,
+2026-09-17,Jari,Patches,29,
+2026-09-17,Giyo,Patches,28,
+2026-09-17,Matta,Tango,54,
+2026-09-17,Bouw,Tango,23,
+2026-09-17,Corne,Tango,20,
+2026-09-17,Jari,Tango,40,
+2026-09-17,Giyo,Tango,69,
+2026-09-17,Matta,Queens,34,
+2026-09-17,Bouw,Queens,13,
+2026-09-17,Corne,Queens,28,
+2026-09-17,Jari,Queens,30,
+2026-09-17,Giyo,Queens,29,
+2026-09-18,Matta,Wend,36,
+2026-09-18,Bouw,Wend,28,
+2026-09-18,Corne,Wend,39,
+2026-09-18,Jari,Wend,60,
+2026-09-18,Giyo,Wend,48,
+2026-09-18,Matta,Zip,4,
+2026-09-18,Bouw,Zip,3,
+2026-09-18,Corne,Zip,4,
+2026-09-18,Jari,Zip,7,
+2026-09-18,Giyo,Zip,8,
+2026-09-18,Matta,Patches,27,
+2026-09-18,Bouw,Patches,15,
+2026-09-18,Corne,Patches,25,
+2026-09-18,Jari,Patches,25,
+2026-09-18,Giyo,Patches,22,
+2026-09-18,Matta,Tango,37,
+2026-09-18,Bouw,Tango,54,
+2026-09-18,Corne,Tango,26,
+2026-09-18,Jari,Tango,61,
+2026-09-18,Giyo,Tango,64,
+2026-09-18,Matta,Queens,79,
+2026-09-18,Bouw,Queens,130,
+2026-09-18,Corne,Queens,51,
+2026-09-18,Jari,Queens,31,
+2026-09-18,Giyo,Queens,63,
+2026-09-19,Matta,Wend,51,
+2026-09-19,Bouw,Wend,33,
+2026-09-19,Corne,Wend,25,
+2026-09-19,Jari,Wend,53,
+2026-09-19,Giyo,Wend,55,
+2026-09-19,Matta,Zip,36,
+2026-09-19,Bouw,Zip,90,
+2026-09-19,Corne,Zip,15,
+2026-09-19,Jari,Zip,14,
+2026-09-19,Giyo,Zip,18,
+2026-09-19,Matta,Patches,60,
+2026-09-19,Bouw,Patches,30,
+2026-09-19,Corne,Patches,35,
+2026-09-19,Jari,Patches,28,
+2026-09-19,Giyo,Patches,33,
+2026-09-19,Matta,Tango,38,
+2026-09-19,Bouw,Tango,71,
+2026-09-19,Corne,Tango,26,
+2026-09-19,Jari,Tango,74,
+2026-09-19,Giyo,Tango,63,
+2026-09-19,Matta,Queens,70,
+2026-09-19,Bouw,Queens,25,
+2026-09-19,Corne,Queens,39,
+2026-09-19,Jari,Queens,62,
+2026-09-19,Giyo,Queens,47,
+2026-09-20,Matta,Wend,74,
+2026-09-20,Bouw,Wend,60,
+2026-09-20,Corne,Wend,82,
+2026-09-20,Jari,Wend,109,
+2026-09-20,Giyo,Wend,118,
+2026-09-20,Matta,Zip,12,
+2026-09-20,Bouw,Zip,8,
+2026-09-20,Corne,Zip,11,
+2026-09-20,Jari,Zip,26,
+2026-09-20,Giyo,Zip,46,
+2026-09-20,Matta,Patches,16,
+2026-09-20,Bouw,Patches,22,
+2026-09-20,Corne,Patches,18,
+2026-09-20,Jari,Patches,44,
+2026-09-20,Giyo,Patches,42,
+2026-09-20,Matta,Tango,43,
+2026-09-20,Bouw,Tango,33,
+2026-09-20,Corne,Tango,24,
+2026-09-20,Jari,Tango,42,
+2026-09-20,Matta,Queens,111,
+2026-09-20,Bouw,Queens,55,
+2026-09-20,Corne,Queens,85,
+2026-09-20,Jari,Queens,91,
+2026-09-20,Giyo,Queens,215,
+2026-09-21,Matta,Wend,30,
+2026-09-21,Bouw,Wend,9,
+2026-09-21,Corne,Wend,24,
+2026-09-21,Jari,Wend,24,
+2026-09-21,Giyo,Wend,27,
+2026-09-21,Matta,Zip,4,
+2026-09-21,Bouw,Zip,5,
+2026-09-21,Corne,Zip,4,
+2026-09-21,Jari,Zip,5,
+2026-09-21,Giyo,Zip,10,
+2026-09-21,Matta,Patches,4,
+2026-09-21,Bouw,Patches,11,
+2026-09-21,Corne,Patches,11,
+2026-09-21,Jari,Patches,6,
+2026-09-21,Giyo,Patches,24,
+2026-09-21,Matta,Tango,43,
+2026-09-21,Bouw,Tango,24,
+2026-09-21,Corne,Tango,25,
+2026-09-21,Jari,Tango,44,
+2026-09-21,Giyo,Tango,57,
+2026-09-21,Matta,Queens,13,
+2026-09-21,Bouw,Queens,9,
+2026-09-21,Corne,Queens,11,
+2026-09-21,Jari,Queens,18,
+2026-09-21,Giyo,Queens,14,
+2026-09-22,Matta,Wend,31,
+2026-09-22,Bouw,Wend,13,
+2026-09-22,Corne,Wend,40,
+2026-09-22,Jari,Wend,22,
+2026-09-22,Giyo,Wend,33,
+2026-09-22,Matta,Zip,16,
+2026-09-22,Bouw,Zip,23,
+2026-09-22,Corne,Zip,6,
+2026-09-22,Jari,Zip,15,
+2026-09-22,Giyo,Zip,26,
+2026-09-22,Matta,Patches,17,
+2026-09-22,Bouw,Patches,8,
+2026-09-22,Corne,Patches,12,
+2026-09-22,Jari,Patches,13,
+2026-09-22,Giyo,Patches,18,
+2026-09-22,Matta,Tango,22,
+2026-09-22,Bouw,Tango,32,
+2026-09-22,Corne,Tango,42,
+2026-09-22,Jari,Tango,32,
+2026-09-22,Giyo,Tango,53,
+2026-09-22,Matta,Queens,21,
+2026-09-22,Bouw,Queens,9,
+2026-09-22,Corne,Queens,17,
+2026-09-22,Jari,Queens,14,
+2026-09-22,Giyo,Queens,40,
+2026-09-23,Matta,Wend,31,
+2026-09-23,Bouw,Wend,13,
+2026-09-23,Corne,Wend,40,
+2026-09-23,Jari,Wend,22,
+2026-09-23,Giyo,Wend,33,
+2026-09-23,Matta,Zip,16,
+2026-09-23,Bouw,Zip,23,
+2026-09-23,Corne,Zip,6,
+2026-09-23,Jari,Zip,15,
+2026-09-23,Giyo,Zip,26,
+2026-09-23,Matta,Patches,17,
+2026-09-23,Bouw,Patches,8,
+2026-09-23,Corne,Patches,12,
+2026-09-23,Jari,Patches,13,
+2026-09-23,Giyo,Patches,18,
+2026-09-23,Matta,Tango,22,
+2026-09-23,Bouw,Tango,32,
+2026-09-23,Corne,Tango,42,
+2026-09-23,Jari,Tango,32,
+2026-09-23,Giyo,Tango,53,
+2026-09-23,Matta,Queens,21,
+2026-09-23,Bouw,Queens,9,
+2026-09-23,Corne,Queens,17,
+2026-09-23,Jari,Queens,14,
+2026-09-23,Giyo,Queens,40,
+2026-09-24,Matta,Wend,48,
+2026-09-24,Bouw,Wend,49,
+2026-09-24,Corne,Wend,51,
+2026-09-24,Jari,Wend,41,
+2026-09-24,Giyo,Wend,33,
+2026-09-24,Matta,Zip,5,
+2026-09-24,Bouw,Zip,5,
+2026-09-24,Corne,Zip,5,
+2026-09-24,Jari,Zip,7,
+2026-09-24,Giyo,Zip,14,
+2026-09-24,Matta,Patches,18,
+2026-09-24,Bouw,Patches,30,
+2026-09-24,Corne,Patches,21,
+2026-09-24,Jari,Patches,10,
+2026-09-24,Giyo,Patches,37,
+2026-09-24,Matta,Tango,29,
+2026-09-24,Bouw,Tango,31,
+2026-09-24,Corne,Tango,22,
+2026-09-24,Jari,Tango,47,
+2026-09-24,Giyo,Tango,56,
+2026-09-24,Matta,Queens,52,
+2026-09-24,Bouw,Queens,29,
+2026-09-24,Corne,Queens,49,
+2026-09-24,Jari,Queens,18,
+2026-09-24,Giyo,Queens,100,
+2026-09-25,Matta,Wend,41,
+2026-09-25,Bouw,Wend,57,
+2026-09-25,Corne,Wend,42,
+2026-09-25,Jari,Wend,48,
+2026-09-25,Giyo,Wend,200,
+2026-09-25,Matta,Zip,18,
+2026-09-25,Bouw,Zip,6,
+2026-09-25,Corne,Zip,19,
+2026-09-25,Jari,Zip,24,
+2026-09-25,Matta,Patches,17,
+2026-09-25,Bouw,Patches,12,
+2026-09-25,Corne,Patches,14,
+2026-09-25,Jari,Patches,14,
+2026-09-25,Matta,Tango,32,
+2026-09-25,Bouw,Tango,34,
+2026-09-25,Corne,Tango,23,
+2026-09-25,Jari,Tango,56,
+2026-09-25,Matta,Queens,96,
+2026-09-25,Bouw,Queens,62,
+2026-09-25,Corne,Queens,39,
+2026-09-25,Jari,Queens,89,
+2026-09-26,Matta,Wend,41,
+2026-09-26,Bouw,Wend,26,
+2026-09-26,Corne,Wend,51,
+2026-09-26,Jari,Wend,85,
+2026-09-26,Matta,Zip,14,
+2026-09-26,Bouw,Zip,7,
+2026-09-26,Corne,Zip,31,
+2026-09-26,Jari,Zip,20,
+2026-09-26,Matta,Patches,32,
+2026-09-26,Bouw,Patches,7,
+2026-09-26,Corne,Patches,13,
+2026-09-26,Jari,Patches,79,
+2026-09-26,Matta,Tango,32,
+2026-09-26,Bouw,Tango,28,
+2026-09-26,Corne,Tango,24,
+2026-09-26,Jari,Tango,40,
+2026-09-26,Matta,Queens,139,
+2026-09-26,Bouw,Queens,90,
+2026-09-26,Corne,Queens,24,
+2026-09-26,Jari,Queens,30,
+2026-09-27,Bouw,Wend,83,
+2026-09-27,Corne,Wend,65,
+2026-09-27,Bouw,Zip,18,
+2026-09-27,Corne,Zip,15,
+2026-09-27,Bouw,Patches,81,
+2026-09-27,Corne,Patches,70,
+2026-09-27,Bouw,Tango,30,
+2026-09-27,Corne,Tango,32,
+2026-09-27,Bouw,Queens,89,
+2026-09-27,Corne,Queens,48,
+2026-09-28,Matta,Wend,16,
+2026-09-28,Bouw,Wend,16,
+2026-09-28,Corne,Wend,11,
+2026-09-28,Jari,Wend,21,
+2026-09-28,Giyo,Wend,21,
+2026-09-28,Matta,Zip,5,
+2026-09-28,Bouw,Zip,7,
+2026-09-28,Corne,Zip,4,
+2026-09-28,Jari,Zip,5,
+2026-09-28,Giyo,Zip,7,
+2026-09-28,Matta,Patches,10,
+2026-09-28,Bouw,Patches,7,
+2026-09-28,Corne,Patches,9,
+2026-09-28,Jari,Patches,9,
+2026-09-28,Giyo,Patches,18,
+2026-09-28,Matta,Tango,40,
+2026-09-28,Bouw,Tango,18,
+2026-09-28,Corne,Tango,16,
+2026-09-28,Jari,Tango,39,
+2026-09-28,Giyo,Tango,61,
+2026-09-28,Matta,Queens,12,
+2026-09-28,Bouw,Queens,8,
+2026-09-28,Corne,Queens,8,
+2026-09-28,Jari,Queens,17,
+2026-09-28,Giyo,Queens,10,
+2026-09-29,Matta,Wend,37,
+2026-09-29,Bouw,Wend,20,
+2026-09-29,Corne,Wend,30,
+2026-09-29,Jari,Wend,28,
+2026-09-29,Giyo,Wend,49,
+2026-09-29,Matta,Zip,5,
+2026-09-29,Bouw,Zip,5,
+2026-09-29,Corne,Zip,6,
+2026-09-29,Jari,Zip,8,
+2026-09-29,Giyo,Zip,9,
+2026-09-29,Matta,Patches,14,
+2026-09-29,Bouw,Patches,10,
+2026-09-29,Corne,Patches,9,
+2026-09-29,Jari,Patches,79,
+2026-09-29,Giyo,Patches,36,
+2026-09-29,Matta,Tango,41,
+2026-09-29,Bouw,Tango,24,
+2026-09-29,Corne,Tango,20,
+2026-09-29,Jari,Tango,45,
+2026-09-29,Giyo,Tango,53,
+2026-09-29,Matta,Queens,19,
+2026-09-29,Bouw,Queens,8,
+2026-09-29,Corne,Queens,8,
+2026-09-29,Jari,Queens,11,
+2026-09-29,Giyo,Queens,16,
+2026-09-30,Matta,Wend,20,
+2026-09-30,Bouw,Wend,15,
+2026-09-30,Corne,Wend,23,
+2026-09-30,Jari,Wend,31,
+2026-09-30,Giyo,Wend,25,
+2026-09-30,Matta,Zip,19,
+2026-09-30,Bouw,Zip,4,
+2026-09-30,Corne,Zip,17,
+2026-09-30,Jari,Zip,19,
+2026-09-30,Giyo,Zip,33,
+2026-09-30,Matta,Patches,19,
+2026-09-30,Bouw,Patches,10,
+2026-09-30,Corne,Patches,17,
+2026-09-30,Jari,Patches,17,
+2026-09-30,Giyo,Patches,22,
+2026-09-30,Matta,Tango,33,
+2026-09-30,Bouw,Tango,39,
+2026-09-30,Corne,Tango,18,
+2026-09-30,Jari,Tango,31,
+2026-09-30,Giyo,Tango,67,
+2026-09-30,Matta,Queens,20,
+2026-09-30,Bouw,Queens,23,
+2026-09-30,Corne,Queens,19,
+2026-09-30,Jari,Queens,15,
+2026-09-30,Giyo,Queens,14,
+2026-10-01,Matta,Wend,33,
+2026-10-01,Bouw,Wend,38,
+2026-10-01,Corne,Wend,31,
+2026-10-01,Jari,Wend,34,
+2026-10-01,Giyo,Wend,30,
+2026-10-01,Matta,Zip,13,
+2026-10-01,Bouw,Zip,60,
+2026-10-01,Corne,Zip,12,
+2026-10-01,Jari,Zip,39,
+2026-10-01,Giyo,Zip,34,
+2026-10-01,Matta,Patches,17,
+2026-10-01,Bouw,Patches,8,
+2026-10-01,Corne,Patches,15,
+2026-10-01,Jari,Patches,10,
+2026-10-01,Giyo,Patches,17,
+2026-10-01,Matta,Tango,40,
+2026-10-01,Bouw,Tango,38,
+2026-10-01,Corne,Tango,28,
+2026-10-01,Jari,Tango,54,
+2026-10-01,Giyo,Tango,83,
+2026-10-01,Matta,Queens,83,
+2026-10-01,Bouw,Queens,45,
+2026-10-01,Corne,Queens,42,
+2026-10-01,Jari,Queens,62,
+2026-10-01,Giyo,Queens,89,
+2026-10-02,Matta,Wend,18,
+2026-10-02,Bouw,Wend,21,
+2026-10-02,Corne,Wend,16,
+2026-10-02,Jari,Wend,62,
+2026-10-02,Giyo,Wend,32,
+2026-10-02,Matta,Zip,36,
+2026-10-02,Bouw,Zip,13,
+2026-10-02,Corne,Zip,8,
+2026-10-02,Jari,Zip,57,
+2026-10-02,Giyo,Zip,31,
+2026-10-02,Matta,Patches,30,
+2026-10-02,Bouw,Patches,35,
+2026-10-02,Corne,Patches,14,
+2026-10-02,Jari,Patches,40,
+2026-10-02,Giyo,Patches,64,
+2026-10-02,Matta,Tango,45,
+2026-10-02,Bouw,Tango,46,
+2026-10-02,Corne,Tango,42,
+2026-10-02,Jari,Tango,38,
+2026-10-02,Giyo,Tango,92,
+2026-10-02,Matta,Queens,37,
+2026-10-02,Bouw,Queens,29,
+2026-10-02,Corne,Queens,45,
+2026-10-02,Jari,Queens,27,
+2026-10-02,Giyo,Queens,58,
+2026-10-03,Matta,Wend,35,
+2026-10-03,Bouw,Wend,64,
+2026-10-03,Corne,Wend,64,
+2026-10-03,Jari,Wend,107,
+2026-10-03,Giyo,Wend,76,
+2026-10-03,Matta,Zip,9,
+2026-10-03,Bouw,Zip,20,
+2026-10-03,Corne,Zip,13,
+2026-10-03,Jari,Zip,15,
+2026-10-03,Giyo,Zip,10,
+2026-10-03,Matta,Patches,26,
+2026-10-03,Bouw,Patches,16,
+2026-10-03,Corne,Patches,17,
+2026-10-03,Jari,Patches,94,
+2026-10-03,Giyo,Patches,33,
+2026-10-03,Matta,Tango,27,
+2026-10-03,Bouw,Tango,40,
+2026-10-03,Corne,Tango,21,
+2026-10-03,Jari,Tango,83,
+2026-10-03,Giyo,Tango,94,
+2026-10-03,Matta,Queens,60,
+2026-10-03,Bouw,Queens,32,
+2026-10-03,Corne,Queens,68,
+2026-10-03,Jari,Queens,67,
+2026-10-03,Giyo,Queens,82,
+2026-10-04,Matta,Wend,48,
+2026-10-04,Bouw,Wend,79,
+2026-10-04,Corne,Wend,59,
+2026-10-04,Jari,Wend,44,
+2026-10-04,Giyo,Wend,45,
+2026-10-04,Matta,Zip,42,
+2026-10-04,Bouw,Zip,47,
+2026-10-04,Corne,Zip,26,
+2026-10-04,Jari,Zip,81,
+2026-10-04,Giyo,Zip,41,
+2026-10-04,Matta,Patches,43,
+2026-10-04,Bouw,Patches,95,
+2026-10-04,Corne,Patches,59,
+2026-10-04,Jari,Patches,33,
+2026-10-04,Giyo,Patches,26,
+2026-10-04,Matta,Tango,61,
+2026-10-04,Bouw,Tango,36,
+2026-10-04,Corne,Tango,36,
+2026-10-04,Jari,Tango,75,
+2026-10-04,Giyo,Tango,110,
+2026-10-04,Matta,Queens,99,
+2026-10-04,Bouw,Queens,253,
+2026-10-04,Corne,Queens,100,
+2026-10-04,Jari,Queens,153,
+2026-10-04,Giyo,Queens,103,
+2026-10-05,Matta,Wend,13,
+2026-10-05,Bouw,Wend,9,
+2026-10-05,Corne,Wend,18,
+2026-10-05,Jari,Wend,22,
+2026-10-05,Giyo,Wend,26,
+2026-10-05,Matta,Zip,10,
+2026-10-05,Bouw,Zip,6,
+2026-10-05,Corne,Zip,8,
+2026-10-05,Jari,Zip,8,
+2026-10-05,Giyo,Zip,7,
+2026-10-05,Matta,Patches,5,
+2026-10-05,Bouw,Patches,9,
+2026-10-05,Corne,Patches,4,
+2026-10-05,Jari,Patches,5,
+2026-10-05,Giyo,Patches,5,
+2026-10-05,Matta,Tango,27,
+2026-10-05,Bouw,Tango,39,
+2026-10-05,Corne,Tango,23,
+2026-10-05,Jari,Tango,39,
+2026-10-05,Giyo,Tango,40,
+2026-10-05,Matta,Queens,11,
+2026-10-05,Bouw,Queens,7,
+2026-10-05,Corne,Queens,7,
+2026-10-05,Jari,Queens,9,
+2026-10-05,Giyo,Queens,10,
+2026-10-06,Matta,Wend,14,
+2026-10-06,Bouw,Wend,15,
+2026-10-06,Corne,Wend,13,
+2026-10-06,Giyo,Wend,13,
+2026-10-06,Matta,Zip,4,
+2026-10-06,Bouw,Zip,3,
+2026-10-06,Corne,Zip,4,
+2026-10-06,Giyo,Zip,4,
+2026-10-06,Matta,Patches,5,
+2026-10-06,Bouw,Patches,18,
+2026-10-06,Corne,Patches,6,
+2026-10-06,Giyo,Patches,7,
+2026-10-06,Matta,Tango,35,
+2026-10-06,Bouw,Tango,22,
+2026-10-06,Corne,Tango,19,
+2026-10-06,Giyo,Tango,41,
+2026-10-06,Matta,Queens,5,
+2026-10-06,Bouw,Queens,10,
+2026-10-06,Corne,Queens,12,
+2026-10-06,Giyo,Queens,12,
+2026-10-07,Matta,Wend,45,
+2026-10-07,Bouw,Wend,24,
+2026-10-07,Corne,Wend,32,
+2026-10-07,Giyo,Wend,39,
+2026-10-07,Matta,Zip,10,
+2026-10-07,Bouw,Zip,14,
+2026-10-07,Corne,Zip,11,
+2026-10-07,Giyo,Zip,7,
+2026-10-07,Matta,Patches,15,
+2026-10-07,Bouw,Patches,8,
+2026-10-07,Corne,Patches,11,
+2026-10-07,Giyo,Patches,11,
+2026-10-07,Matta,Tango,29,
+2026-10-07,Bouw,Tango,22,
+2026-10-07,Corne,Tango,25,
+2026-10-07,Giyo,Tango,42,
+2026-10-07,Matta,Queens,42,
+2026-10-07,Bouw,Queens,19,
+2026-10-07,Corne,Queens,36,
+2026-10-07,Giyo,Queens,39,
+2026-10-08,Matta,Wend,16,
+2026-10-08,Bouw,Wend,31,
+2026-10-08,Corne,Wend,35,
+2026-10-08,Giyo,Wend,22,
+2026-10-08,Matta,Zip,5,
+2026-10-08,Bouw,Zip,8,
+2026-10-08,Corne,Zip,5,
+2026-10-08,Giyo,Zip,9,
+2026-10-08,Matta,Patches,21,
+2026-10-08,Bouw,Patches,11,
+2026-10-08,Corne,Patches,14,
+2026-10-08,Giyo,Patches,22,
+2026-10-08,Matta,Tango,27,
+2026-10-08,Bouw,Tango,29,
+2026-10-08,Corne,Tango,21,
+2026-10-08,Giyo,Tango,47,
+2026-10-08,Matta,Queens,53,
+2026-10-08,Bouw,Queens,10,
+2026-10-08,Corne,Queens,23,
+2026-10-08,Giyo,Queens,16,
+2026-10-09,Matta,Wend,29,
+2026-10-09,Bouw,Wend,23,
+2026-10-09,Corne,Wend,63,
+2026-10-09,Giyo,Wend,57,
+2026-10-09,Matta,Zip,13,
+2026-10-09,Bouw,Zip,46,
+2026-10-09,Corne,Zip,39,
+2026-10-09,Giyo,Zip,37,
+2026-10-09,Matta,Patches,10,
+2026-10-09,Bouw,Patches,19,
+2026-10-09,Corne,Patches,12,
+2026-10-09,Giyo,Patches,13,
+2026-10-09,Matta,Tango,49,
+2026-10-09,Bouw,Tango,24,
+2026-10-09,Corne,Tango,27,
+2026-10-09,Giyo,Tango,51,
+2026-10-09,Matta,Queens,21,
+2026-10-09,Bouw,Queens,26,
+2026-10-09,Corne,Queens,24,
+2026-10-09,Giyo,Queens,18,
+2026-10-10,Matta,Wend,38,
+2026-10-10,Bouw,Wend,61,
+2026-10-10,Corne,Wend,42,
+2026-10-10,Giyo,Wend,82,
+2026-10-10,Matta,Zip,8,
+2026-10-10,Bouw,Zip,10,
+2026-10-10,Corne,Zip,8,
+2026-10-10,Giyo,Zip,12,
+2026-10-10,Matta,Patches,20,
+2026-10-10,Bouw,Patches,24,
+2026-10-10,Corne,Patches,14,
+2026-10-10,Giyo,Patches,20,
+2026-10-10,Matta,Tango,38,
+2026-10-10,Bouw,Tango,34,
+2026-10-10,Corne,Tango,26,
+2026-10-10,Giyo,Tango,62,
+2026-10-10,Matta,Queens,25,
+2026-10-10,Bouw,Queens,134,
+2026-10-10,Corne,Queens,44,
+2026-10-10,Giyo,Queens,27,
+2026-10-11,Matta,Wend,47,
+2026-10-11,Bouw,Wend,56,
+2026-10-11,Corne,Wend,58,
+2026-10-11,Giyo,Wend,122,
+2026-10-11,Matta,Zip,11,
+2026-10-11,Bouw,Zip,22,
+2026-10-11,Corne,Zip,15,
+2026-10-11,Giyo,Zip,15,
+2026-10-11,Matta,Patches,19,
+2026-10-11,Bouw,Patches,167,
+2026-10-11,Corne,Patches,85,
+2026-10-11,Giyo,Patches,54,
+2026-10-11,Matta,Tango,38,
+2026-10-11,Bouw,Tango,35,
+2026-10-11,Corne,Tango,36,
+2026-10-11,Giyo,Tango,71,
+2026-10-11,Matta,Queens,62,
+2026-10-11,Bouw,Queens,176,
+2026-10-11,Corne,Queens,95,
+2026-10-11,Giyo,Queens,120,
+2026-10-12,Matta,Wend,14,
+2026-10-12,Bouw,Wend,27,
+2026-10-12,Corne,Wend,23,
+2026-10-12,Giyo,Wend,15,
+2026-10-12,Matta,Zip,13,
+2026-10-12,Bouw,Zip,4,
+2026-10-12,Corne,Zip,5,
+2026-10-12,Giyo,Zip,8,
+2026-10-12,Matta,Patches,5,
+2026-10-12,Bouw,Patches,4,
+2026-10-12,Corne,Patches,6,
+2026-10-12,Giyo,Patches,9,
+2026-10-12,Matta,Tango,35,
+2026-10-12,Bouw,Tango,23,
+2026-10-12,Corne,Tango,23,
+2026-10-12,Giyo,Tango,43,
+2026-10-12,Matta,Queens,11,
+2026-10-12,Bouw,Queens,6,
+2026-10-12,Corne,Queens,10,
+2026-10-12,Giyo,Queens,28,
+2026-10-13,Matta,Wend,17,
+2026-10-13,Bouw,Wend,16,
+2026-10-13,Corne,Wend,19,
+2026-10-13,Giyo,Wend,11,
+2026-10-13,Matta,Zip,6,
+2026-10-13,Bouw,Zip,3,
+2026-10-13,Corne,Zip,4,
+2026-10-13,Giyo,Zip,7,
+2026-10-13,Matta,Patches,8,
+2026-10-13,Bouw,Patches,18,
+2026-10-13,Corne,Patches,8,
+2026-10-13,Giyo,Patches,20,
+2026-10-13,Matta,Tango,49,
+2026-10-13,Bouw,Tango,43,
+2026-10-13,Corne,Tango,27,
+2026-10-13,Giyo,Tango,59,
+2026-10-13,Matta,Queens,22,
+2026-10-13,Bouw,Queens,15,
+2026-10-13,Corne,Queens,13,
+2026-10-13,Giyo,Queens,14,
+2026-10-14,Matta,Wend,17,
+2026-10-14,Bouw,Wend,22,
+2026-10-14,Corne,Wend,23,
+2026-10-14,Giyo,Wend,13,
+2026-10-14,Matta,Zip,4,
+2026-10-14,Bouw,Zip,4,
+2026-10-14,Corne,Zip,4,
+2026-10-14,Giyo,Zip,6,
+2026-10-14,Matta,Patches,8,
+2026-10-14,Bouw,Patches,6,
+2026-10-14,Corne,Patches,6,
+2026-10-14,Giyo,Patches,25,
+2026-10-14,Matta,Tango,29,
+2026-10-14,Bouw,Tango,23,
+2026-10-14,Corne,Tango,18,
+2026-10-14,Giyo,Tango,37,
+2026-10-14,Matta,Queens,16,
+2026-10-14,Bouw,Queens,13,
+2026-10-14,Corne,Queens,25,
+2026-10-14,Giyo,Queens,47,
+2026-10-15,Matta,Wend,17,
+2026-10-15,Bouw,Wend,14,
+2026-10-15,Corne,Wend,18,
+2026-10-15,Giyo,Wend,29,
+2026-10-15,Matta,Zip,40,
+2026-10-15,Bouw,Zip,59,
+2026-10-15,Corne,Zip,73,
+2026-10-15,Giyo,Zip,106,
+2026-10-15,Matta,Patches,8,
+2026-10-15,Bouw,Patches,7,
+2026-10-15,Corne,Patches,7,
+2026-10-15,Giyo,Patches,8,
+2026-10-15,Matta,Tango,42,
+2026-10-15,Bouw,Tango,30,
+2026-10-15,Corne,Tango,23,
+2026-10-15,Giyo,Tango,58,
+2026-10-15,Matta,Queens,29,
+2026-10-15,Bouw,Queens,13,
+2026-10-15,Corne,Queens,16,
+2026-10-15,Giyo,Queens,10,
+2026-10-16,Matta,Wend,37,
+2026-10-16,Bouw,Wend,31,
+2026-10-16,Corne,Wend,39,
+2026-10-16,Giyo,Wend,38,
+2026-10-16,Matta,Zip,10,
+2026-10-16,Bouw,Zip,33,
+2026-10-16,Corne,Zip,13,
+2026-10-16,Giyo,Zip,19,
+2026-10-16,Matta,Patches,11,
+2026-10-16,Bouw,Patches,11,
+2026-10-16,Corne,Patches,17,
+2026-10-16,Giyo,Patches,15,
+2026-10-16,Matta,Tango,33,
+2026-10-16,Bouw,Tango,48,
+2026-10-16,Corne,Tango,30,
+2026-10-16,Giyo,Tango,62,
+2026-10-16,Matta,Queens,72,
+2026-10-16,Bouw,Queens,70,
+2026-10-16,Corne,Queens,29,
+2026-10-16,Giyo,Queens,52,
+2026-10-17,Matta,Wend,62,
+2026-10-17,Bouw,Wend,71,
+2026-10-17,Corne,Wend,40,
+2026-10-17,Giyo,Wend,73,
+2026-10-17,Matta,Zip,13,
+2026-10-17,Bouw,Zip,12,
+2026-10-17,Corne,Zip,19,
+2026-10-17,Giyo,Zip,21,
+2026-10-17,Matta,Patches,6,
+2026-10-17,Bouw,Patches,17,
+2026-10-17,Corne,Patches,28,
+2026-10-17,Giyo,Patches,11,
+2026-10-17,Matta,Tango,36,
+2026-10-17,Bouw,Tango,45,
+2026-10-17,Corne,Tango,55,
+2026-10-17,Giyo,Tango,53,
+2026-10-17,Matta,Queens,28,
+2026-10-17,Bouw,Queens,28,
+2026-10-17,Corne,Queens,42,
+2026-10-17,Giyo,Queens,58,
+2026-10-18,Matta,Wend,52,
+2026-10-18,Bouw,Wend,35,
+2026-10-18,Corne,Wend,36,
+2026-10-18,Giyo,Wend,51,
+2026-10-18,Matta,Zip,13,
+2026-10-18,Bouw,Zip,11,
+2026-10-18,Corne,Zip,14,
+2026-10-18,Giyo,Zip,45,
+2026-10-18,Matta,Patches,25,
+2026-10-18,Bouw,Patches,18,
+2026-10-18,Corne,Patches,25,
+2026-10-18,Giyo,Patches,50,
+2026-10-18,Matta,Tango,39,
+2026-10-18,Bouw,Tango,35,
+2026-10-18,Corne,Tango,39,
+2026-10-18,Giyo,Tango,64,
+2026-10-18,Matta,Queens,73,
+2026-10-18,Bouw,Queens,40,
+2026-10-18,Corne,Queens,61,
+2026-10-18,Giyo,Queens,97,
+2026-10-19,Matta,Wend,23,
+2026-10-19,Bouw,Wend,10,
+2026-10-19,Corne,Wend,10,
+2026-10-19,Jari,Wend,14,
+2026-10-19,Giyo,Wend,10,
+2026-10-19,Matta,Zip,3,
+2026-10-19,Bouw,Zip,3,
+2026-10-19,Corne,Zip,3,
+2026-10-19,Jari,Zip,4,
+2026-10-19,Giyo,Zip,4,
+2026-10-19,Matta,Patches,8,
+2026-10-19,Bouw,Patches,6,
+2026-10-19,Corne,Patches,7,
+2026-10-19,Jari,Patches,12,
+2026-10-19,Giyo,Patches,17,
+2026-10-19,Matta,Tango,28,
+2026-10-19,Bouw,Tango,19,
+2026-10-19,Corne,Tango,16,
+2026-10-19,Jari,Tango,21,
+2026-10-19,Giyo,Tango,30,
+2026-10-19,Matta,Queens,21,
+2026-10-19,Bouw,Queens,9,
+2026-10-19,Corne,Queens,10,
+2026-10-19,Jari,Queens,12,
+2026-10-19,Giyo,Queens,19,
+2026-10-20,Matta,Wend,17,
+2026-10-20,Bouw,Wend,23,
+2026-10-20,Corne,Wend,16,
+2026-10-20,Jari,Wend,12,
+2026-10-20,Giyo,Wend,20,
+2026-10-20,Matta,Zip,9,
+2026-10-20,Bouw,Zip,5,
+2026-10-20,Corne,Zip,8,
+2026-10-20,Jari,Zip,12,
+2026-10-20,Giyo,Zip,9,
+2026-10-20,Matta,Patches,13,
+2026-10-20,Bouw,Patches,24,
+2026-10-20,Corne,Patches,29,
+2026-10-20,Jari,Patches,10,
+2026-10-20,Giyo,Patches,15,
+2026-10-20,Matta,Tango,21,
+2026-10-20,Bouw,Tango,44,
+2026-10-20,Corne,Tango,21,
+2026-10-20,Jari,Tango,29,
+2026-10-20,Giyo,Tango,29,
+2026-10-20,Matta,Queens,21,
+2026-10-20,Bouw,Queens,13,
+2026-10-20,Corne,Queens,9,
+2026-10-20,Jari,Queens,13,
+2026-10-20,Giyo,Queens,19,
+2026-10-21,Matta,Wend,31,
+2026-10-21,Bouw,Wend,67,
+2026-10-21,Corne,Wend,42,
+2026-10-21,Jari,Wend,48,
+2026-10-21,Giyo,Wend,36,
+2026-10-21,Matta,Zip,11,
+2026-10-21,Bouw,Zip,5,
+2026-10-21,Corne,Zip,18,
+2026-10-21,Jari,Zip,7,
+2026-10-21,Giyo,Zip,4,
+2026-10-21,Matta,Patches,14,
+2026-10-21,Bouw,Patches,42,
+2026-10-21,Corne,Patches,14,
+2026-10-21,Jari,Patches,16,
+2026-10-21,Giyo,Patches,13,
+2026-10-21,Matta,Tango,19,
+2026-10-21,Bouw,Tango,22,
+2026-10-21,Corne,Tango,26,
+2026-10-21,Jari,Tango,18,
+2026-10-21,Giyo,Tango,28,
+2026-10-21,Matta,Queens,10,
+2026-10-21,Bouw,Queens,12,
+2026-10-21,Corne,Queens,12,
+2026-10-21,Jari,Queens,39,
+2026-10-21,Giyo,Queens,75,
+2026-10-22,Matta,Wend,45,
+2026-10-22,Bouw,Wend,52,
+2026-10-22,Corne,Wend,21,
+2026-10-22,Jari,Wend,25,
+2026-10-22,Giyo,Wend,20,
+2026-10-22,Matta,Zip,7,
+2026-10-22,Bouw,Zip,6,
+2026-10-22,Corne,Zip,6,
+2026-10-22,Jari,Zip,7,
+2026-10-22,Giyo,Zip,14,
+2026-10-22,Matta,Patches,15,
+2026-10-22,Bouw,Patches,48,
+2026-10-22,Corne,Patches,11,
+2026-10-22,Jari,Patches,10,
+2026-10-22,Giyo,Patches,17,
+2026-10-22,Matta,Tango,27,
+2026-10-22,Bouw,Tango,44,
+2026-10-22,Corne,Tango,21,
+2026-10-22,Jari,Tango,84,
+2026-10-22,Giyo,Tango,52,
+2026-10-22,Matta,Queens,28,
+2026-10-22,Bouw,Queens,26,
+2026-10-22,Corne,Queens,20,
+2026-10-22,Jari,Queens,12,
+2026-10-22,Giyo,Queens,37,
+2026-10-23,Matta,Wend,30,
+2026-10-23,Bouw,Wend,76,
+2026-10-23,Corne,Wend,32,
+2026-10-23,Jari,Wend,47,
+2026-10-23,Giyo,Wend,55,
+2026-10-23,Matta,Zip,14,
+2026-10-23,Bouw,Zip,9,
+2026-10-23,Corne,Zip,12,
+2026-10-23,Jari,Zip,25,
+2026-10-23,Giyo,Zip,10,
+2026-10-23,Matta,Patches,15,
+2026-10-23,Bouw,Patches,14,
+2026-10-23,Corne,Patches,17,
+2026-10-23,Jari,Patches,18,
+2026-10-23,Giyo,Patches,18,
+2026-10-23,Matta,Tango,59,
+2026-10-23,Bouw,Tango,33,
+2026-10-23,Corne,Tango,28,
+2026-10-23,Jari,Tango,43,
+2026-10-23,Giyo,Tango,63,
+2026-10-23,Matta,Queens,67,
+2026-10-23,Bouw,Queens,45,
+2026-10-23,Corne,Queens,57,
+2026-10-23,Jari,Queens,23,
+2026-10-23,Giyo,Queens,80,
+2026-10-24,Matta,Wend,11,
+2026-10-24,Bouw,Wend,7,
+2026-10-24,Corne,Wend,13,
+2026-10-24,Jari,Wend,30,
+2026-10-24,Giyo,Wend,16,
+2026-10-24,Cas,Wend,14,
+2026-10-24,Matta,Zip,40,
+2026-10-24,Bouw,Zip,57,
+2026-10-24,Corne,Zip,50,
+2026-10-24,Jari,Zip,60,
+2026-10-24,Giyo,Zip,52,
+2026-10-24,Cas,Zip,77,
+2026-10-24,Matta,Patches,24,
+2026-10-24,Bouw,Patches,19,
+2026-10-24,Corne,Patches,22,
+2026-10-24,Jari,Patches,32,
+2026-10-24,Giyo,Patches,21,
+2026-10-24,Cas,Patches,17,
+2026-10-24,Matta,Tango,47,
+2026-10-24,Bouw,Tango,45,
+2026-10-24,Corne,Tango,47,
+2026-10-24,Jari,Tango,67,
+2026-10-24,Giyo,Tango,69,
+2026-10-24,Cas,Tango,81,
+2026-10-24,Matta,Queens,39,
+2026-10-24,Bouw,Queens,30,
+2026-10-24,Corne,Queens,32,
+2026-10-24,Jari,Queens,20,
+2026-10-24,Giyo,Queens,71,
+2026-10-24,Cas,Queens,72,
+2026-10-25,Matta,Wend,55,
+2026-10-25,Bouw,Wend,54,
+2026-10-25,Corne,Wend,105,
+2026-10-25,Jari,Wend,50,
+2026-10-25,Giyo,Wend,56,
+2026-10-25,Cas,Wend,45,
+2026-10-25,Matta,Zip,25,
+2026-10-25,Bouw,Zip,57,
+2026-10-25,Corne,Zip,17,
+2026-10-25,Jari,Zip,40,
+2026-10-25,Giyo,Zip,20,
+2026-10-25,Cas,Zip,41,
+2026-10-25,Matta,Patches,119,
+2026-10-25,Bouw,Patches,38,
+2026-10-25,Corne,Patches,122,
+2026-10-25,Jari,Patches,37,
+2026-10-25,Giyo,Patches,61,
+2026-10-25,Cas,Patches,38,
+2026-10-25,Matta,Tango,30,
+2026-10-25,Bouw,Tango,27,
+2026-10-25,Corne,Tango,36,
+2026-10-25,Jari,Tango,57,
+2026-10-25,Giyo,Tango,39,
+2026-10-25,Cas,Tango,40,
+2026-10-25,Matta,Queens,105,
+2026-10-25,Bouw,Queens,50,
+2026-10-25,Corne,Queens,67,
+2026-10-25,Jari,Queens,75,
+2026-10-25,Giyo,Queens,81,
+2026-10-25,Cas,Queens,90,
+2026-10-26,Matta,Wend,22,
+2026-10-26,Bouw,Wend,16,
+2026-10-26,Corne,Wend,9,
+2026-10-26,Jari,Wend,31,
+2026-10-26,Giyo,Wend,21,
+2026-10-26,Cas,Wend,21,
+2026-10-26,Matta,Zip,4,
+2026-10-26,Bouw,Zip,4,
+2026-10-26,Corne,Zip,9,
+2026-10-26,Jari,Zip,6,
+2026-10-26,Giyo,Zip,8,
+2026-10-26,Cas,Zip,7,
+2026-10-26,Matta,Patches,9,
+2026-10-26,Bouw,Patches,5,
+2026-10-26,Corne,Patches,6,
+2026-10-26,Jari,Patches,19,
+2026-10-26,Giyo,Patches,13,
+2026-10-26,Cas,Patches,9,
+2026-10-26,Matta,Tango,34,
+2026-10-26,Bouw,Tango,24,
+2026-10-26,Corne,Tango,21,
+2026-10-26,Jari,Tango,25,
+2026-10-26,Giyo,Tango,34,
+2026-10-26,Cas,Tango,26,
+2026-10-26,Matta,Queens,31,
+2026-10-26,Bouw,Queens,8,
+2026-10-26,Corne,Queens,10,
+2026-10-26,Jari,Queens,12,
+2026-10-26,Giyo,Queens,11,
+2026-10-26,Cas,Queens,17,
+2026-10-27,Matta,Wend,26,
+2026-10-27,Bouw,Wend,8,
+2026-10-27,Corne,Wend,24,
+2026-10-27,Jari,Wend,21,
+2026-10-27,Giyo,Wend,36,
+2026-10-27,Cas,Wend,25,
+2026-10-27,Matta,Zip,5,
+2026-10-27,Bouw,Zip,6,
+2026-10-27,Corne,Zip,9,
+2026-10-27,Jari,Zip,9,
+2026-10-27,Giyo,Zip,9,
+2026-10-27,Cas,Zip,6,
+2026-10-27,Matta,Patches,15,
+2026-10-27,Bouw,Patches,7,
+2026-10-27,Corne,Patches,15,
+2026-10-27,Jari,Patches,22,
+2026-10-27,Giyo,Patches,9,
+2026-10-27,Cas,Patches,9,
+2026-10-27,Matta,Tango,30,
+2026-10-27,Bouw,Tango,23,
+2026-10-27,Corne,Tango,22,
+2026-10-27,Jari,Tango,43,
+2026-10-27,Giyo,Tango,53,
+2026-10-27,Cas,Tango,30,
+2026-10-27,Matta,Queens,9,
+2026-10-27,Bouw,Queens,13,
+2026-10-27,Corne,Queens,11,
+2026-10-27,Jari,Queens,19,
+2026-10-27,Giyo,Queens,13,
+2026-10-27,Cas,Queens,26,
+2026-10-28,Matta,Wend,27,
+2026-10-28,Bouw,Wend,48,
+2026-10-28,Corne,Wend,25,
+2026-10-28,Jari,Wend,29,
+2026-10-28,Giyo,Wend,25,
+2026-10-28,Cas,Wend,29,
+2026-10-28,Matta,Zip,8,
+2026-10-28,Bouw,Zip,6,
+2026-10-28,Corne,Zip,7,
+2026-10-28,Jari,Zip,10,
+2026-10-28,Giyo,Zip,10,
+2026-10-28,Cas,Zip,9,
+2026-10-28,Matta,Patches,7,
+2026-10-28,Bouw,Patches,8,
+2026-10-28,Corne,Patches,8,
+2026-10-28,Jari,Patches,13,
+2026-10-28,Giyo,Patches,9,
+2026-10-28,Cas,Patches,9,
+2026-10-28,Matta,Tango,33,
+2026-10-28,Bouw,Tango,22,
+2026-10-28,Corne,Tango,28,
+2026-10-28,Jari,Tango,40,
+2026-10-28,Giyo,Tango,31,
+2026-10-28,Cas,Tango,27,
+2026-10-28,Matta,Queens,13,
+2026-10-28,Bouw,Queens,10,
+2026-10-28,Corne,Queens,16,
+2026-10-28,Jari,Queens,15,
+2026-10-28,Giyo,Queens,30,
+2026-10-28,Cas,Queens,25,
+2026-10-29,Matta,Wend,29,
+2026-10-29,Bouw,Wend,23,
+2026-10-29,Corne,Wend,29,
+2026-10-29,Jari,Wend,43,
+2026-10-29,Giyo,Wend,23,
+2026-10-29,Cas,Wend,35,
+2026-10-29,Matta,Zip,20,
+2026-10-29,Bouw,Zip,11,
+2026-10-29,Corne,Zip,17,
+2026-10-29,Jari,Zip,33,
+2026-10-29,Giyo,Zip,13,
+2026-10-29,Cas,Zip,17,
+2026-10-29,Matta,Patches,31,
+2026-10-29,Bouw,Patches,28,
+2026-10-29,Corne,Patches,10,
+2026-10-29,Jari,Patches,10,
+2026-10-29,Giyo,Patches,46,
+2026-10-29,Cas,Patches,16,
+2026-10-29,Matta,Tango,23,
+2026-10-29,Bouw,Tango,28,
+2026-10-29,Corne,Tango,24,
+2026-10-29,Jari,Tango,58,
+2026-10-29,Giyo,Tango,36,
+2026-10-29,Cas,Tango,28,
+2026-10-29,Matta,Queens,11,
+2026-10-29,Bouw,Queens,11,
+2026-10-29,Corne,Queens,19,
+2026-10-29,Jari,Queens,11,
+2026-10-29,Giyo,Queens,12,
+2026-10-29,Cas,Queens,36,
+2026-10-30,Matta,Wend,35,
+2026-10-30,Bouw,Wend,34,
+2026-10-30,Corne,Wend,36,
+2026-10-30,Jari,Wend,42,
+2026-10-30,Giyo,Wend,55,
+2026-10-30,Cas,Wend,46,
+2026-10-30,Matta,Zip,13,
+2026-10-30,Bouw,Zip,11,
+2026-10-30,Corne,Zip,20,
+2026-10-30,Jari,Zip,11,
+2026-10-30,Giyo,Zip,32,
+2026-10-30,Cas,Zip,40,
+2026-10-30,Matta,Patches,21,
+2026-10-30,Bouw,Patches,26,
+2026-10-30,Corne,Patches,17,
+2026-10-30,Jari,Patches,16,
+2026-10-30,Giyo,Patches,18,
+2026-10-30,Cas,Patches,40,
+2026-10-30,Matta,Tango,42,
+2026-10-30,Bouw,Tango,27,
+2026-10-30,Corne,Tango,25,
+2026-10-30,Jari,Tango,76,
+2026-10-30,Giyo,Tango,42,
+2026-10-30,Cas,Tango,43,
+2026-10-30,Matta,Queens,41,
+2026-10-30,Bouw,Queens,42,
+2026-10-30,Corne,Queens,36,
+2026-10-30,Jari,Queens,34,
+2026-10-30,Giyo,Queens,60,
+2026-10-30,Cas,Queens,80,
+2026-10-31,Matta,Wend,37,
+2026-10-31,Bouw,Wend,49,
+2026-10-31,Corne,Wend,48,
+2026-10-31,Jari,Wend,56,
+2026-10-31,Giyo,Wend,36,
+2026-10-31,Cas,Wend,35,
+2026-10-31,Matta,Zip,24,
+2026-10-31,Bouw,Zip,5,
+2026-10-31,Corne,Zip,15,
+2026-10-31,Jari,Zip,10,
+2026-10-31,Giyo,Zip,20,
+2026-10-31,Cas,Zip,15,
+2026-10-31,Matta,Patches,12,
+2026-10-31,Bouw,Patches,23,
+2026-10-31,Corne,Patches,10,
+2026-10-31,Jari,Patches,60,
+2026-10-31,Giyo,Patches,11,
+2026-10-31,Cas,Patches,14,
+2026-10-31,Matta,Tango,35,
+2026-10-31,Bouw,Tango,74,
+2026-10-31,Corne,Tango,27,
+2026-10-31,Jari,Tango,64,
+2026-10-31,Giyo,Tango,41,
+2026-10-31,Cas,Tango,38,
+2026-10-31,Matta,Queens,61,
+2026-10-31,Bouw,Queens,130,
+2026-10-31,Corne,Queens,49,
+2026-10-31,Jari,Queens,74,
+2026-10-31,Giyo,Queens,90,
+2026-10-31,Cas,Queens,151,
+2026-11-01,Matta,Wend,79,
+2026-11-01,Bouw,Wend,81,
+2026-11-01,Corne,Wend,59,
+2026-11-01,Jari,Wend,53,
+2026-11-01,Giyo,Wend,105,
+2026-11-01,Cas,Wend,56,
+2026-11-01,Matta,Zip,57,
+2026-11-01,Bouw,Zip,32,
+2026-11-01,Corne,Zip,10,
+2026-11-01,Jari,Zip,25,
+2026-11-01,Giyo,Zip,18,
+2026-11-01,Cas,Zip,22,
+2026-11-01,Matta,Patches,30,
+2026-11-01,Bouw,Patches,31,
+2026-11-01,Corne,Patches,34,
+2026-11-01,Jari,Patches,66,
+2026-11-01,Giyo,Patches,73,
+2026-11-01,Cas,Patches,104,
+2026-11-01,Matta,Tango,48,
+2026-11-01,Bouw,Tango,30,
+2026-11-01,Corne,Tango,24,
+2026-11-01,Jari,Tango,56,
+2026-11-01,Giyo,Tango,41,
+2026-11-01,Cas,Tango,55,
+2026-11-01,Matta,Queens,99,
+2026-11-01,Bouw,Queens,114,
+2026-11-01,Corne,Queens,86,
+2026-11-01,Jari,Queens,52,
+2026-11-01,Giyo,Queens,99,
+2026-11-01,Cas,Queens,116,
+2026-11-02,Matta,Wend,8,
+2026-11-02,Bouw,Wend,9,
+2026-11-02,Corne,Wend,18,
+2026-11-02,Jari,Wend,16,
+2026-11-02,Giyo,Wend,11,
+2026-11-02,Cas,Wend,7,
+2026-11-02,Matta,Zip,5,
+2026-11-02,Bouw,Zip,4,
+2026-11-02,Corne,Zip,5,
+2026-11-02,Jari,Zip,10,
+2026-11-02,Giyo,Zip,7,
+2026-11-02,Cas,Zip,9,
+2026-11-02,Matta,Patches,9,
+2026-11-02,Bouw,Patches,5,
+2026-11-02,Corne,Patches,8,
+2026-11-02,Jari,Patches,7,
+2026-11-02,Giyo,Patches,14,
+2026-11-02,Cas,Patches,7,
+2026-11-02,Matta,Tango,25,
+2026-11-02,Bouw,Tango,76,
+2026-11-02,Corne,Tango,20,
+2026-11-02,Jari,Tango,37,
+2026-11-02,Giyo,Tango,53,
+2026-11-02,Cas,Tango,36,
+2026-11-02,Matta,Queens,20,
+2026-11-02,Bouw,Queens,6,
+2026-11-02,Corne,Queens,9,
+2026-11-02,Jari,Queens,6,
+2026-11-02,Giyo,Queens,12,
+2026-11-02,Cas,Queens,17,
+2026-11-03,Matta,Wend,17,
+2026-11-03,Bouw,Wend,11,
+2026-11-03,Corne,Wend,23,
+2026-11-03,Jari,Wend,26,
+2026-11-03,Giyo,Wend,28,
+2026-11-03,Cas,Wend,25,
+2026-11-03,Matta,Zip,7,
+2026-11-03,Bouw,Zip,5,
+2026-11-03,Corne,Zip,6,
+2026-11-03,Jari,Zip,8,
+2026-11-03,Giyo,Zip,11,
+2026-11-03,Cas,Zip,14,
+2026-11-03,Matta,Patches,8,
+2026-11-03,Bouw,Patches,9,
+2026-11-03,Corne,Patches,8,
+2026-11-03,Jari,Patches,10,
+2026-11-03,Giyo,Patches,12,
+2026-11-03,Cas,Patches,8,
+2026-11-03,Matta,Tango,32,
+2026-11-03,Bouw,Tango,33,
+2026-11-03,Corne,Tango,28,
+2026-11-03,Jari,Tango,44,
+2026-11-03,Giyo,Tango,48,
+2026-11-03,Cas,Tango,30,
+2026-11-03,Matta,Queens,14,
+2026-11-03,Bouw,Queens,13,
+2026-11-03,Corne,Queens,11,
+2026-11-03,Jari,Queens,11,
+2026-11-03,Giyo,Queens,8,
+2026-11-03,Cas,Queens,21,
+2026-11-04,Matta,Wend,19,
+2026-11-04,Bouw,Wend,29,
+2026-11-04,Corne,Wend,12,
+2026-11-04,Jari,Wend,13,
+2026-11-04,Giyo,Wend,26,
+2026-11-04,Cas,Wend,27,
+2026-11-04,Matta,Zip,6,
+2026-11-04,Bouw,Zip,4,
+2026-11-04,Corne,Zip,7,
+2026-11-04,Jari,Zip,8,
+2026-11-04,Giyo,Zip,7,
+2026-11-04,Cas,Zip,9,
+2026-11-04,Matta,Patches,10,
+2026-11-04,Bouw,Patches,5,
+2026-11-04,Corne,Patches,6,
+2026-11-04,Jari,Patches,7,
+2026-11-04,Giyo,Patches,7,
+2026-11-04,Cas,Patches,10,
+2026-11-04,Matta,Tango,32,
+2026-11-04,Bouw,Tango,28,
+2026-11-04,Corne,Tango,19,
+2026-11-04,Jari,Tango,29,
+2026-11-04,Giyo,Tango,37,
+2026-11-04,Cas,Tango,34,
+2026-11-04,Matta,Queens,24,
+2026-11-04,Bouw,Queens,21,
+2026-11-04,Corne,Queens,18,
+2026-11-04,Jari,Queens,11,
+2026-11-04,Giyo,Queens,36,
+2026-11-04,Cas,Queens,24,
+2026-11-05,Matta,Wend,25,
+2026-11-05,Bouw,Wend,13,
+2026-11-05,Corne,Wend,28,
+2026-11-05,Jari,Wend,33,
+2026-11-05,Giyo,Wend,27,
+2026-11-05,Cas,Wend,47,
+2026-11-05,Matta,Zip,9,
+2026-11-05,Bouw,Zip,5,
+2026-11-05,Corne,Zip,9,
+2026-11-05,Jari,Zip,9,
+2026-11-05,Giyo,Zip,10,
+2026-11-05,Cas,Zip,11,
+2026-11-05,Matta,Patches,9,
+2026-11-05,Bouw,Patches,16,
+2026-11-05,Corne,Patches,8,
+2026-11-05,Jari,Patches,6,
+2026-11-05,Giyo,Patches,17,
+2026-11-05,Cas,Patches,15,
+2026-11-05,Matta,Tango,38,
+2026-11-05,Bouw,Tango,52,
+2026-11-05,Corne,Tango,65,
+2026-11-05,Jari,Tango,76,
+2026-11-05,Giyo,Tango,52,
+2026-11-05,Cas,Tango,68,
+2026-11-05,Matta,Queens,30,
+2026-11-05,Bouw,Queens,15,
+2026-11-05,Corne,Queens,23,
+2026-11-05,Jari,Queens,47,
+2026-11-05,Giyo,Queens,46,
+2026-11-05,Cas,Queens,31,
+2026-11-06,Matta,Wend,32,
+2026-11-06,Bouw,Wend,16,
+2026-11-06,Corne,Wend,47,
+2026-11-06,Jari,Wend,55,
+2026-11-06,Giyo,Wend,26,
+2026-11-06,Cas,Wend,21,
+2026-11-06,Matta,Zip,10,
+2026-11-06,Bouw,Zip,7,
+2026-11-06,Corne,Zip,8,
+2026-11-06,Jari,Zip,8,
+2026-11-06,Giyo,Zip,11,
+2026-11-06,Cas,Zip,10,
+2026-11-06,Matta,Patches,18,
+2026-11-06,Bouw,Patches,14,
+2026-11-06,Corne,Patches,18,
+2026-11-06,Jari,Patches,13,
+2026-11-06,Giyo,Patches,12,
+2026-11-06,Cas,Patches,13,
+2026-11-06,Matta,Tango,19,
+2026-11-06,Bouw,Tango,33,
+2026-11-06,Corne,Tango,33,
+2026-11-06,Jari,Tango,25,
+2026-11-06,Giyo,Tango,45,
+2026-11-06,Cas,Tango,23,
+2026-11-06,Matta,Queens,26,
+2026-11-06,Bouw,Queens,25,
+2026-11-06,Corne,Queens,36,
+2026-11-06,Jari,Queens,37,
+2026-11-06,Giyo,Queens,70,
+2026-11-06,Cas,Queens,60,</script>
+<script>
+(() => {
+/* ===== instellingen, gelijk aan het dashboard ===== */
+const STRAF = 10, BASIS = 300, VENSTER = 14, SKILL_VENSTER = 21;
+const SP_ORDER = ["Wend","Patches","Zip","Tango","Queens"], PL_ORDER = ["Matta","Bouw","Corne","Jari","Giyo","Cas"];
+const SPELER_KLEUR = ["#3987e5","#d95926","#199e70","#c98500","#d55181","#9085e9","#e66767","#4fa83d"];
+const TRUI = { Wend:["#2563C9","#0F2E5C"], Zip:["#1E8A4C","#0E3F22"], Patches:["#F07A1A","#6A300A"], Tango:["#FFFFFF","#6B7078"], Queens:["#FFFFFF","#8E1B28"] };
+const SHIRT = "M10 4 L13 3 Q16 7 19 3 L22 4 L30 10 L26 15 L23 13 L23 29 L9 29 L9 13 L6 15 L2 10 Z";
+/* weekdag: één oplopende reeks van lichtgeel (maandag, makkelijk) naar oranjerood (zondag, zwaar) */
+const WD_KLEUR = ["#FFF1A8","#FFE066","#FFCC33","#FFB020","#F9922B","#EE7034","#DE4F3F"];
+const DAGEN = ["Ma","Di","Wo","Do","Vr","Za","Zo"], DAGEN_LANG = ["maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag","zondag"];
+const MAANDEN = ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
+const MAANDEN_LANG = ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
+const ETAPPE = "Etappe";
+
+/* ===== hulpjes ===== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = sec => { sec = Math.round(sec); return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`; };
+const duur = sec => { const u = Math.floor(sec / 3600), m = Math.round((sec % 3600) / 60); return u ? `${u} uur ${m} min` : `${m} min`; };
+const wdOf = ds => (new Date(ds + "T12:00:00").getDay() + 6) % 7;
+const datumKort = ds => { const d = new Date(ds + "T12:00:00"); return `${DAGEN[wdOf(ds)].toLowerCase()} ${d.getDate()} ${MAANDEN[d.getMonth()]}`; };
+const datumNL = ds => { const d = new Date(ds + "T12:00:00"); return `${DAGEN_LANG[wdOf(ds)]} ${d.getDate()} ${MAANDEN_LANG[d.getMonth()]}`; };
+const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+const median = a => { if(!a.length) return null; const s = a.slice().sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const quant = (a, q) => { const s = a.slice().sort((x, y) => x - y), i = (s.length - 1) * q, lo = Math.floor(i), hi = Math.ceil(i); return s[lo] + (s[hi] - s[lo]) * (i - lo); };
+const sd = a => { const m = mean(a); return a.length > 1 ? Math.sqrt(a.reduce((x, y) => x + (y - m) ** 2, 0) / (a.length - 1)) : 0; };
+const watt = r => BASIS * Math.exp(-r);
+const namen = a => a.length === 1 ? a[0] : a.slice(0, -1).join(", ") + " en " + a[a.length - 1];
+const pctTxt = f => `${Math.round(Math.abs(f) * 100)}%`;
+const trui = (g, size = 18) => { const [f, s] = TRUI[g] || ["#9085e9","#2E1C5E"]; const dots = g === "Queens" ? [[12,10],[20,10],[16,17],[12,23],[20,23]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.3" fill="#D7263D"/>`).join("") : ""; return `<svg viewBox="0 0 32 32" width="${size}" height="${size}" aria-hidden="true"><path d="${SHIRT}" fill="${f}" stroke="${s}" stroke-width="1.3" stroke-linejoin="round"/>${dots}</svg>`; };
+const opslaan = (k, v) => { try{ localStorage.setItem(k, v); }catch(e){} };
+const lezen = k => { try{ return localStorage.getItem(k); }catch(e){ return null; } };
+
+/* ===== data laden (lang formaat, zoals data/scores.csv) ===== */
+const uniek = new Map();
+$("#scores").textContent.trim().split(/\r?\n/).slice(1).forEach(l => {
+  const [datum, speler, spel, tijd] = l.split(",");
+  const t = Number(tijd);
+  if(!datum || !speler || !spel || !(t > 0)) return;
+  uniek.set(`${datum}|${speler}|${spel}`, { datum, speler, spel, t });
+});
+const rijen = [...uniek.values()];
+const dates = [...new Set(rijen.map(r => r.datum))].sort();
+const D = dates.length, dIdx = new Map(dates.map((d, i) => [d, i]));
+const num = dates.map(ds => Math.round(Date.parse(ds + "T12:00:00Z") / 864e5));
+const wd = dates.map(wdOf);
+const volgorde = (voorkeur, gezien) => [...voorkeur.filter(x => gezien.includes(x)), ...gezien.filter(x => !voorkeur.includes(x))];
+const games = volgorde(SP_ORDER, [...new Set(rijen.map(r => r.spel))]);
+const eerste = {};
+rijen.slice().sort((a, b) => a.datum.localeCompare(b.datum)).forEach(r => { if(!eerste[r.speler]) eerste[r.speler] = r.datum; });
+const players = volgorde(PL_ORDER, Object.keys(eerste).sort((a, b) => eerste[a].localeCompare(eerste[b])));
+const kleurVan = p => SPELER_KLEUR[players.indexOf(p) % SPELER_KLEUR.length];
+const bib = p => `<span class="bib">${players.indexOf(p) + 1}</span>`;
+const raw = {}; games.forEach(g => raw[g] = dates.map(() => null));
+rijen.forEach(r => { const d = dIdx.get(r.datum); (raw[r.spel][d] ||= {})[r.speler] = r.t; });
+const meeOp = d => players.filter(p => eerste[p] <= dates[d]);
+/* gemist spel: langzaamste tijd van die dag + 10 s, zoals de Tour-regel */
+const eff = (g, d, p) => { const v = raw[g][d]; return v[p] ?? Math.max(...Object.values(v)) + STRAF; };
+
+/* ===== etappes ===== */
+function rangschik(t, wie){
+  const a = wie.map(p => ({ p, t:t[p] })).sort((x, y) => x.t - y.t || players.indexOf(x.p) - players.indexOf(y.p));
+  let pos = 0; a.forEach((r, i) => { if(i === 0 || r.t !== a[i - 1].t) pos = i + 1; r.pos = pos; }); return a;
+}
+const E = dates.map((ds, d) => {
+  const gs = games.filter(g => raw[g][d]), m = meeOp(d);
+  const tot = {}, full = {}, gw = {}, spelWinnaars = {};
+  m.forEach(p => { tot[p] = gs.reduce((a, g) => a + eff(g, d, p), 0); gw[p] = 0; if(gs.every(g => raw[g][d][p] != null)) full[p] = gs.reduce((a, g) => a + raw[g][d][p], 0); });
+  gs.forEach(g => { const v = raw[g][d], b = Math.min(...Object.values(v)); spelWinnaars[g] = Object.keys(v).filter(p => v[p] === b); spelWinnaars[g].forEach(p => { if(p in gw) gw[p]++; }); });
+  const rang = rangschik(tot, m);
+  return { d, ds, gs, m, tot, full, gw, spelWinnaars, rang, winnaars:rang.filter(r => r.pos === 1).map(r => r.p), mk:ds.slice(0, 7), straf:m.filter(p => gs.some(g => raw[g][d][p] == null)) };
+});
+/* gele trui per dag (maandklassement), voor de weetjes */
+E.forEach((e, d) => {
+  const tour = E.filter(x => x.mk === e.mk && x.d <= d), wie = players.filter(p => eerste[p] <= tour[0].ds);
+  const som = {}; wie.forEach(p => som[p] = tour.reduce((a, x) => a + (x.tot[p] ?? 0), 0));
+  e.gc = rangschik(som, wie); e.tourNr = tour.length;
+});
+
+/* ===== het model: tegen de puzzel =====
+   Per spel en dag: log(tijd) = niveau van de renner (glijdend, ±21 dagen) + zwaarte van de puzzel.
+   De zwaarte voor renner p wordt geschat uit de ANDERE renners, zodat je jezelf niet meet.
+   Vermogen = 300 W × verwachte tijd van een gemiddelde renner / jouw tijd. */
+const M = {};
+games.forEach(g => {
+  const R = raw[g], S = {}, diff = new Array(D).fill(null);
+  players.forEach(p => S[p] = new Array(D).fill(0));
+  const zwaarte = () => { for(let d = 0; d < D; d++) diff[d] = R[d] ? mean(Object.entries(R[d]).map(([q, t]) => Math.log(t) - S[q][d])) : null; };
+  for(let it = 0; it < 8; it++){
+    zwaarte();
+    players.forEach(q => {
+      const eigen = []; for(let d = 0; d < D; d++) if(R[d] && R[d][q] != null) eigen.push(d);
+      if(!eigen.length) return;
+      const res = eigen.map(d => Math.log(R[d][q]) - diff[d]), alles = mean(res);
+      for(let d = 0; d < D; d++){
+        const v = []; eigen.forEach((j, k) => { if(j !== d && Math.abs(num[j] - num[d]) <= SKILL_VENSTER) v.push(res[k]); });
+        S[q][d] = v.length >= 3 ? mean(v) : alles;
+      }
+    });
+    const alle = []; players.forEach(q => { for(let d = 0; d < D; d++) if(R[d] && R[d][q] != null) alle.push(S[q][d]); });
+    const c = mean(alle); players.forEach(q => { for(let d = 0; d < D; d++) S[q][d] -= c; });
+  }
+  zwaarte();
+  const wdNorm = DAGEN.map((_, w) => mean(diff.filter((x, d) => x != null && wd[d] === w)));
+  const score = {}; players.forEach(p => score[p] = new Array(D).fill(null));
+  for(let d = 0; d < D; d++){
+    if(!R[d]) continue;
+    const mx = Math.max(...Object.values(R[d]));
+    meeOp(d).forEach(p => {
+      const ander = Object.entries(R[d]).filter(([q]) => q !== p);
+      const dex = ander.length >= 2 ? mean(ander.map(([q, t]) => Math.log(t) - S[q][d])) : wdNorm[wd[d]];
+      const straf = R[d][p] == null, t = straf ? mx + STRAF : R[d][p], r = Math.log(t) - dex;
+      score[p][d] = { r, t, straf, norm:Math.exp(dex), watt:watt(r), g };
+    });
+  }
+  M[g] = { diff, wdNorm, score };
+});
+const comb = {};
+players.forEach(p => comb[p] = dates.map((_, d) => {
+  const s = E[d].gs.map(g => M[g].score[p][d]).filter(Boolean);
+  if(!s.length) return null;
+  const r = mean(s.map(x => x.r));
+  return { r, t:s.reduce((a, x) => a + x.t, 0), norm:s.reduce((a, x) => a + x.norm, 0), straf:s.some(x => x.straf), watt:watt(r), g:ETAPPE };
+}));
+const serie = (p, g) => g === ETAPPE ? comb[p] : M[g].score[p];
+function vorm(p, g, eind = D - 1, len = VENSTER){
+  const s = serie(p, g), v = [];
+  for(let d = 0; d <= eind; d++) if(s[d] && num[d] > num[eind] - len) v.push(s[d].r);
+  if(!v.length) return null;
+  const r = mean(v); return { r, watt:watt(r), n:v.length, se:v.length > 1 ? sd(v) / Math.sqrt(v.length) : 0 };
+}
+const idxVoor = n => { let i = -1; for(let d = 0; d < D; d++) if(num[d] <= n) i = d; return i; };
+const vorigEind = idxVoor(num[D - 1] - VENSTER);
+const glijdend = (p, g) => dates.map((_, d) => { const s = serie(p, g); if(!s[d]) return null; const v = vorm(p, g, d); return v && v.n >= 3 ? v : null; });
+
+/* ===== status ===== */
+let tab = ["ik","peloton","weetje"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "ik";
+let speler = players.includes(lezen("tdl-stat-speler")) ? lezen("tdl-stat-speler") : players[players.length - 2] || players[0];
+let spelKeus = ETAPPE, modus = "puzzel", kalSpel = "Queens", wDag = D - 1;
+$("#mockLabel").textContent = `Mock-up · echte data t/m ${datumKort(dates[D - 1])}`;
+
+/* ===== tooltip ===== */
+const tip = $("#tip");
+function toonTip(html, x, y){
+  tip.innerHTML = html; tip.hidden = false;
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let lx = x + 14, ly = y + 14;
+  if(lx + w > innerWidth - 8) lx = x - w - 14;
+  if(ly + h > innerHeight - 8) ly = y - h - 14;
+  tip.style.left = Math.max(8, lx) + "px"; tip.style.top = Math.max(8, ly) + "px";
+}
+const verbergTip = () => tip.hidden = true;
+document.addEventListener("pointerover", ev => { const el = ev.target.closest("[data-tip]"); if(el) toonTip(el.dataset.tip, ev.clientX, ev.clientY); });
+document.addEventListener("pointermove", ev => { const el = ev.target.closest("[data-tip]"); if(el) toonTip(el.dataset.tip, ev.clientX, ev.clientY); });
+document.addEventListener("pointerout", ev => { if(ev.target.closest("[data-tip]")) verbergTip(); });
+addEventListener("scroll", verbergTip, { passive:true });
+
+/* ===== kleine grafiekjes ===== */
+function spark(vals, w = 100, h = 30, kleur = "var(--geel)", ref = BASIS){
+  const pts = vals.map((v, i) => v == null ? null : [i, v]).filter(Boolean);
+  if(pts.length < 2) return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"></svg>`;
+  const lv = pts.map(p => Math.log(p[1])).concat([Math.log(ref)]);
+  const lo = Math.min(...lv), hi = Math.max(...lv), n = vals.length - 1;
+  const X = i => 2 + (w - 6) * i / n, Y = v => h - 3 - (h - 6) * (Math.log(v) - lo) / ((hi - lo) || 1);
+  const d = pts.map((p, i) => `${i ? "L" : "M"}${X(p[0]).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join(" ");
+  const laatst = pts[pts.length - 1];
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" aria-hidden="true">
+    <line x1="0" x2="${w}" y1="${Y(ref)}" y2="${Y(ref)}" stroke="#3A404A" stroke-dasharray="2 3"/>
+    <path d="${d} L${X(laatst[0])} ${h} L${X(pts[0][0])} ${h} Z" fill="${kleur}" opacity=".12"/>
+    <path d="${d}" fill="none" stroke="${kleur}" stroke-width="1.6" stroke-linejoin="round"/>
+    <circle cx="${X(laatst[0])}" cy="${Y(laatst[1])}" r="2.6" fill="${kleur}"/></svg>`;
+}
+/* vermogensmeter: halve cirkel, 150–600 W op logschaal, 300 W precies bovenin */
+function meter(w){
+  const lo = Math.log(150), hi = Math.log(600), cx = 130, cy = 120, R = 98;
+  const hoek = v => Math.PI * (1 - (Math.log(Math.min(600, Math.max(150, v))) - lo) / (hi - lo));
+  const pt = (a, r = R) => [cx + r * Math.cos(a), cy - r * Math.sin(a)];
+  const boog = (a0, a1, r = R) => { const [x0, y0] = pt(a0, r), [x1, y1] = pt(a1, r); return `M${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 0 ${a0 > a1 ? 1 : 0} ${x1.toFixed(1)} ${y1.toFixed(1)}`; };
+  const a = hoek(w), a3 = hoek(300);
+  const ticks = [150,200,300,450,600].map(v => { const t = hoek(v), [x0, y0] = pt(t, R + 10), [x1, y1] = pt(t, R + 20); const [tx, ty] = pt(t, R + 31); return `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="#14161A" stroke-width="2"/><text x="${tx}" y="${ty + 4}" text-anchor="middle" font-size="12" font-weight="600" fill="#4A3A00" font-family="Barlow,sans-serif">${v}</text>`; }).join("");
+  const [nx, ny] = pt(a, R - 16);
+  return `<svg class="meter" viewBox="-22 -14 304 150" role="img" aria-label="Vermogensmeter: ${Math.round(w)} watt">
+    <path d="${boog(Math.PI, 0)}" fill="none" stroke="rgba(20,22,26,.16)" stroke-width="18"/>
+    <path class="teken" pathLength="1" d="${boog(a3, a)}" fill="none" stroke="#14161A" stroke-width="18"/>
+    ${ticks}
+    <line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="#D7263D" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="8" fill="#14161A"/>
+    <text x="${cx}" y="${cy - 30}" text-anchor="middle" font-size="12" fill="#4A3A00" font-family="Barlow,sans-serif">watt</text></svg>`;
+}
+
+/* ===== IK ===== */
+function renderSpelerKeus(){
+  $("#spelerKeus").innerHTML = players.map(p => `<button data-sp="${esc(p)}" aria-pressed="${p === speler}"><span class="sw" style="background:${kleurVan(p)}"></span>${esc(p)}</button>`).join("");
+  $("#spelerKeus").querySelectorAll("button").forEach(b => b.onclick = () => { speler = b.dataset.sp; opslaan("tdl-stat-speler", speler); renderIk(); $(`#spelerKeus [data-sp="${CSS.escape(speler)}"]`).focus(); });
+}
+const deltaTxt = (nu, toen) => {
+  if(!nu || !toen) return `<span class="t-s">nog geen vergelijking</span>`;
+  const f = nu.watt / toen.watt - 1;
+  if(Math.abs(f) < .02) return `<span>= gelijk</span>`;
+  return f > 0 ? `<span class="op">▲ ${pctTxt(f)}</span>` : `<span class="neer">▼ ${pctTxt(f)}</span>`;
+};
+function renderHero(){
+  const p = speler, nu = vorm(p, ETAPPE), toen = vorigEind >= 0 ? vorm(p, ETAPPE, vorigEind) : null;
+  const rang = players.map(q => ({ q, v:vorm(q, ETAPPE) })).filter(x => x.v && x.v.n >= 5).sort((a, b) => b.v.watt - a.v.watt);
+  const plek = rang.findIndex(x => x.q === p);
+  let deltaZin = "Nog te weinig etappes om te vergelijken.";
+  if(nu && toen){
+    const f = nu.watt / toen.watt - 1;
+    deltaZin = Math.abs(f) < .02 ? "Even sterk als de 14 dagen ervoor." : `<b>${f > 0 ? "▲" : "▼"} ${pctTxt(f)}</b> ${f > 0 ? "sterker" : "zwakker"} dan de 14 dagen ervoor (${Math.round(toen.watt)} W).`;
+  }
+  const tijdF = nu ? 1 - BASIS / nu.watt : 0;
+  $("#hero").innerHTML = `<div class="finish"></div><div class="hero-in">
+    <div>
+      <p class="eyebrow">Vorm van de laatste 14 dagen</p>
+      <p class="naam">${esc(p)}</p>
+      <div class="watt">${nu ? Math.round(nu.watt) : "–"}<small>W</small></div>
+      <p class="delta">${deltaZin}</p>
+      <p class="rang">${nu ? `${tijdF >= 0 ? `${pctTxt(tijdF)} minder tijd nodig` : `${pctTxt(tijdF)} meer tijd nodig`} dan een gemiddelde renner op dezelfde puzzels. ` : ""}${plek >= 0 ? `Nummer ${plek + 1} van ${rang.length} in vorm.` : ""}</p>
+    </div>
+    <div>${nu ? meter(nu.watt) : ""}</div></div>`;
+  $("#spelKaarten").innerHTML = games.map(g => {
+    const v = vorm(p, g), t = vorigEind >= 0 ? vorm(p, g, vorigEind) : null;
+    const lijn = glijdend(p, g).map(x => x && x.watt);
+    return `<button class="spelkaart" data-g="${esc(g)}" aria-pressed="${spelKeus === g}" title="Toon ${esc(g)} in de grafiek">
+      <div class="sk-kop">${trui(g)}${esc(g)}</div>
+      <div class="sk-w">${v ? Math.round(v.watt) : "–"}<small>W</small></div>
+      <div class="sk-d">${deltaTxt(v, t)}</div>${spark(lijn)}</button>`;
+  }).join("");
+  $("#spelKaarten").querySelectorAll(".spelkaart").forEach(b => b.onclick = () => { spelKeus = spelKeus === b.dataset.g ? ETAPPE : b.dataset.g; renderHero(); renderVerloop(); $("#s-verloop").scrollIntoView({ behavior:"smooth", block:"start" }); });
+}
+
+function renderVerloop(){
+  const p = speler, g = spelKeus, s = serie(p, g);
+  const box = $("#s-verloop");
+  box.innerHTML = `<h2>Verloop</h2>
+    <p class="toel">${modus === "puzzel" ? "Elke stip is één dag, gemeten tegen de puzzel van die dag. De gele lijn is je vorm: het gemiddelde over 14 dagen, met de band als onzekerheid. Boven de stippellijn ben je sneller dan een gemiddelde renner." : "Dezelfde dagen in echte seconden. De grijze lijn is wat een gemiddelde renner op die puzzel nodig had. Zie hoe de weekdag alles bepaalt."}</p>
+    <div class="tabs" id="vSpel" role="group" aria-label="Kies spel">${[ETAPPE, ...games].map(x => `<button data-g="${esc(x)}" aria-pressed="${x === g}">${x === ETAPPE ? "Hele etappe" : trui(x, 16) + esc(x)}</button>`).join("")}</div>
+    <div class="tabs" id="vModus" role="group" aria-label="Weergave"><button data-m="puzzel" aria-pressed="${modus === "puzzel"}">Tegen de puzzel (watt)</button><button data-m="ruw" aria-pressed="${modus === "ruw"}">Ruwe tijden</button></div>
+    <div class="grafiek" id="vGraf"></div>
+    <div class="legenda">${DAGEN.map((d, i) => `<span><i style="background:${WD_KLEUR[i]}"></i>${d}</span>`).join("")}<span><i class="ring"></i>straftijd</span>${modus === "puzzel" ? `<span><i class="lijn" style="background:var(--geel)"></i>vorm (14 d)</span>` : `<span><i class="lijn" style="background:#8A9099"></i>gemiddelde renner</span>`}</div>
+    <p class="conclusie" id="vConc"></p>`;
+  box.querySelectorAll("#vSpel button").forEach(b => b.onclick = () => { spelKeus = b.dataset.g; renderHero(); renderVerloop(); });
+  box.querySelectorAll("#vModus button").forEach(b => b.onclick = () => { modus = b.dataset.m; renderVerloop(); });
+
+  const W = Math.max(300, Math.round($("#vGraf").clientWidth)), H = 270, L = 46, Rm = 10, T = 12, B = 28;
+  const d0 = dIdx.get(eerste[p]), dagen = []; for(let d = d0; d < D; d++) if(s[d]) dagen.push(d);
+  if(dagen.length < 2){ $("#vGraf").innerHTML = `<p class="toel">Nog te weinig dagen.</p>`; return; }
+  const xs = d => L + (W - L - Rm) * (num[d] - num[d0]) / ((num[D - 1] - num[d0]) || 1);
+  const rol = glijdend(p, g);
+  let vals, ticks, fmtY;
+  if(modus === "puzzel"){
+    vals = dagen.map(d => s[d].watt).concat(dagen.filter(d => rol[d]).flatMap(d => [watt(rol[d].r + rol[d].se), watt(rol[d].r - rol[d].se)]), [BASIS]);
+    ticks = [75,100,150,200,300,450,600,900,1200]; fmtY = v => v + " W";
+  } else {
+    vals = dagen.flatMap(d => [s[d].t, s[d].norm]);
+    ticks = [2,5,10,20,30,60,120,180,300,600,900]; fmtY = v => v < 60 ? v + "s" : fmt(v);
+  }
+  let lo = Math.log(Math.min(...vals)) - .06, hi = Math.log(Math.max(...vals)) + .06;
+  const Y = v => T + (H - T - B) * (1 - (Math.log(v) - lo) / (hi - lo));
+  const zicht = ticks.filter(v => Math.log(v) >= lo && Math.log(v) <= hi);
+  let svg = zicht.map(v => `<line x1="${L}" x2="${W - Rm}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="#2A2F36"/><text x="${L - 6}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">${fmtY(v)}</text>`).join("");
+  /* x-as: de eerste van elke maand */
+  for(let d = d0; d < D; d++) if(d === d0 || dates[d].slice(8) === "01" || (d > d0 && dates[d].slice(0, 7) !== dates[d - 1].slice(0, 7))){
+    const m = new Date(dates[d] + "T12:00:00"); svg += `<text x="${xs(d).toFixed(1)}" y="${H - 8}" text-anchor="${d === d0 ? "start" : "middle"}">${m.getDate()} ${MAANDEN[m.getMonth()]}</text>`;
+  }
+  if(modus === "puzzel"){
+    svg += `<line x1="${L}" x2="${W - Rm}" y1="${Y(BASIS)}" y2="${Y(BASIS)}" stroke="#8A9099" stroke-dasharray="4 4"/><text x="${W - Rm}" y="${Y(BASIS) - 5}" text-anchor="end">gemiddelde renner</text>`;
+    const rd = dagen.filter(d => rol[d]);
+    if(rd.length > 1){
+      const boven = rd.map(d => `${xs(d).toFixed(1)} ${Y(watt(rol[d].r - rol[d].se)).toFixed(1)}`), onder = rd.slice().reverse().map(d => `${xs(d).toFixed(1)} ${Y(watt(rol[d].r + rol[d].se)).toFixed(1)}`);
+      svg += `<path d="M${boven.join(" L")} L${onder.join(" L")} Z" fill="#FFD300" opacity=".14"/>`;
+    }
+    svg += dagen.map(d => { const v = s[d]; return v.straf ? `<circle cx="${xs(d).toFixed(1)}" cy="${Y(v.watt).toFixed(1)}" r="4.5" fill="#1E2127" stroke="#F0525A" stroke-width="2"/>` : `<circle cx="${xs(d).toFixed(1)}" cy="${Y(v.watt).toFixed(1)}" r="4.5" fill="${WD_KLEUR[wd[d]]}" stroke="#1E2127" stroke-width="1.5"/>`; }).join("");
+    if(rd.length > 1) svg += `<path class="teken" pathLength="1" d="${rd.map((d, i) => `${i ? "L" : "M"}${xs(d).toFixed(1)} ${Y(rol[d].watt).toFixed(1)}`).join(" ")}" fill="none" stroke="#FFD300" stroke-width="3" stroke-linejoin="round"/>`;
+  } else {
+    svg += `<path d="${dagen.map((d, i) => `${i ? "L" : "M"}${xs(d).toFixed(1)} ${Y(s[d].norm).toFixed(1)}`).join(" ")}" fill="none" stroke="#8A9099" stroke-width="2" stroke-linejoin="round"/>`;
+    svg += dagen.map(d => { const v = s[d]; return v.straf ? `<circle cx="${xs(d).toFixed(1)}" cy="${Y(v.t).toFixed(1)}" r="4.5" fill="#1E2127" stroke="#F0525A" stroke-width="2"/>` : `<circle cx="${xs(d).toFixed(1)}" cy="${Y(v.t).toFixed(1)}" r="4.5" fill="${WD_KLEUR[wd[d]]}" stroke="#1E2127" stroke-width="1.5"/>`; }).join("");
+  }
+  $("#vGraf").innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Verloop van ${esc(p)} in ${esc(g)}">${svg}<line id="vCross" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="#F2F3F5" stroke-opacity=".35" visibility="hidden"/><rect x="${L}" y="0" width="${W - L - Rm}" height="${H - B}" fill="transparent" id="vHit"/></svg>`;
+  const hit = $("#vHit"), cross = $("#vCross");
+  const opDag = ev => {
+    const r = hit.ownerSVGElement.getBoundingClientRect(), x = (ev.clientX - r.left) * W / r.width;
+    let best = dagen[0]; dagen.forEach(d => { if(Math.abs(xs(d) - x) < Math.abs(xs(best) - x)) best = d; });
+    const v = s[best], f = rol[best];
+    cross.setAttribute("x1", xs(best)); cross.setAttribute("x2", xs(best)); cross.setAttribute("visibility", "visible");
+    toonTip(`<span class="t-k">${datumKort(dates[best])} · ${g === ETAPPE ? "etappe" : esc(g)}</span>
+      <b>${fmt(v.t)}</b>${v.straf ? ` <span style="color:var(--rood)">incl. straftijd</span>` : ""}<br>
+      <span class="t-s">Gemiddelde renner: ${fmt(v.norm)}</span><br>
+      <b>${Math.round(v.watt)} W</b> <span class="t-s">${v.watt >= BASIS ? pctTxt(1 - BASIS / v.watt) + " sneller" : pctTxt(BASIS / v.watt - 1) + " trager"} dan verwacht</span>
+      ${f ? `<br><span class="t-s">Vorm toen: ${Math.round(f.watt)} W</span>` : ""}`, ev.clientX, ev.clientY);
+  };
+  hit.addEventListener("pointermove", opDag); hit.addEventListener("pointerdown", opDag);
+  hit.addEventListener("pointerleave", () => { verbergTip(); cross.setAttribute("visibility", "hidden"); });
+
+  /* conclusie: trend over de hele periode, als procent per maand */
+  const xsN = dagen.map(d => num[d]), ys = dagen.map(d => s[d].r), mx = mean(xsN), my = mean(ys);
+  const helling = xsN.reduce((a, x, i) => a + (x - mx) * (ys[i] - my), 0) / xsN.reduce((a, x) => a + (x - mx) ** 2, 0);
+  const pm = Math.exp(-helling * 30) - 1;
+  const nu = vorm(p, g), t = vorigEind >= 0 ? vorm(p, g, vorigEind) : null;
+  const naam = g === ETAPPE ? "over alle spellen" : `in ${esc(g)}`;
+  let zin = Math.abs(pm) < .03 ? `${esc(p)} is ${naam} vrij stabiel over de hele periode.` : `${esc(p)} wordt ${naam} gemiddeld <b>${pctTxt(pm)} per maand ${pm > 0 ? "sterker" : "zwakker"}</b> ten opzichte van de puzzel.`;
+  if(nu && t) zin += ` Nu ${Math.round(nu.watt)} W, twee weken geleden ${Math.round(t.watt)} W.`;
+  if(dagen.length < 20) zin += " Met nog maar " + dagen.length + " dagen is dit een eerste indruk.";
+  $("#vConc").innerHTML = zin;
+}
+
+function wdCel(rs){
+  if(!rs.length) return `<td class="leeg">–</td>`;
+  const w = watt(mean(rs)), t = Math.max(-1, Math.min(1, Math.log(w / BASIS) / .45));
+  const kleur = t >= 0 ? "var(--blauw)" : "var(--oranje)";
+  let pijl = "";
+  if(rs.length >= 4){
+    const h = rs.length >> 1, f = watt(mean(rs.slice(h))) / watt(mean(rs.slice(0, h))) - 1;
+    pijl = Math.abs(f) < .05 ? `<span class="pijl t-s">=</span>` : f > 0 ? `<span class="pijl op">▲${pctTxt(f)}</span>` : `<span class="pijl neer">▼${pctTxt(f)}</span>`;
+  }
+  return { w, html:`<td style="background:color-mix(in srgb, ${kleur} ${Math.round(Math.abs(t) * 55)}%, var(--wit-2))"`, pijl, n:rs.length };
+}
+function renderWeek(){
+  const p = speler;
+  const rijen = [...games, ETAPPE].map(g => {
+    const s = serie(p, g);
+    const cellen = DAGEN.map((_, w) => {
+      const ds = []; for(let d = 0; d < D; d++) if(s[d] && wd[d] === w) ds.push(d);
+      const c = wdCel(ds.map(d => s[d].r));
+      if(typeof c === "string") return { html:c, w:null };
+      const tijden = ds.map(d => s[d].t), groep = [];
+      ds.forEach(d => { if(g === ETAPPE) groep.push(...E[d].m.filter(q => E[d].full[q]).map(q => E[d].full[q])); else groep.push(...Object.values(raw[g][d])); });
+      const tipTxt = `<span class='t-k'>${esc(g === ETAPPE ? "Etappe" : g)} op ${DAGEN_LANG[w]}</span>${c.n}× gespeeld<br>Jouw mediane tijd: <b>${fmt(median(tijden))}</b><br><span class='t-s'>Groep mediaan: ${fmt(median(groep))}</span>`;
+      return { html:`${c.html} data-tip="${tipTxt}"><b>${Math.round(c.w)}</b>${c.pijl}</td>`, w:c.w };
+    });
+    return { g, cellen };
+  });
+  const et = rijen[rijen.length - 1].cellen.map((c, i) => ({ w:c.w, i })).filter(x => x.w);
+  et.sort((a, b) => b.w - a.w);
+  let conc = "";
+  if(et.length > 2) conc = `Relatief het sterkst op <b>${DAGEN_LANG[et[0].i]}</b> (${Math.round(et[0].w)} W), het zwakst op <b>${DAGEN_LANG[et[et.length - 1].i]}</b> (${Math.round(et[et.length - 1].w)} W). Omdat alles al tegen de puzzel gemeten is, betekent dit echt iets: niet "zondag is zwaar", maar "op zondag doe jij het beter of slechter dan de rest".`;
+  $("#s-week").innerHTML = `<h2>Jouw week</h2>
+    <p class="toel">Je gemiddelde vermogen per spel en weekdag. Blauw is sterker dan een gemiddelde renner, oranje zwakker. Het pijltje vergelijkt je recente helft van die weekdagen met de eerste helft: word je beter op zondagen, of alleen op maandagen? Tik op een vak voor de echte tijden.</p>
+    <div class="schaal"><span>zwakker</span><span class="balk"></span><span>sterker dan gemiddeld</span></div>
+    <div class="scroll"><table class="tbl"><thead><tr><th></th>${DAGEN.map(d => `<th>${d}</th>`).join("")}</tr></thead>
+    <tbody>${rijen.map(r => `<tr${r.g === ETAPPE ? ' class="som"' : ""}><td>${esc(r.g)}</td>${r.cellen.map(c => c.html).join("")}</tr>`).join("")}</tbody></table></div>
+    ${conc ? `<p class="conclusie">${conc}</p>` : ""}`;
+}
+
+function renderToen(){
+  const p = speler, start = dIdx.get(eerste[p]);
+  const rijen = games.map(g => {
+    const s = M[g].score[p];
+    const begin = [], nu = [];
+    for(let d = start; d < D; d++) if(s[d]){ if(num[d] < num[start] + 21) begin.push(s[d].watt); if(num[d] > num[D - 1] - VENSTER) nu.push(s[d].watt); }
+    return { g, begin, nu };
+  }).filter(r => r.begin.length >= 3 && r.nu.length >= 3);
+  if(!rijen.length || num[D - 1] - num[start] < 28){ $("#s-toen").innerHTML = `<h2>Toen en nu</h2><p class="toel">${esc(p)} rijdt nog te kort mee voor een vergelijking tussen de eerste weken en nu.</p>`; return; }
+  const W = Math.max(300, Math.round($("#s-toen").clientWidth - 38)), rij = 52, L = 78, Rm = 14, H = rijen.length * rij + 30;
+  const alle = rijen.flatMap(r => [quant(r.begin, .25), quant(r.begin, .75), quant(r.nu, .25), quant(r.nu, .75)]).concat([BASIS]);
+  const lo = Math.log(Math.min(...alle)) - .08, hi = Math.log(Math.max(...alle)) + .08;
+  const X = v => L + (W - L - Rm) * (Math.log(v) - lo) / (hi - lo);
+  let svg = [100,150,200,300,450,600,900].filter(v => Math.log(v) > lo && Math.log(v) < hi).map(v => `<line x1="${X(v)}" x2="${X(v)}" y1="4" y2="${H - 22}" stroke="${v === BASIS ? "#8A9099" : "#2A2F36"}" ${v === BASIS ? 'stroke-dasharray="4 4"' : ""}/><text x="${X(v)}" y="${H - 6}" text-anchor="middle">${v} W</text>`).join("");
+  rijen.forEach((r, i) => {
+    const y = 14 + i * rij, mb = median(r.begin), mn = median(r.nu);
+    const bt = `<span class='t-k'>${esc(r.g)}</span>`;
+    svg += `<text x="0" y="${y + 18}" style="fill:#F2F3F5;font:700 16px var(--cond)">${esc(r.g)}</text>
+      <rect x="${X(quant(r.begin, .25))}" y="${y + 2}" width="${Math.max(2, X(quant(r.begin, .75)) - X(quant(r.begin, .25)))}" height="10" rx="5" fill="#8A9099" opacity=".35" data-tip="${bt}Eerste 3 weken: middelste helft van je dagen tussen ${Math.round(quant(r.begin, .25))} en ${Math.round(quant(r.begin, .75))} W"/>
+      <rect x="${X(quant(r.nu, .25))}" y="${y + 18}" width="${Math.max(2, X(quant(r.nu, .75)) - X(quant(r.nu, .25)))}" height="10" rx="5" fill="#FFD300" opacity=".35" data-tip="${bt}Laatste 14 dagen: middelste helft tussen ${Math.round(quant(r.nu, .25))} en ${Math.round(quant(r.nu, .75))} W"/>
+      <line x1="${X(mb)}" x2="${X(mn)}" y1="${y + 7}" y2="${y + 23}" stroke="#F2F3F5" stroke-opacity=".5" stroke-width="1.5"/>
+      <circle cx="${X(mb)}" cy="${y + 7}" r="5" fill="#1E2127" stroke="#C4C9D1" stroke-width="2" data-tip="${bt}Mediaan eerste 3 weken: <b>${Math.round(mb)} W</b>"/>
+      <circle cx="${X(mn)}" cy="${y + 23}" r="6" fill="#FFD300" stroke="#1E2127" stroke-width="2" data-tip="${bt}Mediaan laatste 14 dagen: <b>${Math.round(mn)} W</b>"/>`;
+  });
+  const beste = rijen.map(r => ({ g:r.g, f:median(r.nu) / median(r.begin) - 1, sp:(quant(r.nu, .75) / quant(r.nu, .25)) / (quant(r.begin, .75) / quant(r.begin, .25)) })).sort((a, b) => b.f - a.f);
+  const constant = beste.slice().sort((a, b) => a.sp - b.sp)[0];
+  $("#s-toen").innerHTML = `<h2>Toen en nu</h2>
+    <p class="toel">Per spel je eerste drie weken (grijs) tegenover de laatste 14 dagen (geel). De stip is je mediaan, de balk de middelste helft van je dagen: hoe smaller, hoe constanter.</p>
+    <div class="grafiek"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Vermogen per spel, begin tegenover nu">${svg}</svg></div>
+    <div class="legenda"><span><i style="background:#1E2127;border:2px solid #C4C9D1"></i>eerste 3 weken</span><span><i style="background:#FFD300"></i>laatste 14 dagen</span></div>
+    <p class="conclusie">Grootste sprong: <b>${esc(beste[0].g)}</b>, ${beste[0].f >= 0 ? pctTxt(beste[0].f) + " sterker" : "al ging het " + pctTxt(beste[0].f) + " achteruit"}. ${constant && constant.sp < .9 ? `In <b>${esc(constant.g)}</b> ben je het meest constant geworden.` : ""}</p>`;
+}
+
+function renderRecords(){
+  const p = speler;
+  const rijen = games.map(g => ({ g, cellen:DAGEN.map((_, w) => {
+    let mijn = null, md = null, groep = null, gw = null;
+    for(let d = 0; d < D; d++){ if(wd[d] !== w || !raw[g][d]) continue; const v = raw[g][d];
+      if(v[p] != null && (mijn === null || v[p] < mijn)){ mijn = v[p]; md = d; }
+      Object.entries(v).forEach(([q, t]) => { if(groep === null || t < groep){ groep = t; gw = q; } }); }
+    if(mijn === null) return `<td class="leeg">–</td>`;
+    const ster = mijn === groep;
+    return `<td class="${ster ? "ster" : ""}" data-tip="<span class='t-k'>Beste ${esc(g)} op ${DAGEN_LANG[w]}</span><b>${fmt(mijn)}</b> op ${datumKort(dates[md])}<br><span class='t-s'>${ster ? "Dit is ook het groepsrecord." : `Groepsrecord: ${esc(gw)}, ${fmt(groep)}`}</span>">${fmt(mijn)}</td>`;
+  }) }));
+  const top = []; games.forEach(g => M[g].score[p].forEach((v, d) => { if(v && !v.straf) top.push({ ...v, d }); }));
+  top.sort((a, b) => b.watt - a.watt);
+  $("#s-records").innerHTML = `<h2>Records per weekdag</h2>
+    <p class="toel">Een record op zondag is iets anders dan op maandag, dus elke weekdag heeft zijn eigen record. Geel omlijnd: dat is ook het groepsrecord voor die dag.</p>
+    <div class="scroll"><table class="tbl"><thead><tr><th></th>${DAGEN.map(d => `<th>${d}</th>`).join("")}</tr></thead><tbody>${rijen.map(r => `<tr><td>${esc(r.g)}</td>${r.cellen.join("")}</tr>`).join("")}</tbody></table></div>
+    <h3 style="font:700 18px/1.1 var(--cond);text-transform:uppercase;margin:14px 0 4px">Beste prestaties tegen de puzzel</h3>
+    <p class="toel">Niet de snelste tijden, maar de dagen waarop je het verst onder de verwachte tijd bleef.</p>
+    <ol class="lijst">${top.slice(0, 5).map((v, i) => `<li><span class="pos">${i + 1}</span><span>${trui(v.g, 16)} <b>${esc(v.g)}</b> op ${datumKort(dates[v.d])}<br><span class="s">${fmt(v.t)} waar een gemiddelde renner ${fmt(v.norm)} nodig had</span></span><span class="w">${Math.round(v.watt)} W</span></li>`).join("")}</ol>`;
+}
+
+function renderReeksen(){
+  const p = speler, start = dIdx.get(eerste[p]), c = comb[p];
+  const totaal = D - start, volledig = E.slice(start).filter(e => e.full[p] != null).length;
+  const gemist = games.reduce((a, g) => a + M[g].score[p].filter(v => v && v.straf).length, 0);
+  let reeks = 0; for(let d = D - 1; d >= start && E[d].full[p] != null; d--) reeks++;
+  let lang = 0, cur = 0, langEind = -1; for(let d = start; d < D; d++){ if(c[d] && c[d].watt > BASIS){ cur++; if(cur > lang){ lang = cur; langEind = d; } } else cur = 0; }
+  let nuBoven = 0; for(let d = D - 1; d >= start && c[d] && c[d].watt > BASIS; d--) nuBoven++;
+  const weken = {}; for(let d = start; d < D; d++) if(c[d]){ const dt = new Date(dates[d] + "T12:00:00"); dt.setDate(dt.getDate() - wd[d]); const k = dt.toISOString().slice(0, 10); (weken[k] ||= []).push(c[d].r); }
+  const besteWeek = Object.entries(weken).filter(([, v]) => v.length >= 5).map(([k, v]) => ({ k, w:watt(mean(v)) })).sort((a, b) => b.w - a.w)[0];
+  const gepuzzeld = rijen.filter(r => r.speler === p).reduce((a, r) => a + r.t, 0);
+  const ritzeges = E.filter(e => e.winnaars.includes(p)).length, podium = E.filter(e => e.rang.some(r => r.p === p && r.pos <= 3)).length;
+  $("#s-reeksen").innerHTML = `<h2>Reeksen &amp; aanwezigheid</h2>
+    <p class="toel">Er zijn is ook een kwaliteit. Een gemist spel telt mee als straftijd (langzaamste tijd van die dag + 10 s), dus ook in je vermogen.</p>
+    <div class="tegels">
+      <div class="tegel"><b>${volledig}/${totaal}</b><span>etappes volledig gereden (${Math.round(volledig / totaal * 100)}%)</span></div>
+      <div class="tegel"><b>${gemist}</b><span>spellen gemist, straftijd gekregen</span></div>
+      <div class="tegel"><b>${reeks}</b><span>dagen op rij alles gespeeld</span></div>
+      <div class="tegel"><b>${nuBoven}</b><span>dagen op rij boven 300 W (record: ${lang}${langEind >= 0 ? ", t/m " + datumKort(dates[langEind]) : ""})</span></div>
+      <div class="tegel"><b>${besteWeek ? Math.round(besteWeek.w) + " W" : "–"}</b><span>beste week${besteWeek ? ", vanaf " + datumKort(besteWeek.k) : ""}</span></div>
+      <div class="tegel"><b>${duur(gepuzzeld)}</b><span>totaal gepuzzeld</span></div>
+      <div class="tegel"><b>${ritzeges}</b><span>ritzeges, ${podium}× op het podium</span></div>
+    </div>`;
+}
+
+function renderOpvallend(){
+  const p = speler, c = comb[p], feiten = [];
+  const dagen = c.map((v, d) => v && { ...v, d }).filter(Boolean);
+  const best = dagen.slice().sort((a, b) => b.watt - a.watt)[0], slecht = dagen.slice().sort((a, b) => a.watt - b.watt)[0];
+  if(best) feiten.push(["★", `Beste dag ooit: <b>${datumNL(dates[best.d])}</b>, ${Math.round(best.watt)} W over alle spellen (${fmt(best.t)}, verwacht ${fmt(best.norm)}).`]);
+  if(slecht) feiten.push(["↓", `Zwaarste dag: ${datumNL(dates[slecht.d])}, ${Math.round(slecht.watt)} W${slecht.straf ? ", met straftijd" : ""}.`]);
+  /* onderling op etappes */
+  const h2h = players.filter(q => q !== p).map(q => { let w = 0, l = 0; E.forEach(e => { if(e.tot[p] != null && e.tot[q] != null){ if(e.tot[p] < e.tot[q]) w++; else if(e.tot[p] > e.tot[q]) l++; } }); return { q, w, l }; }).filter(x => x.w + x.l >= 5);
+  if(h2h.length){
+    const nemesis = h2h.slice().sort((a, b) => a.w / (a.w + a.l) - b.w / (b.w + b.l))[0], prooi = h2h.slice().sort((a, b) => b.w / (b.w + b.l) - a.w / (a.w + a.l))[0];
+    feiten.push(["⚔", `Lastigste tegenstander: <b>${esc(nemesis.q)}</b>. Van de ${nemesis.w + nemesis.l} onderlinge etappes won je er ${nemesis.w}.`]);
+    if(prooi.q !== nemesis.q) feiten.push(["♥", `Favoriete prooi: <b>${esc(prooi.q)}</b>, ${prooi.w} van de ${prooi.w + prooi.l} onderlinge etappes gewonnen.`]);
+  }
+  /* sterkste spel tegen de groep */
+  const pg = games.map(g => ({ g, v:vorm(p, g, D - 1, 999) })).filter(x => x.v).sort((a, b) => b.v.watt - a.v.watt);
+  if(pg.length > 1) feiten.push(["◆", `Specialisme: <b>${esc(pg[0].g)}</b> (${Math.round(pg[0].v.watt)} W over de hele periode). Werk aan de winkel: ${esc(pg[pg.length - 1].g)} (${Math.round(pg[pg.length - 1].v.watt)} W).`]);
+  /* weekdag-PR's */
+  const prs = []; games.forEach(g => DAGEN.forEach((_, w) => { let b = null; for(let d = 0; d < D; d++) if(wd[d] === w && raw[g][d] && raw[g][d][p] != null && (!b || raw[g][d][p] < b.t)) b = { t:raw[g][d][p], d }; if(b && num[D - 1] - num[b.d] < VENSTER) prs.push(`${g} op ${DAGEN_LANG[w]}`); }));
+  if(prs.length) feiten.push(["⚡", `In de laatste 14 dagen ${prs.length} weekdagrecord${prs.length > 1 ? "s" : ""} gebroken: ${esc(namen(prs.slice(0, 4)))}${prs.length > 4 ? " en meer" : ""}.`]);
+  /* snelste seconde */
+  let snel = null; games.forEach(g => raw[g].forEach((v, d) => { if(v && v[p] != null && (!snel || v[p] < snel.t)) snel = { t:v[p], g, d }; }));
+  if(snel) feiten.push(["⏱", `Snelste spel ooit: ${esc(snel.g)} in ${snel.t} seconde${snel.t === 1 ? "" : "n"}, op ${datumNL(dates[snel.d])}.`]);
+  $("#s-opvallend").innerHTML = `<h2>Opvallend</h2>${feiten.map(([i, t]) => `<div class="feit"><span class="ic" aria-hidden="true">${i}</span><span>${t}</span></div>`).join("")}`;
+}
+
+function renderIk(){ renderSpelerKeus(); renderHero(); renderVerloop(); renderWeek(); renderToen(); renderRecords(); renderReeksen(); renderOpvallend(); }
+
+/* ===== PELOTON ===== */
+function renderPeloton(){
+  const rij = players.map(q => ({ q, nu:vorm(q, ETAPPE), toen:vorigEind >= 0 ? vorm(q, ETAPPE, vorigEind) : null, lijn:glijdend(q, ETAPPE).map(x => x && x.watt) })).filter(x => x.nu).sort((a, b) => b.nu.watt - a.nu.watt);
+  $("#p-vorm").innerHTML = `<h2>Vormranglijst</h2>
+    <p class="toel">Wie trapt nu het hardst? Gemiddeld vermogen over de laatste 14 dagen, gemeten tegen de puzzels. Het lijntje is het verloop sinds de start.</p>
+    ${rij.map((x, i) => `<div class="vorm-rij"><span class="pos">${i + 1}</span>${bib(x.q)}<span class="nm">${esc(x.q)}<small>${x.nu.n} dagen${x.nu.n < 5 ? ", te weinig voor een eerlijk beeld" : ""}</small></span>${spark(x.lijn, 110, 28, kleurVan(x.q))}<span class="w">${Math.round(x.nu.watt)} W<small>${deltaTxt(x.nu, x.toen)}</small></span></div>`).join("")}`;
+
+  /* puzzelkalender */
+  const g = kalSpel, diff = M[g].diff;
+  const start = new Date(dates[0] + "T12:00:00"); start.setDate(start.getDate() - wd[0]);
+  const weken = []; for(let d = new Date(start); d <= new Date(dates[D - 1] + "T12:00:00"); d.setDate(d.getDate() + 7)) weken.push(new Date(d));
+  const vals = diff.filter(x => x != null), lo = Math.min(...vals), hi = Math.max(...vals);
+  const cel = ds => { const d = dIdx.get(ds); if(d === undefined || diff[d] == null) return `<td class="x"></td>`; const t = (diff[d] - lo) / ((hi - lo) || 1); const rel = Math.exp(diff[d] - M[g].wdNorm[wd[d]]) - 1;
+    return `<td style="background:color-mix(in srgb, #DE4F3F ${Math.round(t * 100)}%, #FFF1A8)" data-tip="<span class='t-k'>${esc(g)} · ${datumKort(ds)}</span>Gemiddelde renner: <b>${fmt(Math.exp(diff[d]))}</b><br><span class='t-s'>${Math.abs(rel) < .05 ? "normaal" : pctTxt(rel) + (rel > 0 ? " zwaarder" : " lichter")} voor een ${DAGEN_LANG[wd[d]]}</span>">${fmt(Math.exp(diff[d]))}</td>`; };
+  const rel = dates.map((ds, d) => diff[d] == null ? null : { d, f:Math.exp(diff[d] - M[g].wdNorm[wd[d]]) }).filter(Boolean).sort((a, b) => b.f - a.f);
+  $("#p-kal").innerHTML = `<h2>Puzzelkalender</h2>
+    <p class="toel">Hoe zwaar was elke puzzel? Het getal is de tijd die een gemiddelde renner nodig had, de kleur loopt van licht (makkelijk) naar rood (zwaar). Je ziet de week van maandag naar zondag zwaarder worden.</p>
+    <div class="tabs" id="kalSpel" role="group" aria-label="Kies spel">${games.map(x => `<button data-g="${esc(x)}" aria-pressed="${x === g}">${trui(x, 16)}${esc(x)}</button>`).join("")}</div>
+    <div class="scroll"><table class="kal"><thead><tr><th class="wk">week van</th>${DAGEN.map(d => `<th>${d}</th>`).join("")}</tr></thead><tbody>
+    ${weken.map(w => `<tr><th class="wk">${w.getDate()} ${MAANDEN[w.getMonth()]}</th>${DAGEN.map((_, i) => { const x = new Date(w); x.setDate(x.getDate() + i); const ds = `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`; return cel(ds); }).join("")}</tr>`).join("")}
+    </tbody></table></div>
+    <p class="conclusie">Zwaarste ${esc(g)} in verhouding tot de weekdag: <b>${datumNL(dates[rel[0].d])}</b>, ${rel[0].f.toFixed(1).replace(".", ",")}× zo lang als normaal op een ${DAGEN_LANG[wd[rel[0].d]]}. Makkelijkste: ${datumNL(dates[rel[rel.length - 1].d])}.</p>`;
+  $("#kalSpel").querySelectorAll("button").forEach(b => b.onclick = () => { kalSpel = b.dataset.g; renderPeloton(); });
+
+  $("#p-verhuis").innerHTML = `<h2>En de rest van de huidige pagina</h2>
+    <p class="toel">Alles wat nu op de statistiekenpagina staat, verhuist naar dit tabblad. Er gaat niets verloren.</p>
+    <div class="verhuis"><div><b>Snelste tijden</b>top 5 per spel</div><div><b>Gemiddelde per weekdag</b>de groepstabel</div><div><b>Spelersprofielen</b>alle renners naast elkaar</div><div><b>Onderling</b>de head-to-head-matrix</div><div><b>Verloop</b>etappetijd van iedereen</div><div><b>Opvallend</b>de groepsfeitjes</div></div>`;
+}
+
+/* ===== WEETJE VAN DE DAG =====
+   Elke detector kijkt naar één etappe (en alles daarvoor). Hoe zeldzamer hij in het verleden afging, hoe hoger hij scoort. */
+const vorigeWd = d => { const r = []; for(let j = 0; j < d; j++) if(wd[j] === wd[d]) r.push(j); return r; };
+const enkel = e => e.winnaars.length === 1 ? e.winnaars[0] : null;
+const marge = e => e.rang.length > 1 && e.winnaars.length === 1 ? e.rang[1].t - e.rang[0].t : null;
+const spread = e => { const f = e.m.filter(p => e.full[p] != null).map(p => e.full[p]); return f.length >= 4 && f.length === e.m.length ? Math.max(...f) - Math.min(...f) : null; };
+const groepGem = e => mean(e.m.map(p => e.tot[p]));
+const ritWinsTot = (p, d) => E.slice(0, d + 1).filter(e => e.winnaars.includes(p)).length;
+const sec = n => `${n} seconde${n === 1 ? "" : "n"}`;
+const DET = [
+  { id:"zonder", cat:"Uitslag", naam:"Ritwinst zonder één spel te winnen", f:d => { const e = E[d], w = enkel(e); return w && e.gw[w] === 0 && e.gs.length >= 3 ? `<b>${esc(w)}</b> wint de etappe zonder ook maar één spel te winnen.` : null; } },
+  { id:"sweep", cat:"Uitslag", naam:"Alle spellen gewonnen", f:d => { const e = E[d], w = enkel(e); return w && e.gw[w] === e.gs.length && e.gs.length >= 3 ? `<b>${esc(w)}</b> wint alle ${e.gs.length} spellen. Een solo van start tot finish.` : null; } },
+  { id:"foto", cat:"Uitslag", naam:"Fotofinish: winst met 2 seconden of minder", f:d => { const e = E[d], m = marge(e); return m != null && m <= 2 ? `Fotofinish! <b>${esc(e.winnaars[0])}</b> wint met ${sec(m)} voorsprong op ${esc(e.rang[1].p)}.` : null; } },
+  { id:"gedeeld", cat:"Uitslag", naam:"Gedeelde ritzege", f:d => { const e = E[d]; return e.winnaars.length > 1 ? `Dode race: <b>${esc(namen(e.winnaars))}</b> finishen in exact dezelfde tijd, ${fmt(e.rang[0].t)}.` : null; } },
+  { id:"marge", cat:"Uitslag", naam:"Grootste winstmarge ooit", min:10, f:d => { const m = marge(E[d]); if(m == null) return null; const ooit = Math.max(...E.slice(0, d).map(marge).filter(x => x != null)); return m > ooit ? `<b>${esc(E[d].winnaars[0])}</b> wint met ${fmt(m)} voorsprong. Nooit eerder won iemand zo ruim (vorige record: ${fmt(ooit)}).` : null; } },
+  { id:"etWd", cat:"Records", naam:"Snelste etappe ooit op deze weekdag", f:d => { const v = vorigeWd(d); if(v.length < 3) return null; const e = E[d], vandaag = Object.entries(e.full).sort((a, b) => a[1] - b[1])[0]; if(!vandaag) return null; let oud = null; v.forEach(j => Object.entries(E[j].full).forEach(([p, t]) => { if(!oud || t < oud.t) oud = { p, t, j }; })); return oud && vandaag[1] < oud.t ? `Snelste ${DAGEN_LANG[wd[d]]}-etappe ooit: <b>${esc(vandaag[0])}</b> in ${fmt(vandaag[1])}. Het oude record (${fmt(oud.t)}) was van ${esc(oud.p)}, ${datumKort(dates[oud.j])}.` : null; } },
+  { id:"etOoit", cat:"Records", naam:"Snelste etappe aller tijden", min:10, f:d => { const e = E[d], vandaag = Object.entries(e.full).sort((a, b) => a[1] - b[1])[0]; if(!vandaag) return null; const oud = Math.min(...E.slice(0, d).flatMap(x => Object.values(x.full))); return vandaag[1] < oud ? `Snelste etappe aller tijden: <b>${esc(vandaag[0])}</b> in ${fmt(vandaag[1])}.` : null; } },
+  { id:"grSnel", cat:"Records", naam:"Snelste groepsdag ooit op deze weekdag", f:d => { const v = vorigeWd(d); if(v.length < 3) return null; const g0 = groepGem(E[d]), oud = Math.min(...v.map(j => groepGem(E[j]))); return g0 < oud ? `Nooit reed het peloton zo snel op een ${DAGEN_LANG[wd[d]]}: gemiddeld ${fmt(g0)} per renner (vorige beste ${fmt(oud)}).` : null; } },
+  { id:"grTraag", cat:"Records", naam:"Traagste groepsdag ooit op deze weekdag", f:d => { const v = vorigeWd(d); if(v.length < 3) return null; const g0 = groepGem(E[d]), oud = Math.max(...v.map(j => groepGem(E[j]))); return g0 > oud ? `Zwaarste ${DAGEN_LANG[wd[d]]} ooit voor het peloton: gemiddeld ${fmt(g0)} per renner. De bezemwagen maakte overuren.` : null; } },
+  { id:"spWd", cat:"Records", naam:"Spelrecord voor deze weekdag", f:d => { const v = vorigeWd(d); let best = null; E[d].gs.forEach(g => { const vg = v.filter(j => raw[g][j]); if(vg.length < 3) return; const oud = Math.min(...vg.flatMap(j => Object.values(raw[g][j]))); const nu = Math.min(...Object.values(raw[g][d])); if(nu < oud && (!best || nu / oud < best.f)) best = { g, nu, oud, f:nu / oud, wie:E[d].spelWinnaars[g] }; }); return best ? `Snelste ${DAGEN_LANG[wd[d]]}-${esc(best.g)} ooit: <b>${esc(namen(best.wie))}</b> in ${fmt(best.nu)} (oud record ${fmt(best.oud)}).` : null; } },
+  { id:"spOoit", cat:"Records", naam:"Spelrecord aller tijden", min:10, f:d => { let r = null; E[d].gs.forEach(g => { const oud = Math.min(...raw[g].slice(0, d).filter(Boolean).flatMap(v => Object.values(v))); const nu = Math.min(...Object.values(raw[g][d])); if(nu < oud) r = `Groepsrecord aller tijden in ${esc(g)}: <b>${esc(namen(E[d].spelWinnaars[g]))}</b> in ${sec(nu)}.`; }); return r; } },
+  { id:"pr", cat:"Records", naam:"Persoonlijk record op deze weekdag", f:d => { const v = vorigeWd(d), wie = []; Object.entries(E[d].full).forEach(([p, t]) => { const oud = v.map(j => E[j].full[p]).filter(x => x != null); if(oud.length >= 3 && t < Math.min(...oud)) wie.push(`${esc(p)} (${fmt(t)})`); }); return wie.length ? `Persoonlijk ${DAGEN_LANG[wd[d]]}record voor <b>${namen(wie)}</b>.` : null; } },
+  { id:"watt", cat:"Tegen de puzzel", naam:"Hoogste vermogen ooit in één spel", min:10, f:d => { let nu = null; E[d].gs.forEach(g => E[d].m.forEach(p => { const s = M[g].score[p][d]; if(s && !s.straf && (!nu || s.watt > nu.watt)) nu = { ...s, p }; })); if(!nu) return null; let oud = 0; for(let j = 0; j < d; j++) E[j].gs.forEach(g => E[j].m.forEach(p => { const s = M[g].score[p][j]; if(s && !s.straf) oud = Math.max(oud, s.watt); })); return nu.watt > oud ? `<b>${esc(nu.p)}</b> trapt ${Math.round(nu.watt)} W in ${esc(nu.g)}: ${fmt(nu.t)} waar een gemiddelde renner ${fmt(nu.norm)} nodig had. Het hoogste vermogen ooit gemeten.` : null; } },
+  { id:"dagWatt", cat:"Tegen de puzzel", naam:"Beste etappe ooit tegen de puzzel", min:10, f:d => { const nu = E[d].m.map(p => ({ p, c:comb[p][d] })).filter(x => x.c && !x.c.straf).sort((a, b) => b.c.watt - a.c.watt)[0]; if(!nu) return null; let oud = 0; for(let j = 0; j < d; j++) players.forEach(p => { const c = comb[p][j]; if(c && !c.straf) oud = Math.max(oud, c.watt); }); return nu.c.watt > oud ? `<b>${esc(nu.p)}</b> rijdt de sterkste etappe ooit: ${Math.round(nu.c.watt)} W gemiddeld over alle spellen.` : null; } },
+  { id:"zwaar", cat:"Tegen de puzzel", naam:"Zwaarste puzzel ooit voor deze weekdag", f:d => { const v = vorigeWd(d); let b = null; E[d].gs.forEach(g => { const oud = v.map(j => M[g].diff[j]).filter(x => x != null); if(oud.length < 3) return; const nu = M[g].diff[d]; if(nu > Math.max(...oud)){ const f = Math.exp(nu - mean(oud)); if(!b || f > b.f) b = { g, f }; } }); return b ? `De ${esc(b.g)} van vandaag was de zwaarste ${DAGEN_LANG[wd[d]]}-${esc(b.g)} ooit: <b>${b.f.toFixed(1).replace(".", ",")}×</b> zo lang als een gewone ${DAGEN_LANG[wd[d]]}.` : null; } },
+  { id:"licht", cat:"Tegen de puzzel", naam:"Makkelijkste puzzel ooit voor deze weekdag", f:d => { const v = vorigeWd(d); let b = null; E[d].gs.forEach(g => { const oud = v.map(j => M[g].diff[j]).filter(x => x != null); if(oud.length < 3) return; const nu = M[g].diff[d]; if(nu < Math.min(...oud)){ const f = 1 - Math.exp(nu - mean(oud)); if(!b || f > b.f) b = { g, f }; } }); return b ? `Cadeautje: de makkelijkste ${DAGEN_LANG[wd[d]]}-${esc(b.g)} ooit, ${pctTxt(b.f)} sneller op te lossen dan normaal.` : null; } },
+  { id:"boven", cat:"Tegen de puzzel", naam:"Hele peloton boven de eigen vorm", f:d => { const e = E[d]; if(e.m.length < 4 || e.straf.length) return null; const ok = e.m.every(p => { const c = comb[p][d], v = d ? vorm(p, ETAPPE, d - 1) : null; return c && v && v.n >= 5 && c.r < v.r; }); return ok ? `Iedereen reed vandaag boven de eigen vorm. Een collectieve topdag.` : null; } },
+  { id:"l2e", cat:"Wendingen", naam:"Gisteren laatste, vandaag winnaar", f:d => { if(!d) return null; const e = E[d], w = enkel(e), v = E[d - 1]; if(!w || v.rang.length < 4) return null; const laatst = v.rang[v.rang.length - 1].pos; return v.rang.some(r => r.p === w && r.pos === laatst) ? `Van de rode lantaarn naar de bloemen: <b>${esc(w)}</b> werd gisteren laatste en wint vandaag.` : null; } },
+  { id:"e2l", cat:"Wendingen", naam:"Gisteren winnaar, vandaag laatste", f:d => { if(!d) return null; const e = E[d], v = E[d - 1], w = enkel(v); if(!w || e.rang.length < 4) return null; const laatst = e.rang[e.rang.length - 1]; return laatst.p === w && e.rang.filter(r => r.pos === laatst.pos).length === 1 ? `Hoogmoed komt voor de val: winnaar van gisteren <b>${esc(w)}</b> wordt vandaag laatste.` : null; } },
+  { id:"omgekeerd", cat:"Wendingen", naam:"Uitslag precies omgekeerd t.o.v. gisteren", f:d => { if(!d) return null; const a = E[d].rang, b = E[d - 1].rang; if(a.length < 4 || a.length !== b.length || new Set(a.map(r => r.pos)).size !== a.length || new Set(b.map(r => r.pos)).size !== b.length) return null; return a.every((r, i) => r.p === b[b.length - 1 - i].p) ? `De uitslag is precies het spiegelbeeld van gisteren. Eerste werd laatste, laatste werd eerste.` : null; } },
+  { id:"comeback", cat:"Wendingen", naam:"Winst na een gemiste dag", f:d => { if(!d) return null; const w = enkel(E[d]); return w && E[d - 1].straf.includes(w) ? `<b>${esc(w)}</b> miste gisteren nog een spel, en wint vandaag de etappe.` : null; } },
+  { id:"pech", cat:"Wendingen", naam:"Snelst in twee spellen, toch geen podium", f:d => { const e = E[d], r = e.rang.find(x => x.pos > 3 && e.gw[x.p] >= 2); return r ? `Pech voor <b>${esc(r.p)}</b>: snelste in ${e.gw[r.p]} spellen, en toch maar ${r.pos}e.` : null; } },
+  { id:"lantaarn", cat:"Wendingen", naam:"Rode lantaarn van de Tour wint de etappe", f:d => { const e = E[d], w = enkel(e); if(!w || e.tourNr < 3) return null; const gc = E[d - 1].gc; return gc.length >= 4 && gc[gc.length - 1].p === w ? `De rode lantaarn van de Tour, <b>${esc(w)}</b>, wint de etappe. Er is nog hoop.` : null; } },
+  { id:"geelLaatst", cat:"Wendingen", naam:"Gele trui wordt laatste in de etappe", f:d => { const e = E[d]; if(e.tourNr < 3 || e.rang.length < 4) return null; const geel = E[d - 1].gc[0].p, l = e.rang[e.rang.length - 1]; return l.p === geel ? `Inzinking in het geel: Tourleider <b>${esc(geel)}</b> wordt vandaag laatste.` : null; } },
+  { id:"geel", cat:"Klassement", naam:"Gele trui wisselt van drager", f:d => { const e = E[d]; if(e.tourNr < 2) return null; const oud = E[d - 1].gc[0].p, nu = e.gc[0].p; if(oud === nu) return null; let n = 0; for(let j = d - e.tourNr + 2; j <= d; j++) if(E[j].gc[0].p !== E[j - 1].gc[0].p) n++; return `<b>${esc(nu)}</b> pakt het geel van ${esc(oud)}. Wissel nummer ${n} in deze Tour.`; } },
+  { id:"reeks", cat:"Reeksen", naam:"Drie of meer ritzeges op rij", f:d => { const w = enkel(E[d]); if(!w) return null; let n = 1; for(let j = d - 1; j >= 0 && E[j].winnaars.includes(w); j--) n++; return n >= 3 ? `<b>${esc(w)}</b> wint voor de ${n}e keer op rij. Iemand moet hier iets aan doen.` : null; } },
+  { id:"podium", cat:"Reeksen", naam:"Tien, vijftien, … podiumplaatsen op rij", f:d => { let b = null; E[d].rang.filter(r => r.pos <= 3).forEach(r => { let n = 0; for(let j = d; j >= 0 && E[j].rang.some(x => x.p === r.p && x.pos <= 3); j--) n++; if(n >= 10 && n % 5 === 0 && (!b || n > b.n)) b = { p:r.p, n }; }); return b ? `<b>${esc(b.p)}</b> staat voor de ${b.n}e dag op rij op het podium.` : null; } },
+  { id:"anders", cat:"Reeksen", naam:"Vijf verschillende winnaars in vijf dagen", f:d => { if(d < 4) return null; const w = E.slice(d - 4, d + 1).map(enkel); return w.every(Boolean) && new Set(w).size === 5 ? `Vijf etappes, vijf verschillende winnaars: ${esc(namen(w))}. Open koers!` : null; } },
+  { id:"opkomst", cat:"Reeksen", naam:"Mijlpaal volledige opkomst (elke 5 dagen)", f:d => { let n = 0; for(let j = d; j >= 0 && !E[j].straf.length; j--) n++; return n >= 5 && n % 5 === 0 ? `Al ${n} etappes op rij heeft iedereen alles gespeeld. Er zijn is een kwaliteit.` : null; } },
+  { id:"eersteWin", cat:"Mijlpalen", naam:"Eerste ritzege ooit", min:5, f:d => { const w = enkel(E[d]); return w && ritWinsTot(w, d) === 1 && dIdx.get(eerste[w]) < d ? `Eindelijk! <b>${esc(w)}</b> wint de eerste etappe ooit, na ${d - dIdx.get(eerste[w])} dagen proberen.` : null; } },
+  { id:"jubileum", cat:"Mijlpalen", naam:"Jubileum: 10e, 25e of 50e ritzege", f:d => { const w = enkel(E[d]); if(!w) return null; const n = ritWinsTot(w, d); return [10, 25, 50, 75, 100].includes(n) ? `Jubileum: dit is ritzege nummer <b>${n}</b> voor ${esc(w)}.` : null; } },
+  { id:"etJub", cat:"Mijlpalen", naam:"Jubileumetappe (elke 25)", f:d => (d + 1) % 25 === 0 ? `Vandaag werd etappe nummer <b>${d + 1}</b> verreden sinds de start op ${datumNL(dates[0])}.` : null },
+  { id:"uren", cat:"Mijlpalen", naam:"Weer 2 uur samen gepuzzeld", f:d => { const tot = j => rijen.filter(r => r.datum <= dates[j]).reduce((a, r) => a + r.t, 0); const nu = tot(d), oud = d ? tot(d - 1) : 0; return Math.floor(nu / 7200) > Math.floor(oud / 7200) ? `Samen hebben jullie nu <b>${Math.floor(nu / 3600)} uur</b> gepuzzeld. Genoeg voor een bergetappe in de echte Tour.` : null; } },
+  { id:"ieder", cat:"Kuriositeiten", naam:"Iedereen wint minstens één spel", f:d => { const e = E[d]; return e.m.length >= 4 && e.m.every(p => e.gw[p] >= 1) ? `Eerlijk verdeeld: elke renner won vandaag minstens één spel.` : null; } },
+  { id:"allesGelijk", cat:"Kuriositeiten", naam:"Iedereen precies even snel in een spel", f:d => { const e = E[d]; const g = e.gs.find(g => { const v = Object.values(raw[g][d]); return v.length === e.m.length && v.length >= 3 && v.every(x => x === v[0]); }); return g ? `Synchroonpuzzelen: iedereen deed ${esc(g)} in precies ${sec(raw[g][d][e.m[0]])}.` : null; } },
+  { id:"drie", cat:"Kuriositeiten", naam:"Drie of meer renners gedeeld snelst in een spel", f:d => { const e = E[d], g = e.gs.find(g => e.spelWinnaars[g].length >= 3); return g ? `In ${esc(g)} deelden <b>${esc(namen(e.spelWinnaars[g]))}</b> de snelste tijd: ${sec(raw[g][d][e.spelWinnaars[g][0]])}.` : null; } },
+  { id:"tweeling", cat:"Kuriositeiten", naam:"Twee renners met exact dezelfde etappetijd", f:d => { const e = E[d], f = Object.entries(e.full); for(let i = 0; i < f.length; i++) for(let j = i + 1; j < f.length; j++) if(f[i][1] === f[j][1] && !(e.winnaars.includes(f[i][0]) && e.winnaars.includes(f[j][0]))) return `Tweelingen: <b>${esc(f[i][0])}</b> en <b>${esc(f[j][0])}</b> hebben exact dezelfde etappetijd, ${fmt(f[i][1])}.`; return null; } },
+  { id:"flits", cat:"Kuriositeiten", naam:"Een spel in 3 seconden of sneller", f:d => { let b = null; E[d].gs.forEach(g => Object.entries(raw[g][d]).forEach(([p, t]) => { if(t <= 3 && (!b || t < b.t)) b = { p, g, t }; })); return b ? `Flitsend: <b>${esc(b.p)}</b> deed ${esc(b.g)} in ${sec(b.t)}. Knipperen en je mist het.` : null; } },
+  { id:"compact", cat:"Kuriositeiten", naam:"Kleinste verschil tussen eerste en laatste", min:10, f:d => { const s = spread(E[d]); if(s == null) return null; const oud = E.slice(0, d).map(spread).filter(x => x != null); return oud.length && s < Math.min(...oud) ? `Het peloton bleef bij elkaar: maar ${fmt(s)} tussen de eerste en de laatste. Nog nooit zo klein.` : null; } },
+  { id:"uiteen", cat:"Kuriositeiten", naam:"Grootste verschil tussen eerste en laatste", min:10, f:d => { const s = spread(E[d]); if(s == null) return null; const oud = E.slice(0, d).map(spread).filter(x => x != null); return oud.length && s > Math.max(...oud) ? `Het peloton spat uiteen: ${fmt(s)} tussen de eerste en de laatste. Nog nooit zo groot.` : null; } },
+  { id:"basis", cat:"Altijd", naam:"Terugvaloptie: ritzege nummer zoveel", basis:true, f:d => { const e = E[d]; return e.winnaars.length ? `${e.winnaars.length > 1 ? `<b>${esc(namen(e.winnaars))}</b> delen de winst` : `<b>${esc(e.winnaars[0])}</b> pakt ritzege nummer ${ritWinsTot(e.winnaars[0], d)}`}, in ${fmt(e.rang[0].t)}.` : null; } }
+];
+/* alles één keer doorrekenen */
+const AF = DET.map(det => dates.map((_, d) => d >= (det.min || 0) ? det.f(d) : null));
+function weetjesVan(d){
+  return DET.map((det, k) => {
+    const tekst = AF[k][d]; if(!tekst) return null;
+    const eerder = AF[k].slice(0, d).filter(Boolean).length;
+    const score = det.basis ? -1 : Math.log((d + 1) / (eerder + 1));
+    return { det, tekst, eerder, score, n:d + 1 };
+  }).filter(Boolean).sort((a, b) => b.score - a.score);
+}
+const zeldTxt = w => w.det.basis ? "Een gewone dag in de Tour" : w.eerder === 0 ? `Voor het eerst in ${w.n} etappes` : `Pas de ${w.eerder + 1}e keer in ${w.n} etappes`;
+const zeldBalk = w => { const f = w.det.basis ? 0 : Math.min(1, w.score / Math.log(60)); const n = Math.max(1, Math.round(f * 8)); return `<span class="zeldmeter" aria-hidden="true" title="Zeldzaamheid">${[...Array(8)].map((_, i) => `<i class="${i < n ? "aan" : ""}" style="height:${6 + i * 1.6}px"></i>`).join("")}</span>`; };
+
+function renderWeetje(){
+  const d = wDag, e = E[d], lijst = weetjesVan(d), top = lijst[0], rest = lijst.slice(1, 4).filter(x => !x.det.basis);
+  $("#w-dag").innerHTML = `<h2>Op de Tour-pagina</h2>
+    <div class="wnav"><button id="wVor" aria-label="Vorige etappe" ${d === 0 ? "disabled" : ""}>&#8249;</button>
+      <select id="wKies" aria-label="Kies etappe">${dates.map((ds, i) => `<option value="${i}" ${i === d ? "selected" : ""}>Etappe ${i + 1} · ${datumKort(ds)}</option>`).join("")}</select>
+      <button id="wVol" aria-label="Volgende etappe" ${d === D - 1 ? "disabled" : ""}>&#8250;</button></div>
+    <div class="weetje">
+      <div class="w-band"><span class="w-label">Weetje van de dag</span><span class="w-cat">${esc(top.det.cat)}</span></div>
+      <p class="w-tekst">${top.tekst}</p>
+      <div class="w-zeld"><span class="pill ${top.eerder === 0 && !top.det.basis ? "vol" : ""}">${zeldTxt(top)}</span>${zeldBalk(top)}</div>
+    </div>
+    ${rest.length ? `<div class="ook"><h3>Ook vandaag</h3>${rest.map(w => `<div class="feit"><span class="ic" aria-hidden="true">◆</span><span>${w.tekst} <span class="t-s" style="color:var(--sub);font-size:13px">${zeldTxt(w)}.</span></span></div>`).join("")}</div>` : ""}
+    <div class="huld"><div class="h-baan"></div><div class="h-in"><p class="h-k">Huldiging · laatste scène, na het podium</p><p>Wist je dat… ${top.tekst.replace(/<\/?b>/g, "")}</p></div></div>`;
+  $("#wVor").onclick = () => { wDag--; renderWeetje(); };
+  $("#wVol").onclick = () => { wDag++; renderWeetje(); };
+  $("#wKies").onchange = ev => { wDag = +ev.target.value; renderWeetje(); };
+
+  const tel = DET.map((det, k) => ({ det, n:AF[k].filter(Boolean).length, laatst:AF[k].map((x, i) => x ? i : -1).filter(i => i >= 0).pop(), top:dates.filter((_, i) => weetjesVan(i)[0].det === det).length }));
+  const cats = [...new Set(DET.map(x => x.cat))];
+  $("#w-cat").innerHTML = `<h2>Alle ${DET.length - 1} weetjes</h2>
+    <p class="toel">Elke dag draaien al deze controles. Het weetje dat in het verleden het minst vaak voorkwam, wint. Records per weekdag tellen pas mee als die weekdag al 3 keer gereden is; "ooit"-records pas na 10 etappes, anders zou de eerste week vol records staan. "Weetje van de dag" telt hoe vaak het de hoofdrol kreeg.</p>
+    <div class="scroll"><table class="cat-tbl"><thead><tr><th>Weetje</th><th style="text-align:right">Kwam voor</th><th style="text-align:right">Hoofdrol</th><th>Laatst</th></tr></thead><tbody>
+    ${cats.map(c => `<tr><td colspan="4" class="groep">${esc(c)}</td></tr>` + tel.filter(t => t.det.cat === c).map(t => `<tr class="${t.n ? "" : "nooit"}"><td>${esc(t.det.naam)}</td><td class="n">${t.n ? t.n + "×" : "nog nooit"}</td><td class="n">${t.top || "–"}</td><td>${t.laatst != null ? `<a href="#weetje" data-d="${t.laatst}" style="color:var(--asfalt)">${datumKort(dates[t.laatst])}</a>` : ""}</td></tr>`).join("")).join("")}
+    </tbody></table></div>`;
+  $("#w-cat").querySelectorAll("a[data-d]").forEach(a => a.onclick = ev => { ev.preventDefault(); wDag = +a.dataset.d; renderWeetje(); $("#w-dag").scrollIntoView({ behavior:"smooth" }); });
+}
+
+/* ===== tabs en opstart ===== */
+function toon(t){
+  tab = t;
+  document.querySelectorAll(".hoofdtabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === t));
+  ["ik","peloton","weetje"].forEach(x => $("#v-" + x).hidden = x !== t);
+  try{ history.replaceState(null, "", "#" + t); }catch(e){}
+  ({ ik:renderIk, peloton:renderPeloton, weetje:renderWeetje })[t]();
+}
+document.querySelectorAll(".hoofdtabs button").forEach(b => b.onclick = () => toon(b.dataset.tab));
+addEventListener("hashchange", () => { const h = location.hash.slice(1); if(["ik","peloton","weetje"].includes(h) && h !== tab) toon(h); });
+$("#voet").innerHTML = `Vermogen is een spelletje met de data, geen echte watt: 300 W is wat een gemiddelde renner uit de groep op dezelfde puzzel zou doen. Hoe zwaar een puzzel was, schatten we uit de tijden van de anderen, dus je eigen tijd telt niet mee in je eigen maatstaf. Gemiste spellen tellen als straftijd. ${D} etappes, ${rijen.length} tijden.`;
+let breedte = innerWidth;
+addEventListener("resize", () => { clearTimeout(window._rt); window._rt = setTimeout(() => { if(innerWidth !== breedte){ breedte = innerWidth; toon(tab); } }, 200); });
+toon(tab);
+})();
+</script>
