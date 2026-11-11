@@ -512,3 +512,7 @@ body.huld-open{overflow:hidden}
 .kr-staaf{display:block;height:5px;background:var(--wit-2);border-radius:3px;margin-top:5px;min-width:70px}
 .kr-staaf i{display:block;height:100%;background:var(--geel);border-radius:3px}
 .kr-tip{border-left:4px solid var(--geel);background:var(--wit-2);padding:12px 14px;border-radius:0 4px 4px 0;font-size:15px;margin:4px 0 10px}
+.kr-dagen{flex-wrap:nowrap;gap:4px;flex:1 1 auto;min-width:0;max-width:380px}
+.kr-dagen button{flex:1 1 0;min-width:0;padding:5px 0;border-radius:6px;font:700 16px/1.1 var(--cond);text-align:center}
+.kr-dagen button small{display:block;font:500 11px/1.2 Barlow,sans-serif;opacity:.75}
+.kr-soort b{color:var(--asfalt)}

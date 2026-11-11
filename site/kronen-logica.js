@@ -23,8 +23,9 @@ const TECHNIEKEN = {
   enkel:      { naam:"Laatste vakje",              zwaarte:0, tip:"Tel per rij, kolom en vlak hoeveel vakjes nog vrij zijn. Is het er één, dan staat daar de kroon." },
   opgesloten: { naam:"Vlak in één rij of kolom",   zwaarte:1, tip:"Zoek vlakken die helemaal binnen één rij of kolom liggen. Die lijn is dan van dat vlak: streep de rest van de lijn weg." },
   claim:      { naam:"Rij of kolom in één vlak",   zwaarte:1, tip:"Kijk per rij en kolom of alle vrije vakjes dezelfde kleur hebben. Dan komt de kroon van die kleur in die lijn: streep de rest van het vlak weg." },
-  aanval:     { naam:"Blokkerend vakje",           zwaarte:2, tip:"Kijk bij kleine vlakken (2 of 3 vrije vakjes) welk vakje ernaast ze allemaal tegelijk raakt. Daar kan geen kroon staan." },
-  groep:      { naam:"Groep van vlakken",          zwaarte:3, tip:"Zoek twee of drie vlakken die samen in net zoveel rijen of kolommen passen. Die lijnen zijn dan bezet: andere kleuren vallen daar af." },
+  aanval:     { naam:"Blokkerend vakje",           zwaarte:3, tip:"Kijk bij kleine vlakken (2 of 3 vrije vakjes) welk vakje ernaast ze allemaal tegelijk raakt. Daar kan geen kroon staan." },
+  groep:      { naam:"Groep van vlakken",          zwaarte:5, tip:"Zoek twee of drie vlakken die samen in net zoveel rijen of kolommen passen. Die lijnen zijn dan bezet: andere kleuren vallen daar af." },
+  gevolg:     { naam:"Vooruitdenken",              zwaarte:6, tip:"Als niets anders lukt: kies een vakje in een klein vlak en denk één of twee stappen door. Loopt een ander vlak of een lijn dan leeg, dan kan daar geen kroon staan." },
   fout:       { naam:"Fout herstellen",            zwaarte:0, tip:"Zet pas een kruisje of kroon als je kunt uitleggen waarom. Gokken kost later meer tijd dan het nu oplevert." }
 };
 
@@ -164,7 +165,34 @@ function stap(n, reg, staat){
     if(weg.length) return { type:"aanval", eenheid:e, plaats:[], weg, basis:e.cellen };
   }
 
-  return lijnen(2, n - 1);
+  h = lijnen(2, n - 1);
+  if(h) return h;
+
+  /* vooruitdenken: een kroon hier dwingt een of meer andere kronen af, en daarna loopt iets leeg */
+  let best = null;
+  for(let c = 0; c < N; c++){
+    if(!A.k[c]) continue;
+    const sim = Uint8Array.from(staat), keten = [];
+    sim[c] = 2;
+    for(let d = 0; d <= 3; d++){
+      const B = analyse(n, reg, sim);
+      let leeg = null, een = null;
+      for(const soort of ["reg", "rij", "kol"]){
+        const heeft = soort === "reg" ? B.rg : soort === "rij" ? B.rij : B.kol;
+        for(let i = 0; i < n && !leeg; i++){
+          if(heeft[i] >= 0) continue;
+          let tel = 0, cel = -1;
+          for(let x = 0; x < N; x++) if(B.k[x] && hoortBij(n, reg, x, soort, i)){ tel++; cel = x; }
+          if(!tel) leeg = { soort, i };
+          else if(tel === 1 && !een) een = { eenheid:{ soort, i }, cel };
+        }
+      }
+      if(leeg){ if(!best || keten.length < best.keten.length) best = { type:"gevolg", n2:N, plaats:[], weg:[c], basis:keten.map(k => k.cel), keten, eenheid:leeg }; break; }
+      if(!een || (best && keten.length + 1 >= best.keten.length)) break;
+      sim[een.cel] = 2; keten.push(een);
+    }
+  }
+  return best;
 }
 
 function techniek(h){
@@ -190,6 +218,10 @@ function beschrijf(h){
   if(h.type === "aanval"){
     const wat = h.weg.length === 1 ? "het aangewezen vakje" : "een van de aangewezen vakjes";
     return `Een kroon op ${wat} zou alle vrije vakjes van ${naamEenheid(h.eenheid)} blokkeren. Daar kan dus geen kroon staan.`;
+  }
+  if(h.type === "gevolg"){
+    const stappen = h.keten.map((k, i) => `${i ? "Daarna blijft" : "Dan blijft"} in ${naamEenheid(k.eenheid)} alleen het omlijnde vakje op ${naamCel(Math.round(Math.sqrt(h.n2)), k.cel)} over, dus daar komt een kroon.`).join(" ");
+    return `Stel dat er een kroon op het aangewezen vakje komt. ${stappen} Nu is er in ${naamEenheid(h.eenheid)} geen plek meer. Het aangewezen vakje kan dus geen kroon zijn.`;
   }
   const L = naamLijnen(h), V = naamVlakken(h.regs), een = h.regs.length === 1 && h.k === 1;
   if(h.type === "opgesloten") return een
@@ -218,17 +250,77 @@ function losOp(n, reg){
 }
 
 /* Omdat elke stap van de motor waterdicht is, heeft een puzzel die hij oplost precies één oplossing. */
-function genereer(n, seed){
+function genereer(n, seed, past, pogingen){
   const rnd = rng(seed);
-  for(let poging = 0; poging < 20000; poging++){
+  for(let poging = 0; poging < (pogingen || 20000); poging++){
     const reg = groei(n, maakOplossing(n, rnd), rnd);
     const res = losOp(n, reg);
-    if(res && res.zwaarte >= n - 3) return { n, reg:Array.from(reg), opl:res.opl, zwaarte:res.zwaarte, tel:res.tel, seed };
+    if(res && (!past || past(res))) return { n, reg:Array.from(reg), opl:res.opl, zwaarte:res.zwaarte, tel:res.tel, seed };
   }
   return null;
 }
 
-const api = { KLEUREN, TECHNIEKEN, rng, hash, analyse, stap, techniek, beschrijf, losOp, genereer, naamCel, raakt };
+/* ---- een puzzel per weekdag: maandag heel makkelijk, zondag heel moeilijk ----
+   Formaten volgen wat Queens-archieven voor LinkedIn laten zien: 7×7 aan het begin van de week,
+   8×8 in het midden, 9×9 in het weekend. De moeilijkheid komt van schuiven met de vlakgrenzen:
+   een grensvakje verhuist naar het buurvlak zolang de puzzel zonder gokken oplosbaar blijft
+   en de zwaarte richting het doel van die dag gaat. */
+const DAGEN = [
+  { naam:"Maandag",   kort:"Ma", n:7, min:0,  max:2,   label:"heel makkelijk" },
+  { naam:"Dinsdag",   kort:"Di", n:7, min:5,  max:8,   label:"makkelijk" },
+  { naam:"Woensdag",  kort:"Wo", n:8, min:9,  max:13,  label:"gemiddeld" },
+  { naam:"Donderdag", kort:"Do", n:8, min:15, max:20,  label:"pittig" },
+  { naam:"Vrijdag",   kort:"Vr", n:8, min:23, max:30,  label:"moeilijk" },
+  { naam:"Zaterdag",  kort:"Za", n:9, min:34, max:44,  label:"heel moeilijk" },
+  { naam:"Zondag",    kort:"Zo", n:9, min:50, max:90,  label:"extreem moeilijk" }
+];
+
+function heelVlak(n, reg, g, zonder){
+  let start = -1, totaal = 0;
+  for(let i = 0; i < n * n; i++) if(reg[i] === g && i !== zonder){ totaal++; if(start < 0) start = i; }
+  if(start < 0) return false;
+  const gezien = new Uint8Array(n * n), rij = [start]; gezien[start] = 1; let tel = 1;
+  while(rij.length){
+    const i = rij.pop(), r = (i / n) | 0, c = i % n;
+    for(const j of [r ? i - n : -1, r < n - 1 ? i + n : -1, c ? i - 1 : -1, c < n - 1 ? i + 1 : -1]){
+      if(j >= 0 && j !== zonder && !gezien[j] && reg[j] === g){ gezien[j] = 1; tel++; rij.push(j); }
+    }
+  }
+  return tel === totaal;
+}
+
+function genereerDag(dag, seed){
+  const rnd = rng(seed), D = DAGEN[dag];
+  let best = null;
+  for(let poging = 0; poging < 6; poging++){
+    const p = klim(dag, rnd);
+    if(p.raak) return p;
+    const mis = Math.min(Math.abs(p.zwaarte - D.min), Math.abs(p.zwaarte - D.max));
+    if(!best || mis < best.mis){ best = p; best.mis = mis; }
+  }
+  return best;
+}
+function klim(dag, rnd, stappen){
+  const D = DAGEN[dag], n = D.n, seed = 0;
+  const afstand = z => z < D.min ? D.min - z : z > D.max ? z - D.max : 0;
+  let p = genereer(n, (rnd() * 4294967296) >>> 0);
+  const reg = Int8Array.from(p.reg), vast = new Set(p.opl);
+  let res = { opl:p.opl, tel:p.tel, zwaarte:p.zwaarte };
+  for(let s = 0; s < (stappen || 900) && afstand(res.zwaarte); s++){
+    const i = Math.floor(rnd() * n * n), r = (i / n) | 0, c = i % n;
+    if(vast.has(i)) continue;
+    const buren = [r ? i - n : -1, r < n - 1 ? i + n : -1, c ? i - 1 : -1, c < n - 1 ? i + 1 : -1].filter(j => j >= 0 && reg[j] !== reg[i]);
+    if(!buren.length) continue;
+    const oud = reg[i], nieuw = reg[buren[Math.floor(rnd() * buren.length)]];
+    if(!heelVlak(n, reg, oud, i)) continue;
+    reg[i] = nieuw;
+    const r2 = losOp(n, reg);
+    if(r2 && afstand(r2.zwaarte) <= afstand(res.zwaarte)) res = r2; else reg[i] = oud;
+  }
+  return { n, dag, reg:Array.from(reg), opl:res.opl, zwaarte:res.zwaarte, tel:res.tel, seed, raak:!afstand(res.zwaarte) };
+}
+
+const api = { DAGEN, genereerDag, KLEUREN, TECHNIEKEN, rng, hash, maakOplossing, groei, analyse, stap, techniek, beschrijf, losOp, genereer, naamCel, raakt };
 if(typeof module !== "undefined" && module.exports) module.exports = api;
 else root.KronenLogica = api;
 })(typeof self !== "undefined" ? self : this);

@@ -7,13 +7,14 @@ const doel = document.getElementById("speelView");
 if(!L || !doel) return;
 
 const OPSLAG = "tdl-kronen";
-const MATEN = [6, 7, 8, 9];
 const KROON = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 17.5 2 7.5l5.5 4L12 4l4.5 7.5 5.5-4-1.5 10z"/><rect x="3.5" y="19" width="17" height="2.4" rx="1"/></svg>`;
 
 function lees(){ try{ return JSON.parse(localStorage.getItem(OPSLAG)) || {}; }catch(err){ return {}; } }
 function bewaar(o){ try{ localStorage.setItem(OPSLAG, JSON.stringify(o)); }catch(err){} }
-const opslag = Object.assign({ n:7, auto:false, partijen:[] }, lees());
-if(!MATEN.includes(opslag.n)) opslag.n = 7;
+const opslag = Object.assign({ auto:false, partijen:[] }, lees());
+opslag.partijen = opslag.partijen.filter(x => x.dag >= 0 && x.dag < 7);
+const weekdag = () => (new Date().getDay() + 6) % 7;   // 0 = maandag
+let dag = weekdag();
 
 function klok(s){ s = Math.max(0, Math.round(s)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; }
 function vandaag(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
@@ -37,9 +38,9 @@ function loop(aan){
 doel.innerHTML = `
 <section class="kr">
   <h2>Kronen</h2>
-  <p class="toel">Training voor Queens. Zet in elke rij, elke kolom en elk kleurvlak precies één kroon. Kronen mogen elkaar niet raken, ook niet schuin.</p>
+  <p class="toel">Training voor Queens. Zet in elke rij, elke kolom en elk kleurvlak precies één kroon. Kronen mogen elkaar niet raken, ook niet schuin. Kies een dag: maandag is heel makkelijk, zondag extreem moeilijk.</p>
   <div class="kr-balk">
-    <div class="tabs" id="krMaat" role="group" aria-label="Kies formaat">${MATEN.map(n => `<button data-n="${n}">${n}×${n}</button>`).join("")}</div>
+    <div class="tabs kr-dagen" id="krDag" role="group" aria-label="Kies een dag: maandag is het makkelijkst, zondag het moeilijkst">${L.DAGEN.map((d, i) => `<button data-dag="${i}" title="${d.naam}: ${d.n}×${d.n}, ${d.label}">${d.kort}<small>${d.n}×${d.n}</small></button>`).join("")}</div>
     <div class="kr-klok" id="krKlok" aria-label="Tijd">0:00</div>
   </div>
   <p class="kr-soort" id="krSoort"></p>
@@ -267,9 +268,9 @@ function klaarMaken(){
   }
   const vast = [...momenten].sort((a, b) => b.duur - a.duur).filter(m => m.duur >= 5).slice(0, 3).sort((a, b) => a.t - b.t);
 
-  const eerder = opslag.partijen.filter(x => x.n === n);
+  const eerder = opslag.partijen.filter(x => x.dag === dag);
   const record = eerder.length ? Math.min(...eerder.map(x => x.t)) : null;
-  const partij = { d:vandaag(), n, t:Math.round(totaal), h:hints, f:fouten, dag:dagpuzzel, tech:{} };
+  const partij = { d:vandaag(), n, dag, t:Math.round(totaal), h:hints, f:fouten, vast:dagpuzzel, tech:{} };
   for(const k in perTech) partij.tech[k] = [Math.round(perTech[k].tijd * 10) / 10, perTech[k].aantal];
   opslag.partijen.push(partij);
   opslag.partijen = opslag.partijen.slice(-300);
@@ -280,9 +281,10 @@ function klaarMaken(){
 function tekenAnalyse({ totaal, vast, perTech, record, eerder, partij }){
   const n = p.n, T = L.TECHNIEKEN;
   const langst = vast.length ? Math.max(...vast.map(m => m.duur)) : 0;
-  const recordTekst = record === null ? "Je eerste tijd op dit formaat."
-    : partij.t < record ? `Nieuw record op ${n}×${n}. Het oude stond op ${klok(record)}.`
-    : `Je record op ${n}×${n} is ${klok(record)}.`;
+  const dn = L.DAGEN[dag].naam.toLowerCase();
+  const recordTekst = record === null ? `Je eerste tijd op een ${dn}puzzel.`
+    : partij.t < record ? `Nieuw record op ${dn}. Het oude stond op ${klok(record)}.`
+    : `Je record op ${dn} is ${klok(record)}.`;
 
   /* tijdlijn: waar zat de tijd? */
   const blokken = vast.map((m, i) => `<i class="vast" style="left:${(m.t - m.duur) / totaal * 100}%;width:${m.duur / totaal * 100}%"><b>${i + 1}</b></i>`).join("");
@@ -324,7 +326,7 @@ function tekenAnalyse({ totaal, vast, perTech, record, eerder, partij }){
   const tip = zwak ? `<p class="kr-tip"><b>Hier win je de meeste tijd: ${T[zwak].naam.toLowerCase()}.</b> ${T[zwak].tip}</p>` : "";
 
   const reeks = [...eerder, partij].slice(-12), top = Math.max(...reeks.map(x => x.t));
-  const vorm = reeks.length > 1 ? `<div class="kr-vorm" role="img" aria-label="Je laatste ${reeks.length} tijden op ${n}×${n}">${reeks.map((x, i) => `<i class="${i === reeks.length - 1 ? "nu" : ""}" style="height:${Math.max(8, x.t / top * 100)}%" title="${x.d}: ${klok(x.t)}"></i>`).join("")}</div><p class="toel">Je laatste ${reeks.length} tijden op ${n}×${n}; de gele is deze puzzel.</p>` : "";
+  const vorm = reeks.length > 1 ? `<div class="kr-vorm" role="img" aria-label="Je laatste ${reeks.length} tijden op ${dn}">${reeks.map((x, i) => `<i class="${i === reeks.length - 1 ? "nu" : ""}" style="height:${Math.max(8, x.t / top * 100)}%" title="${x.d}: ${klok(x.t)}"></i>`).join("")}</div><p class="toel">Je laatste ${reeks.length} tijden op ${dn}; de gele is deze puzzel.</p>` : "";
 
   analyseEl.innerHTML = `
   <section class="kr-na">
@@ -357,25 +359,24 @@ function tekenAnalyse({ totaal, vast, perTech, record, eerder, partij }){
 }
 
 /* ---- starten ---- */
-function start(dag){
-  const n = opslag.n;
-  dagpuzzel = dag;
-  const seed = dag ? L.hash(`kronen-${vandaag()}-${n}`) : (Math.random() * 4294967296) >>> 0;
-  p = L.genereer(n, seed);
+function start(vaste){
+  const D = L.DAGEN[dag], n = D.n;
+  dagpuzzel = vaste;
+  const seed = vaste ? L.hash(`kronen-${vandaag()}-${dag}`) : (Math.random() * 4294967296) >>> 0;
+  p = L.genereerDag(dag, seed);
   isOpl = new Uint8Array(n * n); p.opl.forEach(c => isOpl[c] = 1);
   staat = new Uint8Array(n * n);
   terug = []; log = []; hints = 0; fouten = 0; klaar = false; hint = null;
   verstreken = 0; sinds = null;
   analyseEl.innerHTML = "";
   toonHint(null);
-  doel.querySelectorAll("#krMaat button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.n === n));
-  const d = new Date();
-  doel.querySelector("#krSoort").textContent = dag ? `Dagpuzzel van ${d.getDate()} ${["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"][d.getMonth()]}: iedereen krijgt vandaag dezelfde.` : "Oefenpuzzel";
+  doel.querySelectorAll("#krDag button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.dag === dag));
+  doel.querySelector("#krSoort").innerHTML = `<b>${D.naam}</b> · ${n}×${n} · ${D.label}${dag === weekdag() ? " · de dag van vandaag" : ""}<br>${vaste ? "Vaste puzzel van vandaag: iedereen krijgt op deze dag dezelfde." : "Oefenpuzzel"}`;
   bouwBord();
   loop(zichtbaar && !document.hidden);
 }
 
-doel.querySelectorAll("#krMaat button").forEach(b => b.onclick = () => { opslag.n = +b.dataset.n; bewaar(opslag); start(true); });
+doel.querySelectorAll("#krDag button").forEach(b => b.onclick = () => { dag = +b.dataset.dag; start(true); });
 doel.querySelector("#krTerug").onclick = ongedaan;
 doel.querySelector("#krHint").onclick = geefHint;
 doel.querySelector("#krWis").onclick = () => { const w = []; staat.forEach((v, i) => { if(v) w.push([i, 0]); }); zet(w); };

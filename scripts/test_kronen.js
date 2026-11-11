@@ -17,15 +17,17 @@ function telOplossingen(n, reg){
 }
 
 let fout = 0;
-for(const n of [6, 7, 8, 9]){
-  const t0 = Date.now(); let max = 0, som = 0; const tel = {};
-  for(let s = 1; s <= 40; s++){
-    const a = Date.now(), p = K.genereer(n, K.hash(`test-${n}-${s}`));
+for(let d = 0; d < 7; d++){
+  const D = K.DAGEN[d], t0 = Date.now(); let max = 0, raak = 0; const zw = [];
+  for(let s = 1; s <= 30; s++){
+    const a = Date.now(), p = K.genereerDag(d, K.hash(`test-${d}-${s}`));
     max = Math.max(max, Date.now() - a);
-    if(!p){ console.log(`n=${n} seed ${s}: geen puzzel`); fout++; continue; }
-    if(telOplossingen(n, p.reg) !== 1){ console.log(`n=${n} seed ${s}: niet uniek`); fout++; }
-    som += p.zwaarte; for(const k in p.tel) tel[k] = (tel[k] || 0) + p.tel[k];
+    if(telOplossingen(D.n, p.reg) !== 1){ console.log(`${D.naam} seed ${s}: niet uniek`); fout++; }
+    if(!K.losOp(D.n, p.reg)){ console.log(`${D.naam} seed ${s}: niet zonder gokken oplosbaar`); fout++; }
+    if(p.raak) raak++;
+    zw.push(p.zwaarte);
   }
-  console.log(`n=${n}: 40 puzzels in ${Date.now() - t0} ms (traagste ${max} ms), gem. zwaarte ${(som / 40).toFixed(1)}`, tel);
+  zw.sort((a, b) => a - b);
+  console.log(`${D.naam.padEnd(9)} ${D.n}×${D.n}  doel ${D.min}-${D.max}  raak ${raak}/30  zwaarte ${zw[0]}-${zw[29]} (mediaan ${zw[15]})  ${Date.now() - t0} ms, traagste ${max} ms`);
 }
 process.exit(fout ? 1 : 0);
