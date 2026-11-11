@@ -5,7 +5,9 @@
      kop, slot,
      spellen:[{ spel, trui, truiNaam, uitslag:[{ p, bib, kleur, t, pos, straf }] }],
      lantaarn:{ wie:[{ p, bib, kleur }], achter, grap, icoon } of null,
-     podium:[{ p, bib, kleur, t, pos, gap }]  (alle renners, op volgorde) } */
+     podium:[{ p, bib, kleur, t, pos, gap }]  (alle renners, op volgorde) }
+   Staat de winnaar op het podium, dan verschijnt de knop "Meer rook!": elke tik zet de rookmachines
+   een stand hoger en laat de winnaar iets nieuws roepen. */
 (() => {
   const RUSTIG = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const DUUR = { spel:3.4, lantaarn:4.8, podium:7.4, weetje:4.2 };
@@ -18,6 +20,49 @@
   let el, canvas, c, W = 0, H = 0, scenes = [], idx = 0, t0 = 0, raf = 0, data = null, opEinde = null, terug = null;
   let confetti = [], vorigeT = 0;
 
+  /* Meer rook! Onze vaste kreet: de winnaar mag net zo vaak op de knop drukken als hij wil. */
+  const ROOK_ROEP = ["Meer rook!", "Méér rook!", "Nog meer rook!", "MEER ROOK!!", "Ik zie het podium nog. Meer rook!",
+    "Rookmachine op standje elf!", "Meer rook, ik heb gewonnen!", "Rookmelder? Nooit van gehoord. Meer rook!",
+    "Wie staat er op één? Ik! Meer rook!", "Dit is geen mist, dit is winst!", "Bel de brandweer maar vast. Meer rook!",
+    "Nóg. Meer. Rook.", "Ik heb gewonnen, dus: meer rook!", "Kan de bezemwagen ook roken? Meer rook!"];
+  const ROOK_KNOP = ["Meer rook!", "Nog meer rook!", "En nog meer rook!", "NOG MEER ROOK!", "Dit kan rokeriger!", "MEER! ROOK!"];
+  const ROOK_KLEUR = ["#E6E8EB", "#C9CED6", "#FFD300", "#F0525A", "#5AA2F0", "#4CC38A", "#F07A1A"];
+  const lus = (lijst, n, vanaf) => n < lijst.length ? lijst[n] : lijst[vanaf + (n - lijst.length) % (lijst.length - vanaf)];
+  let rook = [], rookNiveau = 0, rookTik = -9, rookKnop = null;
+  const wolkjes = {};
+  function wolkje(kl){
+    if(wolkjes[kl]) return wolkjes[kl];
+    const k = document.createElement("canvas"), g = k.getContext("2d"); k.width = k.height = 64;
+    const v = g.createRadialGradient(32, 32, 2, 32, 32, 32);
+    v.addColorStop(0, kl + "CC"); v.addColorStop(.55, kl + "55"); v.addColorStop(1, kl + "00");
+    g.fillStyle = v; g.fillRect(0, 0, 64, 64);
+    return wolkjes[kl] = k;
+  }
+  function rookKnopTekst(){
+    rookKnop.innerHTML = `<span aria-hidden="true">&#128168;</span> ${esc(lus(ROOK_KNOP, rookNiveau, 3))}${rookNiveau ? ` <b>&times;${rookNiveau}</b>` : ""}`;
+    rookKnop.style.setProperty("--n", Math.min(rookNiveau, 10));
+  }
+  function meerRook(){
+    if(!rookKnop || rookKnop.hidden) return;
+    rookNiveau++; rookTik = performance.now() / 1000;
+    rookKnopTekst();
+    rookKnop.classList.remove("pof"); void rookKnop.offsetWidth; rookKnop.classList.add("pof");
+    if(!RUSTIG) for(let k = 0; k < 24; k++) pluim(2.2);
+  }
+  /* rookbronnen: eerst de twee machines naast het podium, daarna komt er per stand een bron bij */
+  function rookBronnen(){
+    const bw = Math.min(180, W * .24), zij = Math.min(W / 2 - 22, bw * 1.75);
+    return [W / 2 - zij, W / 2 + zij, W * .05, W * .95, W * .3, W * .7, W * .5];
+  }
+  function pluim(kracht){
+    const bronnen = rookBronnen(), n = Math.min(bronnen.length, 1 + rookNiveau), s = H / 300;
+    const kleuren = Math.min(ROOK_KLEUR.length, rookNiveau < 3 ? 2 : rookNiveau);
+    rook.push({ x:bronnen[Math.floor(Math.random() * n)] + (Math.random() - .5) * 16, y:H * .93,
+      vx:(Math.random() - .5) * 46 * kracht, vy:-(34 + Math.random() * 60) * s * kracht, r:10 + Math.random() * 10,
+      groei:(16 + Math.random() * 14 + rookNiveau * 2) * s, l:0, max:2.6 + Math.random() * 2.2,
+      kl:ROOK_KLEUR[Math.floor(Math.random() * kleuren)] });
+  }
+
   function bouw(){
     el = document.createElement("div");
     el.className = "huld"; el.hidden = true; el.tabIndex = -1;
@@ -28,20 +73,23 @@
         <div class="huld-kopregel"><p class="huld-kop"></p><button type="button" class="huld-sluit">Sluiten &times;</button></div>
         <h2 class="huld-titel"></h2>
       </div>
-      <div class="huld-baan" title="Tik voor de volgende"><canvas aria-hidden="true"></canvas></div>
+      <div class="huld-baan" title="Tik voor de volgende"><canvas aria-hidden="true"></canvas><button type="button" class="huld-rook" title="Meer rook!" hidden></button></div>
       <div class="huld-paneel"><div class="huld-inhoud" aria-live="polite"></div><button type="button" class="huld-verder"></button></div>`;
     document.body.appendChild(el);
     canvas = el.querySelector("canvas"); c = canvas.getContext("2d");
     el.querySelector(".huld-sluit").onclick = ev => { ev.stopPropagation(); stop(); };
     el.querySelector(".huld-baan").onclick = volgende;
+    rookKnop = el.querySelector(".huld-rook");
+    rookKnop.onclick = ev => { ev.stopPropagation(); meerRook(); };
     el.querySelector(".huld-verder").onclick = ev => { ev.stopPropagation(); volgende(); };
     el.addEventListener("keydown", ev => {
       if(ev.key === "Escape"){ ev.preventDefault(); stop(); }
       else if(ev.key === "ArrowRight"){ ev.preventDefault(); volgende(); }
+      else if(ev.key === "r" || ev.key === "R"){ ev.preventDefault(); meerRook(); }
       else if(ev.key === "Tab"){
         ev.preventDefault();
-        const knoppen = [el.querySelector(".huld-sluit"), el.querySelector(".huld-verder")];
-        knoppen[(knoppen.indexOf(document.activeElement) + 1) % 2].focus();
+        const knoppen = [el.querySelector(".huld-sluit"), rookKnop, el.querySelector(".huld-verder")].filter(k => !k.hidden);
+        knoppen[(knoppen.indexOf(document.activeElement) + (ev.shiftKey ? knoppen.length - 1 : 1)) % knoppen.length].focus();
       }
     });
     new ResizeObserver(maat).observe(canvas);
@@ -69,6 +117,7 @@
 
   function start(i){
     idx = i; t0 = performance.now(); confetti = []; vorigeT = 0;
+    rook = []; rookNiveau = 0; rookTik = -9; rookKnop.hidden = true; rookKnop.classList.remove("pof"); canvas.style.transform = "";
     const sc = scenes[i], titel = el.querySelector(".huld-titel"), paneel = el.querySelector(".huld-inhoud");
     if(sc.soort === "spel"){
       titel.innerHTML = `${sc.g.trui}<span>${esc(sc.g.spel)}</span>`;
@@ -266,6 +315,59 @@
         if(f.y > H + 10){ f.y = -10; f.x = Math.random() * W; }
         c.save(); c.translate(f.x, f.y); c.rotate(f.r); c.fillStyle = f.kl; c.fillRect(-f.w / 2, -2, f.w, 4 * Math.abs(Math.cos(f.r))); c.restore();
       });
+    }
+    /* meer rook: de knop komt zodra de winnaar juicht */
+    if(u > PODIUM_A[1] + LAND + .3 && rookKnop.hidden){ rookKnopTekst(); rookKnop.hidden = false; }
+    if(rookNiveau) tekenRook(t, dt, s, getekend.filter(g => g.p === 1 && g.staat));
+  }
+
+  function tekenRook(t, dt, s, winnaars){
+    const sinds = t - rookTik;
+    if(!RUSTIG){
+      /* de twee rookmachines naast het podium */
+      rookBronnen().slice(0, 2).forEach((x, k) => {
+        const r = k ? -1 : 1, y = H * .95;
+        c.fillStyle = "#14161A"; c.fillRect(x - 13 * s, y - 14 * s, 26 * s, 14 * s);
+        c.fillStyle = "#4A505A"; c.fillRect(x + r * 13 * s - (r < 0 ? 7 * s : 0), y - 12 * s, 7 * s, 6 * s);
+        c.fillStyle = sinds < .4 ? "#F0525A" : "#4CC38A"; c.beginPath(); c.arc(x - r * 7 * s, y - 7 * s, 2 * s, 0, 7); c.fill();
+      });
+      const plafond = Math.min(460, 50 + rookNiveau * 32);
+      for(let k = Math.random() < (10 + rookNiveau * 9) * dt % 1 ? 1 : 0, n = Math.floor((10 + rookNiveau * 9) * dt) + k; n > 0 && rook.length < plafond; n--) pluim(1);
+      rook = rook.filter(p => (p.l += dt) < p.max);
+      rook.forEach(p => {
+        p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 1 - .6 * dt; p.vy *= 1 - .25 * dt; p.r += p.groei * dt;
+        c.globalAlpha = Math.sin(Math.PI * Math.min(1, p.l / p.max)) * .6;
+        c.drawImage(wolkje(p.kl), p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+      });
+      c.globalAlpha = 1;
+      /* het podium dreunt even na bij elke tik */
+      const dreun = sinds < .5 ? (1 - sinds / .5) * Math.min(9, 1 + rookNiveau) : 0;
+      canvas.style.transform = dreun ? `translate(${(Math.sin(t * 71) * dreun).toFixed(1)}px,${(Math.cos(t * 89) * dreun).toFixed(1)}px)` : "";
+    }
+    /* de mist trekt dicht naarmate er vaker gedrukt wordt */
+    const mist = Math.min(.62, (RUSTIG ? .08 : .045) * (rookNiveau - (RUSTIG ? 0 : 2)));
+    if(mist > 0){ c.fillStyle = `rgba(226,229,233,${mist.toFixed(3)})`; c.fillRect(0, 0, W, H); }
+    if(rookNiveau >= 8 && (RUSTIG || t % 1 < .6)){
+      c.font = `900 italic 15px "Barlow Condensed", sans-serif`; c.textAlign = "center"; c.textBaseline = "middle";
+      const tw = c.measureText("ROOKMELDER GAAT AF").width + 18;
+      c.fillStyle = "#D7263D"; c.fillRect(W / 2 - tw / 2, H - 26, tw, 20);
+      c.fillStyle = "#FFFFFF"; c.fillText("ROOKMELDER GAAT AF", W / 2, H - 15); c.textAlign = "start";
+    }
+    /* de winnaar roept het uit */
+    if(sinds < 2.4 && winnaars.length){
+      const tekst = lus(ROOK_ROEP, rookNiveau - 1, 4);
+      let px = 24; c.font = `900 italic ${px}px "Barlow Condensed", sans-serif`;
+      while(px > 13 && c.measureText(tekst).width > W - 44) c.font = `900 italic ${--px}px "Barlow Condensed", sans-serif`;
+      const tw = c.measureText(tekst).width + 22, bh = px + 16;
+      const wx = winnaars.reduce((a, g) => a + g.x, 0) / winnaars.length;
+      const bx = Math.max(tw / 2 + 6, Math.min(W - tw / 2 - 6, wx)), by = Math.max(62 + bh / 2, winnaars[0].y - 112 * winnaars[0].ss);
+      const pop = RUSTIG ? 1 : Math.min(1, sinds * 7) * (1 + .12 * Math.max(0, 1 - sinds * 4));
+      c.save(); c.translate(bx, by); c.scale(pop, pop); c.rotate(RUSTIG ? 0 : Math.sin(t * 9) * .02);
+      c.globalAlpha = Math.min(1, (2.4 - sinds) * 4);
+      c.fillStyle = "#FFD300"; c.beginPath(); c.roundRect ? c.roundRect(-tw / 2, -bh / 2, tw, bh, 8) : c.rect(-tw / 2, -bh / 2, tw, bh); c.fill();
+      c.beginPath(); c.moveTo(wx - bx - 7, bh / 2 - 1); c.lineTo(wx - bx + 7, bh / 2 - 1); c.lineTo(wx - bx, bh / 2 + 11); c.fill();
+      c.fillStyle = "#14161A"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(tekst, 0, 1);
+      c.restore(); c.textAlign = "start";
     }
   }
 
