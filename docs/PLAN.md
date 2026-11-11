@@ -102,6 +102,14 @@ tour-de-linkedin/
 - [x] Pages aanzetten (Source: GitHub Actions)
 - [ ] Link delen in de groep
 
+### Fase 4: Trainen (zelf spelen)
+- [x] Tabblad "Trainen" met Queens-training (regels en bediening als Queens, eigen uiterlijk en eigen puzzels)
+- [x] Generator die alleen puzzels maakt die zonder gokken oplosbaar zijn (`site/kronen-logica.js`, test: `node scripts/test_kronen.js`)
+- [x] Dagkeuze: maandag 7×7 heel makkelijk tot zondag 9×9 extreem moeilijk (ma/di 7×7, wo t/m vr 8×8, za/zo 9×9, zoals Queens-archieven voor LinkedIn laten zien)
+- [x] Hints met uitleg, en na afloop een analyse: waar liep je vast, welke stap lag er, denktijd per techniek
+- [ ] Punten, leaderboard en verzamelobjecten
+- [ ] Trainingsversies van de andere spellen
+
 ### Later (optioneel)
 - Foto uploaden en Claude de tijden laten uitlezen
 - Melding in de groep bij een nieuwe gele trui
