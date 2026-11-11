@@ -3,7 +3,7 @@
 (function(){
 "use strict";
 const L = window.KronenLogica;
-const doel = document.getElementById("speelView");
+const doel = document.getElementById("speelQueens");
 if(!L || !doel) return;
 
 const OPSLAG = "tdl-kronen";
@@ -612,7 +612,7 @@ tik = setInterval(() => { if(sinds !== null) klokEl.textContent = klok(tijd()); 
 setInterval(() => { if(sinds !== null) bewaarStand(); }, 5000);
 window.addEventListener("pagehide", () => { if(sinds !== null) bewaarStand(); });
 
-/* app.js roept dit aan bij het wisselen van weergave; de klok loopt alleen als het bord in beeld is */
+/* trainen.js roept dit aan bij het wisselen van spel of weergave; de klok loopt alleen als het bord in beeld is */
 window.Kronen = {
   toon(){ zichtbaar = true; if(!p) start(true); else { loop(!document.hidden); if(!gestart) vulWie(); } haalUitslag(); },
   verberg(){ zichtbaar = false; loop(false); }

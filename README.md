@@ -10,7 +10,7 @@ Zie [docs/PLAN.md](docs/PLAN.md) voor de opzet en de planning.
 |-----|--------|
 | `site/` | Statisch dashboard, wordt gepubliceerd op GitHub Pages |
 | `apps-script/` | Google Apps Script dat de Sheet leest en beschrijft |
-| `scripts/` | Hulpscripts, zoals de eenmalige Excel-migratie |
+| `scripts/` | Hulpscripts, zoals de eenmalige Excel-migratie en de tests van de trainingspuzzels (`node scripts/test_kronen.js`, `node scripts/test_tango.js`) |
 | `data/` | `scores.csv` met alle scores; de Pages-workflow zet een kopie in de site |
 | `docs/` | Plan, setup-handleiding en het oorspronkelijke ontwerp |
 

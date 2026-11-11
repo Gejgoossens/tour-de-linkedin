@@ -885,7 +885,7 @@ function toonView(v){
   document.getElementById("tourView").hidden = v !== "tour";
   document.getElementById("statView").hidden = v !== "stats";
   document.getElementById("speelView").hidden = v !== "spelen";
-  if(window.Kronen) v === "spelen" ? Kronen.toon() : Kronen.verberg();
+  if(window.Trainen) v === "spelen" ? Trainen.toon() : Trainen.verberg();
   document.querySelector(".nav").hidden = v !== "tour";
   document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === v));
   try{ history.replaceState(null, "", v === "stats" ? "#statistieken" : v === "spelen" ? "#trainen" : "#tour"); }catch(err){}

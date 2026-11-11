@@ -67,6 +67,10 @@ De gedeelde uitslag van de Queens-training heeft de nieuwste `Code.gs` nodig. Zo
 
 Het tabblad **Training** maakt het script zelf aan bij het eerste resultaat. Tijden die al op een apparaat stonden, worden bij het volgende bezoek alsnog gedeeld (tot twee dagen terug).
 
+### Bijwerken voor de Tango-training (eenmalig, november 2026)
+
+De Tango-training deelt haar uitslag via hetzelfde tabblad **Training**, met een extra kolom `Spel`. Daarvoor moet het script nog één keer worden bijgewerkt, met dezelfde drie stappen als hierboven. Tot die tijd werkt de Tango-training gewoon, maar blijven de tijden op het eigen apparaat; daarna worden ze alsnog gedeeld (tot twee dagen terug). De Queens-training merkt niets van de overgang: rijen zonder `Spel` tellen als Queens.
+
 ## Goed om te weten
 
 - **Invoeren** gaat het snelst **per spel**: open op LinkedIn de uitslag van één spel en neem de tijden van iedereen in één keer over. Met **per speler** vul je juist al je eigen spellen in.

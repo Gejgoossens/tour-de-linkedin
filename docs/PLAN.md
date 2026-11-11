@@ -110,7 +110,27 @@ tour-de-linkedin/
 - [x] Vaste puzzel één keer per dag per speler; je kiest wie je bent ("Start als Giyo") en het resultaat gaat naar tab **Training** in de Sheet (`Datum | Speler | Dag | Tijd | Hints | Fouten | IngevoerdOp`)
 - [x] Uitslag van vandaag per dagpuzzel onder het bord
 - [ ] Punten, leaderboard en verzamelobjecten
-- [ ] Trainingsversies van de andere spellen
+- [x] Tango-training naast de Queens-training, met een spelkeuze bovenaan het tabblad (`site/tango-logica.js`, `site/tango.js`, test: `node scripts/test_tango.js`). Regels, bediening en hulpmiddelen zoals LinkedIn: tik voor zon, maan, leeg; Ongedaan maken, Hint, Wissen; rode strepen bij een overtreding. Dezelfde analyse als bij Queens: waar liep je vast, je hints, denktijd per techniek
+- [x] Tango per weekdag opgebouwd zoals LinkedIn (zie "Tango per weekdag" hieronder); resultaten in tab **Training** met de extra kolom `Spel`
+- [ ] Trainingsversies van de andere spellen (Zip, Patches, Wend)
+
+### Tango per weekdag
+
+Bij LinkedIn is Tango elke dag 6×6; de moeilijkheid zit in hoeveel er voorgevuld is, hoeveel tekens er liggen en welke stappen je nodig hebt. Gemeten op 16 echte puzzels (#750 t/m #765, 27 oktober t/m 11 november 2026, startborden van Nerd's Chalk, opgelost met onze eigen motor) en naast de telling van HintSheet over 37 borden (3 september t/m 10 oktober 2026) gelegd:
+
+| Dag | Voorgevuld | Tekens | Lijn doorrekenen | Label |
+|-----|-----------|--------|------------------|-------|
+| Maandag | 6–9 | 2–4 | niet nodig | makkelijk |
+| Dinsdag | 5–8 | 3–5 | niet nodig | makkelijk |
+| Woensdag | 6–10 | 3–6 | 0–2 keer | gemiddeld |
+| Donderdag | 6–8 | 4–6 | 1–4 keer | gemiddeld |
+| Vrijdag | 6–10 | 4–6 | 3–5 keer | pittig |
+| Zaterdag | 4–7 | 6–8 | 2–4 keer | moeilijk |
+| Zondag | 4–6 | 6–8 | 3–6 keer | heel moeilijk |
+
+Verder overgenomen: een teken raakt aan het begin nooit een voorgevuld vakje (bij alle gemeten borden zo), = en × komen ongeveer even vaak voor, en de voorgevulde vakjes en tekens liggen in rijtjes, hoekjes en diagonalen, vaak gespiegeld of een halve slag gedraaid. Geen enkele dagpuzzel vraagt om gokken of om vooruitdenken over meerdere lijnen.
+
+Niet overgenomen: de echte puzzels van LinkedIn zelf (we maken eigen puzzels), de resultaatpagina met vergelijking tegen andere leden, en de exacte teksten van LinkedIn's hints (die staan niet in de helppagina; onze hints leggen de stap uit zoals bij Queens).
 
 ### Later (optioneel)
 - Foto uploaden en Claude de tijden laten uitlezen

@@ -5,9 +5,11 @@
  *   POST (JSON als text/plain) { code, datum, scores:[{ speler:"Giyo", spel:"Wend", tijd:26 }, ...] }
  *        tijd getal = opslaan/overschrijven, null = bestaande tijd wissen. Wat er niet in staat, blijft zoals het was.
  *        Zo kan het dashboard per spel (alle spelers) of per speler (alle spellen) opslaan.
- *   GET  ?action=training&datum=2026-11-12   → { ok, training:[{Datum,Speler,Dag,Tijd,Hints,Fouten}] } (zonder datum: alles)
- *   POST { code, soort:"training", datum, speler, dag:0-6, tijd, hints, fouten }
- *        Resultaat van de vaste Queens-trainingspuzzel. Eén per speler per dagpuzzel per datum: het eerste blijft staan.
+ *   GET  ?action=training&datum=2026-11-12&spel=Tango
+ *        → { ok, versie:2, training:[{Datum,Speler,Dag,Tijd,Hints,Fouten,Spel}] } (zonder datum: alle dagen; zonder spel: Queens)
+ *   POST { code, soort:"training", spel:"Queens"|"Tango", datum, speler, dag:0-6, tijd, hints, fouten }
+ *        Resultaat van een vaste trainingspuzzel. Eén per speler per spel per dagpuzzel per datum: het eerste blijft staan.
+ *        Zonder spel is het Queens, zodat een dashboard dat nog in de cache van een browser zit blijft werken.
  *
  * De groepscode staat in Projectinstellingen → Scripteigenschappen als GROEPSCODE, nooit in de code.
  * Eenmalig: voer `installeer` uit vanuit de editor (maakt de tabs en haalt de scores van GitHub).
@@ -18,14 +20,15 @@ var STANDAARD_SPELERS = ['Matta', 'Bouw', 'Corne', 'Jari', 'Giyo', 'Cas'];
 var CSV_URL = 'https://raw.githubusercontent.com/Gejgoossens/tour-de-linkedin/main/data/scores.csv';
 var KOP_SCORES = ['Datum', 'Speler', 'Spel', 'Tijd', 'IngevoerdOp'];
 var KOP_SPELERS = ['Naam', 'Startnummer', 'Actief'];
-var KOP_TRAINING = ['Datum', 'Speler', 'Dag', 'Tijd', 'Hints', 'Fouten', 'IngevoerdOp'];
+var KOP_TRAINING = ['Datum', 'Speler', 'Dag', 'Tijd', 'Hints', 'Fouten', 'IngevoerdOp', 'Spel'];
+var TRAIN_SPELLEN = ['Queens', 'Tango'];
 var MAX_TIJD = 3600;
 
 /* ===== web-app ===== */
 
 function doGet(e) {
   var actie = (e && e.parameter && e.parameter.action) || 'scores';
-  if (actie === 'training') return json_({ ok: true, training: leesTraining_(String((e.parameter && e.parameter.datum) || '')) });
+  if (actie === 'training') return json_({ ok: true, versie: 2, training: leesTraining_(String((e.parameter && e.parameter.datum) || ''), trainSpel_(e.parameter && e.parameter.spel)) });
   if (actie !== 'scores') return json_({ ok: false, fout: 'Onbekende actie' });
   return json_({ ok: true, scores: leesScores_(), spelers: leesSpelers_(), spellen: SPELLEN });
 }
@@ -80,7 +83,13 @@ function doPost(e) {
   }
 }
 
-/* ===== Queens-training ===== */
+/* ===== Training (Queens en Tango) ===== */
+
+/* rijen van vóór de Tango-training hebben geen spel: dat zijn Queens-resultaten */
+function trainSpel_(waarde) {
+  var spel = String(waarde || '').trim();
+  return spel === '' ? 'Queens' : (TRAIN_SPELLEN.indexOf(spel) < 0 ? null : spel);
+}
 
 function postTraining_(invoer) {
   var datum = String(invoer.datum || '');
@@ -89,6 +98,8 @@ function postTraining_(invoer) {
   var dagen = Math.round((new Date(vandaag_() + 'T12:00:00') - new Date(datum + 'T12:00:00')) / 86400000);
   if (dagen < -1 || dagen > 2) return json_({ ok: false, fout: 'Deze datum is te oud of ligt in de toekomst', code: 'datum' });
 
+  var spel = trainSpel_(invoer.spel);
+  if (!spel) return json_({ ok: false, fout: 'Onbekend spel' });
   var speler = String(invoer.speler || '').trim();
   var bekend = leesSpelers_().filter(function (s) { return s.Actief; }).map(function (s) { return s.Naam; });
   if (bekend.indexOf(speler) < 0) return json_({ ok: false, fout: 'Onbekende speler: ' + speler });
@@ -100,26 +111,28 @@ function postTraining_(invoer) {
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) return json_({ ok: false, fout: 'Het is even druk, probeer het opnieuw' });
   try {
-    var al = leesTraining_(datum).filter(function (r) { return r.Speler === speler && r.Dag === dag; })[0];
+    var al = leesTraining_(datum, spel).filter(function (r) { return r.Speler === speler && r.Dag === dag; })[0];
     if (al) return json_({ ok: true, bestond: true, resultaat: al });
     var blad = blad_('Training', KOP_TRAINING);
     var rij = blad.getLastRow() + 1;
     blad.getRange(rij, 1, 1, 1).setNumberFormat('@');
-    blad.getRange(rij, 1, 1, KOP_TRAINING.length).setValues([[datum, speler, dag, tijd, Math.round(hints), Math.round(fouten), new Date().toISOString()]]);
+    blad.getRange(rij, 1, 1, KOP_TRAINING.length).setValues([[datum, speler, dag, tijd, Math.round(hints), Math.round(fouten), new Date().toISOString(), spel]]);
     return json_({ ok: true, bestond: false });
   } finally {
     lock.releaseLock();
   }
 }
 
-function leesTraining_(datum) {
+function leesTraining_(datum, spel) {
   var blad = blad_('Training', KOP_TRAINING);
   var laatste = blad.getLastRow();
   if (laatste < 2) return [];
-  return blad.getRange(2, 1, laatste - 1, 6).getValues()
-    .filter(function (r) { return r[0] !== '' && r[1] !== '' && r[3] !== '' && (!datum || datumTekst_(r[0]) === datum); })
+  /* een blad van vóór de Tango-training heeft de kolom Spel nog niet */
+  if (blad.getRange(1, KOP_TRAINING.length).getValue() === '') blad.getRange(1, KOP_TRAINING.length).setValue('Spel').setFontWeight('bold');
+  return blad.getRange(2, 1, laatste - 1, KOP_TRAINING.length).getValues()
+    .filter(function (r) { return r[0] !== '' && r[1] !== '' && r[3] !== '' && (!datum || datumTekst_(r[0]) === datum) && (!spel || trainSpel_(r[7]) === spel); })
     .map(function (r) {
-      return { Datum: datumTekst_(r[0]), Speler: String(r[1]).trim(), Dag: Number(r[2]), Tijd: Number(r[3]), Hints: Number(r[4]) || 0, Fouten: Number(r[5]) || 0 };
+      return { Datum: datumTekst_(r[0]), Speler: String(r[1]).trim(), Dag: Number(r[2]), Tijd: Number(r[3]), Hints: Number(r[4]) || 0, Fouten: Number(r[5]) || 0, Spel: trainSpel_(r[7]) || 'Queens' };
     });
 }
 
