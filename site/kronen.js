@@ -13,6 +13,13 @@ function lees(){ try{ return JSON.parse(localStorage.getItem(OPSLAG)) || {}; }ca
 function bewaar(o){ try{ localStorage.setItem(OPSLAG, JSON.stringify(o)); }catch(err){} }
 const opslag = Object.assign({ autoX:true, partijen:[] }, lees());
 opslag.partijen = opslag.partijen.filter(x => x.dag >= 0 && x.dag < 7);
+/* Vanaf hoeveel seconden stilstand telt een pauze als "vastlopen" (per dag, ma t/m zo)?
+   Op een makkelijke puzzel is 2 seconden al lang; op een moeilijke is 5 seconden gewoon nadenken.
+   Een denkpauze voor de techniektabel telt vanaf 40% daarvan, met een ondergrens van 1 seconde. */
+const VAST_VANAF = [2, 3, 3, 4, 5, 5, 5];
+const vastVanaf = () => VAST_VANAF[dag];
+const pauzeVanaf = () => Math.max(1, Math.round(VAST_VANAF[dag] * 4) / 10);
+const secTekst = x => `${String(x).replace(".", ",")} ${x === 1 ? "seconde" : "seconden"}`;
 const weekdag = () => (new Date().getDay() + 6) % 7;   // 0 = maandag
 let dag = weekdag();
 
@@ -323,9 +330,9 @@ function klaarMaken(terugkijken){
     const t = fout ? "fout" : L.techniek(h);
     const s = perTech[t] || (perTech[t] = { tijd:0, aantal:0 });
     s.tijd += duur;
-    if(duur >= 2){ s.aantal++; momenten.push({ duur, t:z.t, z, h, fout, tech:t }); }
+    if(duur >= pauzeVanaf()){ s.aantal++; momenten.push({ duur, t:z.t, z, h, fout, tech:t }); }
   }
-  const vast = [...momenten].sort((a, b) => b.duur - a.duur).filter(m => m.duur >= 5).slice(0, 3).sort((a, b) => a.t - b.t);
+  const vast = [...momenten].sort((a, b) => b.duur - a.duur).filter(m => m.duur >= vastVanaf()).slice(0, 3).sort((a, b) => a.t - b.t);
 
   let eerder = opslag.partijen.filter(x => x.dag === dag && vanMij(x)), partij;
   if(terugkijken){
@@ -435,10 +442,10 @@ function tekenAnalyse({ totaal, vast, perTech, record, eerder, partij, hintMomen
   </section>
   <section class="kr-na">
     <h2>Waar liep je vast</h2>
-    ${vast.length ? `<p class="toel">De rode blokken zijn je langste denkpauzes, de witte streepjes zijn je queens${hintMomenten.length ? ", de gele je hints" : ""}. Per pauze zie je de stand van dat moment en de makkelijkste stap die er lag.</p>
+    ${vast.length ? `<p class="toel">De rode blokken zijn je langste denkpauzes (vanaf ${secTekst(vastVanaf())} op een ${dn}puzzel), de witte streepjes zijn je queens${hintMomenten.length ? ", de gele je hints" : ""}. Per pauze zie je de stand van dat moment en de makkelijkste stap die er lag.</p>
     <div class="kr-lijn" aria-hidden="true">${blokken}${tikken}${hintTikken}</div>
     <div class="kr-lijn-as" aria-hidden="true"><span>0:00</span><span>${klok(totaal)}</span></div>
-    ${kaarten}` : `<p class="conclusie">Nergens. Je hebt geen enkele keer langer dan 5 seconden stilgestaan.</p>`}
+    ${kaarten}` : `<p class="conclusie">Nergens. Je hebt geen enkele keer langer dan ${secTekst(vastVanaf())} stilgestaan. Op een ${dn}puzzel telt dat als vastlopen.</p>`}
   </section>
   <section class="kr-na">
     <h2>Je hints</h2>
@@ -447,7 +454,7 @@ function tekenAnalyse({ totaal, vast, perTech, record, eerder, partij, hintMomen
   </section>
   ${rijen.length ? `<section class="kr-na">
     <h2>Denktijd per techniek</h2>
-    <p class="toel">Bij elke denkpauze van 2 seconden of meer is gekeken welke stap op dat moment het makkelijkst was. Zo zie je welk soort stap je het meeste tijd kost.</p>
+    <p class="toel">Bij elke denkpauze van ${secTekst(pauzeVanaf())} of meer is gekeken welke stap op dat moment het makkelijkst was. Zo zie je welk soort stap je het meeste tijd kost.</p>
     <div class="scroll"><table class="tbl vrij kr-tech"><thead><tr><th>Techniek</th><th>Totaal</th><th>Pauzes</th><th>Per keer</th><th>Jouw gem.</th></tr></thead><tbody>${techTabel}</tbody></table></div>
     ${tip}
   </section>` : ""}`;
