@@ -454,8 +454,10 @@ body.huld-open{overflow:hidden}
 .kr-cel:focus-visible{outline:3px solid var(--inkt);outline-offset:-5px}
 .kr-cel.botst{background-image:repeating-linear-gradient(45deg,rgba(200,20,40,.55) 0 5px,transparent 5px 10px)}
 .kr-cel.botst svg{fill:#A30D22}
-.kr-cel.dof{filter:brightness(.42) saturate(.6)}
-.kr-cel.basis{box-shadow:inset 0 0 0 3px rgba(20,22,26,.75)}
+.kr-cel.dof{filter:brightness(.4) saturate(.7)}
+/* hint: vakjes die afvallen worden flets met schuine streepjes */
+.kr-cel.streep{background-image:repeating-linear-gradient(135deg,rgba(20,22,26,.5) 0 2px,transparent 2px 8px),linear-gradient(rgba(255,255,255,.5),rgba(255,255,255,.5))}
+.kr-cel.streep svg,.kr-cel.streep i{opacity:.55}
 .kr-cel.doel{box-shadow:inset 0 0 0 3px var(--inkt),inset 0 0 0 7px #fff;z-index:1}
 .kr-bord.klaar .kr-cel{cursor:default}
 @media (prefers-reduced-motion:no-preference){
@@ -472,7 +474,14 @@ body.huld-open{overflow:hidden}
 .kr-knoppen button:disabled{opacity:.35;cursor:default}
 .kr-knoppen button.hoofd{background:var(--geel);border-color:var(--geel);color:var(--inkt);max-width:240px}
 .kr-hint{max-width:480px;margin:0 auto 12px;padding:12px 14px;border-left:4px solid var(--geel);background:var(--wit-2);border-radius:0 4px 4px 0;font-size:15px}
-.kr-actie{display:block;margin-top:6px;color:var(--geel);font-weight:600}
+.kr-hint{position:relative}
+.kr-hint p{margin:0 0 8px}
+.kr-hint-kop{font:700 18px/1 var(--cond);margin-bottom:6px}
+.kr-hint-sluit{position:absolute;top:2px;right:2px;width:40px;height:40px;border:0;background:none;font-size:24px;line-height:1;cursor:pointer;color:var(--sub)}
+.kr-hint-sluit:hover{color:var(--asfalt)}
+.kr-hint .kr-actie{font-weight:600}
+.kr-toon{min-height:40px;border:1.5px solid var(--asfalt);background:var(--wit);border-radius:20px;padding:4px 18px;cursor:pointer;font-weight:600;font-size:15px}
+.kr-toon:hover{border-color:var(--geel)}
 .kr-auto{display:flex;gap:8px;align-items:center;justify-content:center;font-size:14px;color:var(--sub);margin-bottom:10px;cursor:pointer}
 .kr-auto input{width:18px;height:18px;accent-color:var(--geel)}
 .kr-uitleg{font-size:14px;color:var(--sub);margin-bottom:8px}
@@ -505,7 +514,6 @@ body.huld-open{overflow:hidden}
 .kr-bord.kr-mini .kr-cel.rl{border-left-width:2px}
 .kr-bord.kr-mini .kr-cel i{font-size:12px}
 .kr-bord.kr-mini .kr-cel.doel{box-shadow:inset 0 0 0 2px var(--inkt),inset 0 0 0 4px #fff}
-.kr-bord.kr-mini .kr-cel.basis{box-shadow:inset 0 0 0 2px rgba(20,22,26,.75)}
 .kr-tech td:first-child,.kr-tech th:first-child{text-align:left;width:auto;font-weight:600}
 .kr-tech td,.kr-tech th{padding:8px 5px;white-space:nowrap}
 .kr-tech td:first-child{white-space:normal}
@@ -523,3 +531,8 @@ body.huld-open{overflow:hidden}
 .kr-start button{min-width:150px;min-height:56px;border:0;border-radius:28px;background:var(--geel);color:var(--inkt);font:800 26px/1 var(--cond);text-transform:uppercase;cursor:pointer}
 .kr-start button:hover{background:#fff}
 .kr-start span{font-size:14px;color:var(--sub);background:var(--wit);padding:2px 8px;border-radius:3px}
+.kr-bord.kr-mini .kr-cel.streep{background-image:repeating-linear-gradient(135deg,rgba(20,22,26,.5) 0 1.5px,transparent 1.5px 5px),linear-gradient(rgba(255,255,255,.5),rgba(255,255,255,.5))}
+@media (prefers-reduced-motion:no-preference){
+  .kr-bord:not(.kr-mini) .kr-cel.streep{animation:kr-streep .35s ease-out}
+  @keyframes kr-streep{from{background-image:none}}
+}

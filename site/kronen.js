@@ -98,7 +98,8 @@ function celInhoud(n, reg, st, i, h, bots, auto){
   if(st[i] === 2){ inh = KROON; k += " kroon"; if(bots.has(i)) k += " botst"; }
   else if(st[i] === 1 || auto.has(i)){ inh = "<i>×</i>"; }
   if(h){
-    if(h.plaats.includes(i) || h.weg.includes(i)) k += " doel";
+    if(h.plaats.includes(i)) k += " doel";
+    else if(h.weg.includes(i)) k += " streep";
     else if(h.basis.includes(i)) k += " basis";
     else k += " dof";
   }
@@ -109,7 +110,7 @@ function miniBord(n, reg, st, h){
   let html = "";
   for(let i = 0; i < n * n; i++){
     const [k, inh] = celInhoud(n, reg, st, i, h, bots, leeg);
-    html += `<div class="${k}" style="background:${L.KLEUREN[reg[i]].hex}">${inh}</div>`;
+    html += `<div class="${k}" style="background-color:${L.KLEUREN[reg[i]].hex}">${inh}</div>`;
   }
   return `<div class="kr-bord kr-mini" style="--n:${n}" aria-hidden="true">${html}</div>`;
 }
@@ -117,7 +118,7 @@ function miniBord(n, reg, st, h){
 function bouwBord(){
   const n = p.n;
   bord.style.setProperty("--n", n);
-  bord.innerHTML = p.reg.map((g, i) => `<button type="button" data-cel="${i}" tabindex="${i ? -1 : 0}" style="background:${L.KLEUREN[g].hex}"></button>`).join("");
+  bord.innerHTML = p.reg.map((g, i) => `<button type="button" data-cel="${i}" tabindex="${i ? -1 : 0}" style="background-color:${L.KLEUREN[g].hex}"></button>`).join("");
   teken();
 }
 function teken(){
@@ -142,7 +143,11 @@ function teken(){
 function toonHint(h, tekst){
   hint = h;
   hintEl.hidden = !tekst;
-  hintEl.innerHTML = tekst || "";
+  hintEl.innerHTML = tekst ? `<button type="button" class="kr-hint-sluit" aria-label="Hint sluiten">&times;</button><div class="kr-hint-kop">Hint</div><p>${tekst}</p>${h && h.doe ? `<button type="button" class="kr-toon">Laat zien</button>` : ""}` : "";
+  if(!tekst) return;
+  hintEl.querySelector(".kr-hint-sluit").onclick = () => { toonHint(null); teken(); };
+  const toon = hintEl.querySelector(".kr-toon");
+  if(toon) toon.onclick = () => zet(h.doe);
 }
 
 /* ---- zetten ---- */
@@ -229,17 +234,18 @@ function geefHint(){
   const f = standFout(staat);
   if(f){
     const k = f.kroon.length > 0, cellen = k ? f.kroon : f.kruis;
-    toonHint({ plaats:[], weg:cellen, basis:[] }, `<b>Eerst iets rechtzetten.</b> ${k
-      ? (cellen.length === 1 ? "De aangewezen queen staat" : "De aangewezen queens staan") + " niet goed. Haal die weg en kijk opnieuw."
-      : (cellen.length === 1 ? "Op het aangewezen vakje staat een kruisje, maar daar hoort" : "Op de aangewezen vakjes staan kruisjes, maar daar horen") + " juist een queen. Haal het kruisje weg."}`);
+    toonHint({ plaats:[], weg:cellen, basis:[], doe:cellen.map(c => [c, 0]) }, `<b>Eerst iets rechtzetten.</b> ${k
+      ? (cellen.length === 1 ? "De gestreepte queen staat" : "De gestreepte queens staan") + " niet goed. Haal die weg en kijk opnieuw."
+      : (cellen.length === 1 ? "Op het gestreepte vakje staat een kruisje, maar daar hoort" : "Op de gestreepte vakjes staan kruisjes, maar daar horen") + " juist een queen. Haal het kruisje weg."}`);
   } else {
     const h = L.stap(p.n, p.reg, staat);
     if(h && h.type !== "vast"){
-      const actie = h.plaats.length ? "Zet een queen op het aangewezen vakje." : `Zet een kruisje op ${h.weg.length === 1 ? "het aangewezen vakje" : "de aangewezen vakjes"}.`;
-      toonHint(h, `<b>${L.TECHNIEKEN[L.techniek(h)].naam}.</b> ${L.beschrijf(h)} <span class="kr-actie">${actie}</span>`);
+      h.doe = h.plaats.map(c => [c, 2]).concat(h.weg.map(c => [c, 1]));
+      const actie = h.plaats.length ? "Zet een queen op het omlijnde vakje." : `Zet een kruisje op ${h.weg.length === 1 ? "het gestreepte vakje" : "de gestreepte vakjes"}.`;
+      toonHint(h, `<b>${L.TECHNIEKEN[L.techniek(h)].naam}.</b> ${L.beschrijf(h)} </p><p class="kr-actie">${actie}`);
     } else {
       const c = p.opl.find(i => staat[i] !== 2);
-      toonHint({ plaats:[c], weg:[], basis:[] }, "<b>Hier hoort een queen.</b>");
+      toonHint({ plaats:[c], weg:[], basis:[], doe:[[c, 2]] }, "<b>Hier hoort een queen.</b>");
     }
   }
   teken();
@@ -302,7 +308,7 @@ function tekenAnalyse({ totaal, vast, perTech, record, eerder, partij }){
     if(m.fout){
       const cellen = m.fout.kroon.length ? m.fout.kroon : m.fout.kruis;
       h = { plaats:[], weg:cellen, basis:[] };
-      uitleg = `<b>Er stond een fout op het bord.</b> ${m.fout.kroon.length ? "De aangewezen queen stond verkeerd" : "Op het aangewezen vakje stond een kruisje waar een queen hoort"}. Daardoor liep je vast: de puzzel klopte niet meer.`;
+      uitleg = `<b>Er stond een fout op het bord.</b> ${m.fout.kroon.length ? "De gestreepte queen stond verkeerd" : "Op het gestreepte vakje stond een kruisje waar een queen hoort"}. Daardoor liep je vast: de puzzel klopte niet meer.`;
     } else if(h && h.type !== "vast"){
       uitleg = `<b>${T[m.tech].naam}.</b> ${L.beschrijf(h)}`;
     } else uitleg = "Hier was geen eenvoudige stap te vinden.";
