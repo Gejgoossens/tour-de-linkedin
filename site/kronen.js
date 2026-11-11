@@ -26,11 +26,11 @@ let staat = null;      // 0 leeg, 1 kruisje, 2 kroon
 let terug = [];        // ongedaan-stapel: [[cel, vorigeWaarde], ...] per actie
 let log = [];          // elke zet: { t, cel, naar, voor }
 let hints = 0, fouten = 0, klaar = false, dagpuzzel = true, hint = null;
-let verstreken = 0, sinds = null, zichtbaar = false, tik = null;
+let verstreken = 0, sinds = null, zichtbaar = false, tik = null, gestart = false;
 
 function tijd(){ return verstreken + (sinds === null ? 0 : (performance.now() - sinds) / 1000); }
 function loop(aan){
-  if(aan && sinds === null && !klaar && p) sinds = performance.now();
+  if(aan && sinds === null && !klaar && p && gestart) sinds = performance.now();
   if(!aan && sinds !== null){ verstreken = tijd(); sinds = null; }
 }
 
@@ -44,7 +44,10 @@ doel.innerHTML = `
     <div class="kr-klok" id="krKlok" aria-label="Tijd">0:00</div>
   </div>
   <p class="kr-soort" id="krSoort"></p>
-  <div class="kr-bord" id="krBord"></div>
+  <div class="kr-veld">
+    <div class="kr-bord" id="krBord"></div>
+    <div class="kr-start" id="krStart"><button type="button" id="krStartKnop">Start</button><span>De tijd loopt zodra je start.</span></div>
+  </div>
   <div class="kr-knoppen">
     <button id="krTerug">Ongedaan</button>
     <button id="krHint">Hint</button>
@@ -129,9 +132,11 @@ function teken(){
     el.setAttribute("aria-label", `${L.naamCel(n, i)}, ${L.KLEUREN[p.reg[i]].zn}, ${wat}`);
   }
   bord.classList.toggle("klaar", klaar);
-  doel.querySelector("#krTerug").disabled = klaar || !terug.length;
-  doel.querySelector("#krHint").disabled = klaar;
-  doel.querySelector("#krWis").disabled = klaar || !staat.some(v => v);
+  doel.querySelector("#krTerug").disabled = klaar || !gestart || !terug.length;
+  doel.querySelector("#krHint").disabled = klaar || !gestart;
+  doel.querySelector("#krWis").disabled = klaar || !gestart || !staat.some(v => v);
+  bord.classList.toggle("wacht", !gestart);
+  doel.querySelector("#krStart").hidden = gestart;
   klokEl.textContent = klok(tijd());
 }
 function toonHint(h, tekst){
@@ -367,14 +372,19 @@ function start(vaste){
   isOpl = new Uint8Array(n * n); p.opl.forEach(c => isOpl[c] = 1);
   staat = new Uint8Array(n * n);
   terug = []; log = []; hints = 0; fouten = 0; klaar = false; hint = null;
-  verstreken = 0; sinds = null;
+  verstreken = 0; sinds = null; gestart = false;
   analyseEl.innerHTML = "";
   toonHint(null);
   doel.querySelectorAll("#krDag button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.dag === dag));
   doel.querySelector("#krSoort").innerHTML = `<b>${D.naam}</b> · ${n}×${n} · ${D.label}${dag === weekdag() ? " · de dag van vandaag" : ""}<br>${vaste ? "Vaste puzzel van vandaag: iedereen krijgt op deze dag dezelfde." : "Oefenpuzzel"}`;
   bouwBord();
-  loop(zichtbaar && !document.hidden);
 }
+doel.querySelector("#krStartKnop").onclick = () => {
+  gestart = true;
+  teken();
+  loop(zichtbaar && !document.hidden);
+  bord.children[0].focus({ preventScroll:true });
+};
 
 doel.querySelectorAll("#krDag button").forEach(b => b.onclick = () => { dag = +b.dataset.dag; start(true); });
 doel.querySelector("#krTerug").onclick = ongedaan;
