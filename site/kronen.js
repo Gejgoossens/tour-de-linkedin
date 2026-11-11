@@ -28,10 +28,23 @@ let log = [];          // elke zet: { t, cel, naar, voor }
 let hints = 0, fouten = 0, klaar = false, dagpuzzel = true, hint = null;
 let verstreken = 0, sinds = null, zichtbaar = false, tik = null, gestart = false;
 
+/* De vaste puzzel van een dag speel je één keer. De stand wordt bewaard, zodat herladen
+   geen nieuwe poging geeft en je de analyse later die dag kunt teruglezen. */
+function vasteStand(){
+  if(!opslag.vast || opslag.vast.datum !== vandaag()) opslag.vast = { datum:vandaag(), dagen:{} };
+  return opslag.vast.dagen;
+}
+function bewaarStand(extra){
+  if(!dagpuzzel || !gestart || !p) return;
+  const dagen = vasteStand();
+  dagen[dag] = Object.assign(dagen[dag] || {}, { staat:Array.from(staat), log, terug, verstreken:tijd(), hints, klaar }, extra || {});
+  bewaar(opslag);
+}
+
 function tijd(){ return verstreken + (sinds === null ? 0 : (performance.now() - sinds) / 1000); }
 function loop(aan){
   if(aan && sinds === null && !klaar && p && gestart) sinds = performance.now();
-  if(!aan && sinds !== null){ verstreken = tijd(); sinds = null; }
+  if(!aan && sinds !== null){ verstreken = tijd(); sinds = null; bewaarStand(); }
 }
 
 /* ---- opbouw ---- */
@@ -98,7 +111,8 @@ function celInhoud(n, reg, st, i, h, bots, auto){
   if(st[i] === 2){ inh = KROON; k += " kroon"; if(bots.has(i)) k += " botst"; }
   else if(st[i] === 1 || auto.has(i)){ inh = "<i>×</i>"; }
   if(h){
-    if(h.plaats.includes(i) || h.weg.includes(i)) k += " doel";
+    if(h.plaats.includes(i)) k += " doel";
+    else if(h.weg.includes(i)) k += " streep";
     else if(h.basis.includes(i)) k += " basis";
     else k += " dof";
   }
@@ -109,7 +123,7 @@ function miniBord(n, reg, st, h){
   let html = "";
   for(let i = 0; i < n * n; i++){
     const [k, inh] = celInhoud(n, reg, st, i, h, bots, leeg);
-    html += `<div class="${k}" style="background:${L.KLEUREN[reg[i]].hex}">${inh}</div>`;
+    html += `<div class="${k}" style="background-color:${L.KLEUREN[reg[i]].hex}">${inh}</div>`;
   }
   return `<div class="kr-bord kr-mini" style="--n:${n}" aria-hidden="true">${html}</div>`;
 }
@@ -117,7 +131,7 @@ function miniBord(n, reg, st, h){
 function bouwBord(){
   const n = p.n;
   bord.style.setProperty("--n", n);
-  bord.innerHTML = p.reg.map((g, i) => `<button type="button" data-cel="${i}" tabindex="${i ? -1 : 0}" style="background:${L.KLEUREN[g].hex}"></button>`).join("");
+  bord.innerHTML = p.reg.map((g, i) => `<button type="button" data-cel="${i}" tabindex="${i ? -1 : 0}" style="background-color:${L.KLEUREN[g].hex}"></button>`).join("");
   teken();
 }
 function teken(){
@@ -142,7 +156,11 @@ function teken(){
 function toonHint(h, tekst){
   hint = h;
   hintEl.hidden = !tekst;
-  hintEl.innerHTML = tekst || "";
+  hintEl.innerHTML = tekst ? `<button type="button" class="kr-hint-sluit" aria-label="Hint sluiten">&times;</button><div class="kr-hint-kop">Hint</div><p>${tekst}</p>${h && h.doe ? `<button type="button" class="kr-toon">Laat zien</button>` : ""}` : "";
+  if(!tekst) return;
+  hintEl.querySelector(".kr-hint-sluit").onclick = () => { toonHint(null); teken(); };
+  const toon = hintEl.querySelector(".kr-toon");
+  if(toon) toon.onclick = () => zet(h.doe);
 }
 
 /* ---- zetten ---- */
@@ -151,7 +169,7 @@ function zet(wijzigingen){
   if(!echt.length || klaar) return;
   const groep = [];
   for(const [c, v] of echt){
-    log.push({ t:tijd(), cel:c, naar:v, voor:staat.slice() });
+    log.push({ t:tijd(), cel:c, naar:v, voor:Array.from(staat) });
     groep.push([c, staat[c]]);
     staat[c] = v;
   }
@@ -164,6 +182,7 @@ function na(){
   let kronen = 0;
   for(let i = 0; i < n * n; i++) if(staat[i] === 2) kronen++;
   if(kronen === n && !botsers(n, p.reg, staat).size) klaarMaken();
+  else bewaarStand();
   teken();
 }
 function wissel(c){
@@ -173,7 +192,7 @@ function wissel(c){
 function ongedaan(){
   const groep = terug.pop();
   if(!groep || klaar) return;
-  for(const [c, v] of groep.reverse()){ log.push({ t:tijd(), cel:c, naar:v, voor:staat.slice(), terug:true }); staat[c] = v; }
+  for(const [c, v] of groep.reverse()){ log.push({ t:tijd(), cel:c, naar:v, voor:Array.from(staat), terug:true }); staat[c] = v; }
   na();
 }
 
@@ -225,30 +244,37 @@ function standFout(st){
 function geefHint(){
   if(klaar) return;
   hints++;
-  log.push({ t:tijd(), hint:true });
+  const item = { t:tijd(), hint:true, voor:Array.from(staat) };
+  log.push(item);
   const f = standFout(staat);
   if(f){
     const k = f.kroon.length > 0, cellen = k ? f.kroon : f.kruis;
-    toonHint({ plaats:[], weg:cellen, basis:[] }, `<b>Eerst iets rechtzetten.</b> ${k
-      ? (cellen.length === 1 ? "De aangewezen queen staat" : "De aangewezen queens staan") + " niet goed. Haal die weg en kijk opnieuw."
-      : (cellen.length === 1 ? "Op het aangewezen vakje staat een kruisje, maar daar hoort" : "Op de aangewezen vakjes staan kruisjes, maar daar horen") + " juist een queen. Haal het kruisje weg."}`);
+    item.h = { plaats:[], weg:cellen, basis:[] }; item.tech = "fout";
+    item.tekst = k ? "Er stond een queen op een plek waar er geen hoort." : "Er stond een kruisje op een plek waar juist een queen hoort.";
+    toonHint({ plaats:[], weg:cellen, basis:[], doe:cellen.map(c => [c, 0]) }, `<b>Eerst iets rechtzetten.</b> ${k
+      ? (cellen.length === 1 ? "De gestreepte queen staat" : "De gestreepte queens staan") + " niet goed. Haal die weg en kijk opnieuw."
+      : (cellen.length === 1 ? "Op het gestreepte vakje staat een kruisje, maar daar hoort" : "Op de gestreepte vakjes staan kruisjes, maar daar horen") + " juist een queen. Haal het kruisje weg."}`);
   } else {
     const h = L.stap(p.n, p.reg, staat);
     if(h && h.type !== "vast"){
-      const actie = h.plaats.length ? "Zet een queen op het aangewezen vakje." : `Zet een kruisje op ${h.weg.length === 1 ? "het aangewezen vakje" : "de aangewezen vakjes"}.`;
-      toonHint(h, `<b>${L.TECHNIEKEN[L.techniek(h)].naam}.</b> ${L.beschrijf(h)} <span class="kr-actie">${actie}</span>`);
+      h.doe = h.plaats.map(c => [c, 2]).concat(h.weg.map(c => [c, 1]));
+      const actie = h.plaats.length ? "Zet een queen op het omlijnde vakje." : `Zet een kruisje op ${h.weg.length === 1 ? "het gestreepte vakje" : "de gestreepte vakjes"}.`;
+      item.h = { plaats:h.plaats, weg:h.weg, basis:h.basis }; item.tech = L.techniek(h); item.tekst = L.beschrijf(h);
+      toonHint(h, `<b>${L.TECHNIEKEN[L.techniek(h)].naam}.</b> ${L.beschrijf(h)} </p><p class="kr-actie">${actie}`);
     } else {
       const c = p.opl.find(i => staat[i] !== 2);
-      toonHint({ plaats:[c], weg:[], basis:[] }, "<b>Hier hoort een queen.</b>");
+      item.h = { plaats:[c], weg:[], basis:[] }; item.tech = "gevolg"; item.tekst = "Hier hoort een queen.";
+      toonHint({ plaats:[c], weg:[], basis:[], doe:[[c, 2]] }, "<b>Hier hoort een queen.</b>");
     }
   }
+  bewaarStand();
   teken();
 }
 
 /* ---- analyse achteraf ---- */
-function klaarMaken(){
-  loop(false);
+function klaarMaken(terugkijken){
   klaar = true;
+  loop(false);
   const totaal = tijd(), n = p.n;
   /* per zet: hoe lang dacht je na, en wat was op dat moment de makkelijkste stap? */
   /* een queen zet je met twee tikken (kruisje, dan kroon): dat telt als één zet */
@@ -259,11 +285,21 @@ function klaarMaken(){
     else zetten.push(Object.assign({}, z));
   }
   fouten = zetten.filter(z => !z.hint && !z.terug && ((z.naar === 2 && !isOpl[z.cel]) || (z.naar === 1 && isOpl[z.cel]))).length;
-  const momenten = [], perTech = {};
-  let vorige = 0;
+  const momenten = [], perTech = {}, hintMomenten = [];
+  let vorige = 0, vorigeHint = false;
   for(const z of zetten){
     const duur = z.t - vorige; vorige = z.t;
-    if(z.hint || !z.voor) continue;
+    if(z.hint){
+      if(z.h){
+        const s = perTech[z.tech] || (perTech[z.tech] = { tijd:0, aantal:0 });
+        s.tijd += duur; s.aantal++;
+        hintMomenten.push({ duur, t:z.t, z, naHint:vorigeHint });
+      }
+      vorigeHint = true;
+      continue;
+    }
+    vorigeHint = false;
+    if(!z.voor) continue;
     const fout = standFout(z.voor);
     const h = fout ? null : L.stap(n, p.reg, z.voor);
     const t = fout ? "fout" : L.techniek(h);
@@ -273,17 +309,24 @@ function klaarMaken(){
   }
   const vast = [...momenten].sort((a, b) => b.duur - a.duur).filter(m => m.duur >= 5).slice(0, 3).sort((a, b) => a.t - b.t);
 
-  const eerder = opslag.partijen.filter(x => x.dag === dag);
+  let eerder = opslag.partijen.filter(x => x.dag === dag), partij;
+  if(terugkijken){
+    partij = terugkijken.partij;
+    eerder = eerder.slice(0, terugkijken.eerder);
+  } else {
+    partij = { d:vandaag(), n, dag, t:Math.round(totaal), h:hints, f:fouten, vast:dagpuzzel, tech:{} };
+    for(const k in perTech) partij.tech[k] = [Math.round(perTech[k].tijd * 10) / 10, perTech[k].aantal];
+    opslag.partijen.push(partij);
+    opslag.partijen = opslag.partijen.slice(-300);
+    bewaar(opslag);
+    bewaarStand({ partij, eerder:eerder.length });
+  }
   const record = eerder.length ? Math.min(...eerder.map(x => x.t)) : null;
-  const partij = { d:vandaag(), n, dag, t:Math.round(totaal), h:hints, f:fouten, vast:dagpuzzel, tech:{} };
-  for(const k in perTech) partij.tech[k] = [Math.round(perTech[k].tijd * 10) / 10, perTech[k].aantal];
-  opslag.partijen.push(partij);
-  opslag.partijen = opslag.partijen.slice(-300);
-  bewaar(opslag);
-  tekenAnalyse({ totaal, vast, perTech, record, eerder, partij });
+  tekenAnalyse({ totaal, vast, perTech, record, eerder, partij, hintMomenten, terugkijken:!!terugkijken });
+  toonSoort();
 }
 
-function tekenAnalyse({ totaal, vast, perTech, record, eerder, partij }){
+function tekenAnalyse({ totaal, vast, perTech, record, eerder, partij, hintMomenten, terugkijken }){
   const n = p.n, T = L.TECHNIEKEN;
   const langst = vast.length ? Math.max(...vast.map(m => m.duur)) : 0;
   const dn = L.DAGEN[dag].naam.toLowerCase();
@@ -302,7 +345,7 @@ function tekenAnalyse({ totaal, vast, perTech, record, eerder, partij }){
     if(m.fout){
       const cellen = m.fout.kroon.length ? m.fout.kroon : m.fout.kruis;
       h = { plaats:[], weg:cellen, basis:[] };
-      uitleg = `<b>Er stond een fout op het bord.</b> ${m.fout.kroon.length ? "De aangewezen queen stond verkeerd" : "Op het aangewezen vakje stond een kruisje waar een queen hoort"}. Daardoor liep je vast: de puzzel klopte niet meer.`;
+      uitleg = `<b>Er stond een fout op het bord.</b> ${m.fout.kroon.length ? "De gestreepte queen stond verkeerd" : "Op het gestreepte vakje stond een kruisje waar een queen hoort"}. Daardoor liep je vast: de puzzel klopte niet meer.`;
     } else if(h && h.type !== "vast"){
       uitleg = `<b>${T[m.tech].naam}.</b> ${L.beschrijf(h)}`;
     } else uitleg = "Hier was geen eenvoudige stap te vinden.";
@@ -317,6 +360,27 @@ function tekenAnalyse({ totaal, vast, perTech, record, eerder, partij }){
       <div><h3><span class="kr-nr">${i + 1}</span>${Math.round(m.duur)} s stil na ${klok(m.t - m.duur)}</h3><p>${uitleg}</p>${deed}</div>
     </div>`;
   }).join("");
+
+  /* hints: welke vroeg je, en waarom had je ze nodig? */
+  const hintTikken = hintMomenten.map(m => `<s style="left:${m.t / totaal * 100}%"></s>`).join("");
+  const hintKaarten = hintMomenten.slice(0, 8).map((m, i) => {
+    const tech = m.z.tech, sec = Math.round(m.duur);
+    let waarom;
+    if(tech === "fout") waarom = `Je had deze hint nodig omdat de puzzel niet meer klopte. Met een fout op het bord vallen er vakjes af die wel kunnen, en dan lijkt het alsof er geen stap meer is. ${T.fout.tip}`;
+    else {
+      const start = m.naHint ? "Je vroeg deze hint direct na de vorige: ook de volgende stap zag je niet."
+        : sec < 3 ? "Je vroeg deze hint vrijwel meteen, zonder eerst zelf te zoeken."
+        : `Je zocht ${sec} s voordat je deze hint vroeg.`;
+      waarom = `${start} De stap die je miste is van het soort <b>${T[tech].naam.toLowerCase()}</b>. ${T[tech].tip}`;
+    }
+    return `<div class="kr-kaart">
+      ${miniBord(n, p.reg, m.z.voor, m.z.h)}
+      <div><h3><span class="kr-nr hint">${i + 1}</span>Hint na ${klok(m.t)}</h3><p>${m.z.tekst}</p><p class="kr-deed"><b>Waarom je hem nodig had.</b> ${waarom}</p></div>
+    </div>`;
+  }).join("");
+  const hintTel = {};
+  for(const m of hintMomenten) hintTel[m.z.tech] = (hintTel[m.z.tech] || 0) + 1;
+  const hintSom = Object.keys(hintTel).sort((a, b) => hintTel[b] - hintTel[a]).map(k => `${hintTel[k]}× ${T[k].naam.toLowerCase()}`).join(", ");
 
   /* technieken: deze puzzel naast je eigen gemiddelde */
   const gem = {};
@@ -344,14 +408,19 @@ function tekenAnalyse({ totaal, vast, perTech, record, eerder, partij }){
       <div><b>${langst ? Math.round(langst) + " s" : "geen"}</b><span>langste stilstand</span></div>
     </div>
     ${vorm}
-    <div class="kr-knoppen"><button id="krVolgende" class="hoofd">Volgende puzzel</button></div>
+    <div class="kr-knoppen"><button id="krVolgende" class="hoofd">Oefenpuzzel spelen</button></div>
   </section>
   <section class="kr-na">
     <h2>Waar liep je vast</h2>
-    ${vast.length ? `<p class="toel">De rode blokken zijn je langste denkpauzes, de streepjes zijn je queens. Per pauze zie je de stand van dat moment en de makkelijkste stap die er lag.</p>
-    <div class="kr-lijn" aria-hidden="true">${blokken}${tikken}</div>
+    ${vast.length ? `<p class="toel">De rode blokken zijn je langste denkpauzes, de witte streepjes zijn je queens${hintMomenten.length ? ", de gele je hints" : ""}. Per pauze zie je de stand van dat moment en de makkelijkste stap die er lag.</p>
+    <div class="kr-lijn" aria-hidden="true">${blokken}${tikken}${hintTikken}</div>
     <div class="kr-lijn-as" aria-hidden="true"><span>0:00</span><span>${klok(totaal)}</span></div>
     ${kaarten}` : `<p class="conclusie">Nergens. Je hebt geen enkele keer langer dan 5 seconden stilgestaan.</p>`}
+  </section>
+  <section class="kr-na">
+    <h2>Je hints</h2>
+    ${hintMomenten.length ? `<p class="toel">Je gebruikte ${hintMomenten.length === 1 ? "1 hint" : hintMomenten.length + " hints"}: ${hintSom}. Per hint zie je de stand van dat moment, de stap die de hint aanwees en waarom je hem nodig had.</p>
+    ${hintKaarten}${hintMomenten.length > 8 ? `<p class="toel">En nog ${hintMomenten.length - 8} hints daarna.</p>` : ""}` : `<p class="conclusie">Geen. Je hebt deze puzzel helemaal zelf opgelost.</p>`}
   </section>
   ${rijen.length ? `<section class="kr-na">
     <h2>Denktijd per techniek</h2>
@@ -360,7 +429,15 @@ function tekenAnalyse({ totaal, vast, perTech, record, eerder, partij }){
     ${tip}
   </section>` : ""}`;
   analyseEl.querySelector("#krVolgende").onclick = () => { start(false); doel.scrollIntoView({ behavior:"smooth", block:"start" }); };
-  analyseEl.querySelector(".kr-na").scrollIntoView({ behavior:"smooth", block:"start" });
+  if(!terugkijken) analyseEl.querySelector(".kr-na").scrollIntoView({ behavior:"smooth", block:"start" });
+}
+
+function toonSoort(){
+  const D = L.DAGEN[dag];
+  const regel = !dagpuzzel ? "Oefenpuzzel: telt niet als de vaste puzzel van de dag."
+    : klaar ? `Deze puzzel heb je vandaag al gespeeld (${klok(tijd())}). Morgen staat er een nieuwe. Oefenen kan met “Nieuwe puzzel”.`
+    : "Vaste puzzel van vandaag: iedereen krijgt dezelfde en je speelt hem één keer.";
+  doel.querySelector("#krSoort").innerHTML = `<b>${D.naam}</b> · ${D.n}×${D.n} · ${D.label}${dag === weekdag() ? " · de dag van vandaag" : ""}<br>${regel}`;
 }
 
 /* ---- starten ---- */
@@ -376,13 +453,22 @@ function start(vaste){
   analyseEl.innerHTML = "";
   toonHint(null);
   doel.querySelectorAll("#krDag button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.dag === dag));
-  doel.querySelector("#krSoort").innerHTML = `<b>${D.naam}</b> · ${n}×${n} · ${D.label}${dag === weekdag() ? " · de dag van vandaag" : ""}<br>${vaste ? "Vaste puzzel van vandaag: iedereen krijgt op deze dag dezelfde." : "Oefenpuzzel"}`;
+  const oud = vaste ? vasteStand()[dag] : null;
+  if(oud && oud.staat && oud.staat.length === n * n){
+    staat = Uint8Array.from(oud.staat); log = oud.log || []; terug = oud.terug || [];
+    verstreken = oud.verstreken || 0; hints = oud.hints || 0; gestart = true;
+  }
   bouwBord();
+  if(oud && gestart && oud.klaar && oud.partij) klaarMaken({ partij:oud.partij, eerder:oud.eerder || 0 });
+  else if(gestart) loop(zichtbaar && !document.hidden);
+  toonSoort();
+  teken();
 }
 doel.querySelector("#krStartKnop").onclick = () => {
   gestart = true;
   teken();
   loop(zichtbaar && !document.hidden);
+  bewaarStand();
   bord.children[0].focus({ preventScroll:true });
 };
 
@@ -395,6 +481,8 @@ autoEl.onchange = () => { opslag.autoX = autoEl.checked; bewaar(opslag); if(p) t
 
 document.addEventListener("visibilitychange", () => loop(zichtbaar && !document.hidden));
 tik = setInterval(() => { if(sinds !== null) klokEl.textContent = klok(tijd()); }, 250);
+setInterval(() => { if(sinds !== null) bewaarStand(); }, 5000);
+window.addEventListener("pagehide", () => { if(sinds !== null) bewaarStand(); });
 
 /* app.js roept dit aan bij het wisselen van weergave; de klok loopt alleen als het bord in beeld is */
 window.Kronen = {

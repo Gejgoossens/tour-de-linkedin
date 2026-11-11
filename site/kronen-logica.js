@@ -216,12 +216,12 @@ function beschrijf(h){
   if(h.type === "enkel") return `In ${naamEenheid(h.eenheid)} is nog maar één vakje vrij. Daar moet de queen komen.`;
   if(h.type === "vast") return `In ${naamEenheid(h.eenheid)} is geen vrij vakje meer over. Er staat dus ergens een kruisje of queen verkeerd.`;
   if(h.type === "aanval"){
-    const wat = h.weg.length === 1 ? "het aangewezen vakje" : "een van de aangewezen vakjes";
-    return `Een kroon op ${wat} zou alle vrije vakjes van ${naamEenheid(h.eenheid)} blokkeren. Daar kan dus geen queen staan.`;
+    const wat = h.weg.length === 1 ? "het gestreepte vakje" : "een van de gestreepte vakjes";
+    return `Een queen op ${wat} zou alle vrije vakjes van ${naamEenheid(h.eenheid)} blokkeren. Daar kan dus geen queen staan.`;
   }
   if(h.type === "gevolg"){
-    const stappen = h.keten.map((k, i) => `${i ? "Daarna blijft" : "Dan blijft"} in ${naamEenheid(k.eenheid)} alleen het omlijnde vakje op ${naamCel(Math.round(Math.sqrt(h.n2)), k.cel)} over, dus daar komt een queen.`).join(" ");
-    return `Stel dat er een queen op het aangewezen vakje komt. ${stappen} Nu is er in ${naamEenheid(h.eenheid)} geen plek meer. Het aangewezen vakje kan dus geen queen zijn.`;
+    const stappen = h.keten.map((k, i) => `${i ? "Daarna blijft" : "Dan blijft"} in ${naamEenheid(k.eenheid)} alleen het oplichtende vakje op ${naamCel(Math.round(Math.sqrt(h.n2)), k.cel)} over, dus daar komt een queen.`).join(" ");
+    return `Stel dat er een queen op het gestreepte vakje komt. ${stappen} Nu is er in ${naamEenheid(h.eenheid)} geen plek meer. Het gestreepte vakje kan dus geen queen zijn.`;
   }
   const L = naamLijnen(h), V = naamVlakken(h.regs), een = h.regs.length === 1 && h.k === 1;
   if(h.type === "opgesloten") return een
