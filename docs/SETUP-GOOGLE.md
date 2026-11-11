@@ -57,6 +57,16 @@ Commit en push. Na een minuut staat de knop **+ Scores invoeren** op het dashboa
 
 Plak de nieuwe code in de editor en kies **Implementeren → Implementaties beheren → potloodje → Versie: Nieuwe versie → Implementeren**. Zo blijft de URL hetzelfde. Kies je "Nieuwe implementatie", dan krijg je een nieuwe URL en moet `config.js` mee.
 
+### Bijwerken voor de Queens-training (eenmalig, november 2026)
+
+De gedeelde uitslag van de Queens-training heeft de nieuwste `Code.gs` nodig. Zolang het script niet is bijgewerkt, werkt de training gewoon, maar ziet niemand elkaars tijden.
+
+1. Open de Sheet en kies **Extensies → Apps Script**.
+2. Verwijder alles in `Code.gs` en plak de inhoud van [`apps-script/Code.gs`](../apps-script/Code.gs).
+3. Kies **Implementeren → Implementaties beheren → potloodje → Versie: Nieuwe versie → Implementeren**.
+
+Het tabblad **Training** maakt het script zelf aan bij het eerste resultaat. Tijden die al op een apparaat stonden, worden bij het volgende bezoek alsnog gedeeld (tot twee dagen terug).
+
 ## Goed om te weten
 
 - **Invoeren** gaat het snelst **per spel**: open op LinkedIn de uitslag van één spel en neem de tijden van iedereen in één keer over. Met **per speler** vul je juist al je eigen spellen in.

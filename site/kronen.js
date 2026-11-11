@@ -16,6 +16,20 @@ opslag.partijen = opslag.partijen.filter(x => x.dag >= 0 && x.dag < 7);
 const weekdag = () => (new Date().getDay() + 6) % 7;   // 0 = maandag
 let dag = weekdag();
 
+/* ---- wie speelt er, en de gedeelde uitslag in de Google Sheet ---- */
+const API = (window.TOUR_CONFIG || {}).APPS_SCRIPT_URL || "";
+const CODE_SLEUTEL = "tdl-groepscode", SPELER_SLEUTEL = "tdl-stat-speler";
+const veilig = t => String(t).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+const leesKort = k => { try{ return localStorage.getItem(k) || ""; }catch(err){ return ""; } };
+const zetKort = (k, v) => { try{ v ? localStorage.setItem(k, v) : localStorage.removeItem(k); }catch(err){} };
+function namenLijst(){
+  try{ return spelerLijst.length ? spelerLijst.filter(x => x.Actief).map(x => x.Naam) : spelers.slice(); }catch(err){ return []; }
+}
+let ik = "";
+/* uitslag van vandaag: status "laden", "ok", "oud" (script nog niet bijgewerkt) of "fout" */
+let uitslag = { datum:"", status:"laden", rijen:[] };
+let deelMelding = "";
+
 function klok(s){ s = Math.max(0, Math.round(s)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; }
 function vandaag(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
 
@@ -34,10 +48,12 @@ function vasteStand(){
   if(!opslag.vast || opslag.vast.datum !== vandaag()) opslag.vast = { datum:vandaag(), dagen:{} };
   return opslag.vast.dagen;
 }
+const standSleutel = () => `${ik}|${dag}`;
+const vanMij = x => x.wie === undefined || x.wie === ik;
 function bewaarStand(extra){
   if(!dagpuzzel || !gestart || !p) return;
   const dagen = vasteStand();
-  dagen[dag] = Object.assign(dagen[dag] || {}, { staat:Array.from(staat), log, terug, verstreken:tijd(), hints, klaar }, extra || {});
+  dagen[standSleutel()] = Object.assign(dagen[standSleutel()] || {}, { staat:Array.from(staat), log, terug, verstreken:tijd(), hints, klaar }, extra || {});
   bewaar(opslag);
 }
 
@@ -56,10 +72,11 @@ doel.innerHTML = `
     <div class="tabs kr-dagen" id="krDag" role="group" aria-label="Kies een dag: maandag is het makkelijkst, zondag het moeilijkst">${L.DAGEN.map((d, i) => `<button data-dag="${i}" title="${d.naam}: ${d.n}×${d.n}, ${d.label}">${d.kort}<small>${d.n}×${d.n}</small></button>`).join("")}</div>
     <div class="kr-klok" id="krKlok" aria-label="Tijd">0:00</div>
   </div>
+  <label class="kr-wie">Je speelt als <select id="krWie" aria-label="Wie speelt er"></select></label>
   <p class="kr-soort" id="krSoort"></p>
   <div class="kr-veld">
     <div class="kr-bord" id="krBord"></div>
-    <div class="kr-start" id="krStart"><button type="button" id="krStartKnop">Start</button><span>De tijd loopt zodra je start.</span></div>
+    <div class="kr-start" id="krStart"><button type="button" id="krStartKnop">Start</button><span id="krStartInfo"></span></div>
   </div>
   <div class="kr-knoppen">
     <button id="krTerug">Ongedaan</button>
@@ -80,6 +97,7 @@ doel.innerHTML = `
     </ul>
   </details>
 </section>
+<section class="kr-na" id="krUitslag" hidden></section>
 <div id="krAnalyse"></div>`;
 
 const bord = doel.querySelector("#krBord"), klokEl = doel.querySelector("#krKlok"), hintEl = doel.querySelector("#krHintTekst");
@@ -309,17 +327,22 @@ function klaarMaken(terugkijken){
   }
   const vast = [...momenten].sort((a, b) => b.duur - a.duur).filter(m => m.duur >= 5).slice(0, 3).sort((a, b) => a.t - b.t);
 
-  let eerder = opslag.partijen.filter(x => x.dag === dag), partij;
+  let eerder = opslag.partijen.filter(x => x.dag === dag && vanMij(x)), partij;
   if(terugkijken){
     partij = terugkijken.partij;
     eerder = eerder.slice(0, terugkijken.eerder);
   } else {
-    partij = { d:vandaag(), n, dag, t:Math.round(totaal), h:hints, f:fouten, vast:dagpuzzel, tech:{} };
+    partij = { d:vandaag(), n, dag, wie:ik, t:Math.round(totaal), h:hints, f:fouten, vast:dagpuzzel, tech:{} };
     for(const k in perTech) partij.tech[k] = [Math.round(perTech[k].tijd * 10) / 10, perTech[k].aantal];
     opslag.partijen.push(partij);
     opslag.partijen = opslag.partijen.slice(-300);
     bewaar(opslag);
     bewaarStand({ partij, eerder:eerder.length });
+    if(dagpuzzel && ik){
+      opslag.wachtrij = (opslag.wachtrij || []).concat({ datum:partij.d, speler:ik, dag, tijd:Math.max(1, partij.t), hints:partij.h, fouten:partij.f });
+      bewaar(opslag);
+      verstuur();
+    }
   }
   const record = eerder.length ? Math.min(...eerder.map(x => x.t)) : null;
   tekenAnalyse({ totaal, vast, perTech, record, eerder, partij, hintMomenten, terugkijken:!!terugkijken });
@@ -384,7 +407,7 @@ function tekenAnalyse({ totaal, vast, perTech, record, eerder, partij, hintMomen
 
   /* technieken: deze puzzel naast je eigen gemiddelde */
   const gem = {};
-  for(const x of opslag.partijen) for(const k in x.tech || {}){ const g = gem[k] || (gem[k] = [0, 0]); g[0] += x.tech[k][0]; g[1] += x.tech[k][1]; }
+  for(const x of opslag.partijen.filter(vanMij)) for(const k in x.tech || {}){ const g = gem[k] || (gem[k] = [0, 0]); g[0] += x.tech[k][0]; g[1] += x.tech[k][1]; }
   const rijen = Object.keys(perTech).filter(k => perTech[k].aantal).sort((a, b) => perTech[b].tijd - perTech[a].tijd);
   const maxT = Math.max(1, ...rijen.map(k => perTech[k].tijd));
   const techTabel = rijen.map(k => {
@@ -399,7 +422,7 @@ function tekenAnalyse({ totaal, vast, perTech, record, eerder, partij, hintMomen
 
   analyseEl.innerHTML = `
   <section class="kr-na">
-    <h2>Opgelost in ${klok(totaal)}</h2>
+    <h2>${ik ? veilig(ik) + ": opgelost" : "Opgelost"} in ${klok(totaal)}</h2>
     <p class="toel">${recordTekst}</p>
     <div class="kr-tegels">
       <div><b>${klok(totaal)}</b><span>tijd</span></div>
@@ -432,6 +455,95 @@ function tekenAnalyse({ totaal, vast, perTech, record, eerder, partij, hintMomen
   if(!terugkijken) analyseEl.querySelector(".kr-na").scrollIntoView({ behavior:"smooth", block:"start" });
 }
 
+/* ---- gedeelde uitslag ---- */
+async function haalUitslag(){
+  if(!API){ uitslag = { datum:vandaag(), status:"fout", rijen:[] }; return werkBij(); }
+  const datum = vandaag();
+  if(uitslag.datum !== datum) uitslag = { datum, status:"laden", rijen:[] };
+  try{
+    const r = await fetch(`${API}${API.includes("?") ? "&" : "?"}action=training&datum=${datum}`, { cache:"no-store" });
+    const j = await r.json();
+    uitslag = j.ok && Array.isArray(j.training) ? { datum, status:"ok", rijen:j.training } : { datum, status:"oud", rijen:[] };
+  }catch(err){
+    uitslag = { datum, status:"fout", rijen:[] };
+  }
+  werkBij();
+  if(uitslag.status === "ok" && (opslag.wachtrij || []).length && leesKort(CODE_SLEUTEL)) verstuur();
+}
+let bezigMetSturen = false;
+async function verstuur(){
+  const code = leesKort(CODE_SLEUTEL);
+  if(bezigMetSturen || !API || !code || uitslag.status !== "ok"){ tekenUitslag(); return; }
+  bezigMetSturen = true; deelMelding = "";
+  let gelukt = false;
+  for(const item of (opslag.wachtrij || []).slice()){
+    let j;
+    try{
+      const r = await fetch(API, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body:JSON.stringify(Object.assign({ code, soort:"training" }, item)) });
+      j = await r.json();
+    }catch(err){ deelMelding = "Geen verbinding met de Google Sheet. Je tijd wordt later opnieuw verstuurd."; break; }
+    if(j.ok || j.code === "datum"){
+      opslag.wachtrij = opslag.wachtrij.filter(x => x !== item); bewaar(opslag); gelukt = gelukt || j.ok;
+      if(j.bestond && j.resultaat && j.resultaat.Tijd !== item.tijd) deelMelding = `Er stond al een tijd voor ${item.speler} (${klok(j.resultaat.Tijd)}). Die eerste blijft staan.`;
+    } else if(j.code === "groepscode"){ zetKort(CODE_SLEUTEL, ""); deelMelding = "De groepscode klopt niet."; break; }
+    else { deelMelding = j.fout || "Delen is mislukt."; break; }
+  }
+  bezigMetSturen = false;
+  if(gelukt) haalUitslag(); else tekenUitslag();
+}
+function serverResultaat(){ return uitslag.status === "ok" ? uitslag.rijen.find(r => r.Speler === ik && r.Dag === dag) : null; }
+function geblokkeerd(){ return dagpuzzel && !gestart && !!serverResultaat(); }
+
+function tekenUitslag(){
+  const el = doel.querySelector("#krUitslag");
+  el.hidden = !dagpuzzel;
+  if(!dagpuzzel) return;
+  const D = L.DAGEN[dag];
+  const wacht = (opslag.wachtrij || []).filter(x => x.datum === vandaag() && x.dag === dag);
+  const gespeeld = uitslag.rijen.filter(r => r.Dag === dag).map(r => ({ naam:r.Speler, t:r.Tijd, h:r.Hints, f:r.Fouten }));
+  for(const w of wacht) if(!gespeeld.some(g => g.naam === w.speler)) gespeeld.push({ naam:w.speler, t:w.tijd, h:w.hints, f:w.fouten, lokaal:true });
+  gespeeld.sort((a, b) => (a.h > 0) - (b.h > 0) || a.t - b.t);   // zonder hints gaat voor, daarna telt de tijd
+  const rest = namenLijst().filter(nm => !gespeeld.some(g => g.naam === nm));
+  const rijen = gespeeld.map((g, i) => `<tr class="${g.naam === ik ? "ik" : ""}"><td>${i + 1}</td><td>${veilig(g.naam)}${g.lokaal ? ` <small>nog niet gedeeld</small>` : ""}</td><td>${klok(g.t)}</td><td>${g.h}</td><td>${g.f}</td></tr>`).join("")
+    + rest.map(nm => `<tr class="leeg ${nm === ik ? "ik" : ""}"><td>–</td><td>${veilig(nm)}</td><td colspan="3">nog niet gespeeld</td></tr>`).join("");
+  let status = "";
+  if(uitslag.status === "laden") status = "Uitslag ophalen…";
+  else if(uitslag.status === "oud") status = "De gedeelde uitslag werkt nog niet: het Apps Script moet eerst worden bijgewerkt. Je tijd blijft op dit apparaat bewaard en wordt daarna alsnog gedeeld.";
+  else if(uitslag.status === "fout") status = "De Google Sheet is nu niet bereikbaar. Je ziet alleen wat op dit apparaat staat.";
+  const codeNodig = uitslag.status === "ok" && (opslag.wachtrij || []).length && !leesKort(CODE_SLEUTEL);
+  el.innerHTML = `<h2>Uitslag van vandaag</h2>
+    <p class="toel">${D.naam}, vaste puzzel (${D.n}×${D.n}). Iedereen speelt hem één keer. Wie zonder hints oplost staat boven wie hints gebruikte; daarna telt de tijd.</p>
+    <div class="scroll"><table class="tbl vrij kr-uitslag"><thead><tr><th></th><th>Speler</th><th>Tijd</th><th>Hints</th><th>Fouten</th></tr></thead><tbody>${rijen}</tbody></table></div>
+    ${status ? `<p class="toel">${status}</p>` : ""}
+    ${deelMelding ? `<p class="toel kr-let">${veilig(deelMelding)}</p>` : ""}
+    ${codeNodig ? `<form class="kr-code" id="krCodeForm"><label>Groepscode om je tijd te delen<input id="krCode" type="password" autocomplete="off" required></label><button type="submit">Deel mijn tijd</button></form>` : ""}`;
+  const f = el.querySelector("#krCodeForm");
+  if(f) f.onsubmit = e => { e.preventDefault(); zetKort(CODE_SLEUTEL, el.querySelector("#krCode").value.trim()); verstuur(); };
+}
+
+/* startknop, naam en uitslag opnieuw tekenen; na het ophalen van de uitslag of het wisselen van speler */
+function werkBij(){
+  if(!p) return;
+  const knop = doel.querySelector("#krStartKnop"), info = doel.querySelector("#krStartInfo");
+  const sr = serverResultaat(), blok = geblokkeerd();
+  const wachtOpSheet = dagpuzzel && API && uitslag.status === "laden";
+  knop.hidden = blok;
+  knop.disabled = !ik || wachtOpSheet;
+  knop.textContent = ik ? `Start als ${ik}` : "Start";
+  info.innerHTML = !ik ? "Kies eerst hierboven wie je bent."
+    : blok ? `<b>${veilig(ik)}</b> heeft deze puzzel vandaag al gespeeld: ${klok(sr.Tijd)}. Morgen staat er een nieuwe. Oefenen kan met “Nieuwe puzzel”.`
+    : wachtOpSheet ? "Even kijken of je vandaag al gespeeld hebt…"
+    : dagpuzzel ? `Je tijd komt op naam van <b>${veilig(ik)}</b>. De tijd loopt zodra je start.`
+    : "De tijd loopt zodra je start.";
+  toonSoort();
+  tekenUitslag();
+}
+function vulWie(){
+  const sel = doel.querySelector("#krWie"), lijst = namenLijst();
+  if(!ik){ const oud = leesKort(SPELER_SLEUTEL); if(lijst.includes(oud)) ik = oud; }
+  sel.innerHTML = `${ik ? "" : `<option value="">kies je naam…</option>`}${lijst.map(nm => `<option${nm === ik ? " selected" : ""}>${veilig(nm)}</option>`).join("")}`;
+}
+
 function toonSoort(){
   const D = L.DAGEN[dag];
   const regel = !dagpuzzel ? "Oefenpuzzel: telt niet als de vaste puzzel van de dag."
@@ -453,7 +565,8 @@ function start(vaste){
   analyseEl.innerHTML = "";
   toonHint(null);
   doel.querySelectorAll("#krDag button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.dag === dag));
-  const oud = vaste ? vasteStand()[dag] : null;
+  vulWie();
+  const oud = vaste && ik ? vasteStand()[standSleutel()] : null;
   if(oud && oud.staat && oud.staat.length === n * n){
     staat = Uint8Array.from(oud.staat); log = oud.log || []; terug = oud.terug || [];
     verstreken = oud.verstreken || 0; hints = oud.hints || 0; gestart = true;
@@ -461,10 +574,17 @@ function start(vaste){
   bouwBord();
   if(oud && gestart && oud.klaar && oud.partij) klaarMaken({ partij:oud.partij, eerder:oud.eerder || 0 });
   else if(gestart) loop(zichtbaar && !document.hidden);
-  toonSoort();
+  werkBij();
   teken();
 }
+doel.querySelector("#krWie").onchange = e => {
+  loop(false);
+  ik = e.target.value;
+  zetKort(SPELER_SLEUTEL, ik);
+  start(dagpuzzel);
+};
 doel.querySelector("#krStartKnop").onclick = () => {
+  if(!ik || geblokkeerd()) return;
   gestart = true;
   teken();
   loop(zichtbaar && !document.hidden);
@@ -486,7 +606,7 @@ window.addEventListener("pagehide", () => { if(sinds !== null) bewaarStand(); })
 
 /* app.js roept dit aan bij het wisselen van weergave; de klok loopt alleen als het bord in beeld is */
 window.Kronen = {
-  toon(){ zichtbaar = true; if(!p) start(true); else loop(!document.hidden); },
+  toon(){ zichtbaar = true; if(!p) start(true); else { loop(!document.hidden); if(!gestart) vulWie(); } haalUitslag(); },
   verberg(){ zichtbaar = false; loop(false); }
 };
 })();

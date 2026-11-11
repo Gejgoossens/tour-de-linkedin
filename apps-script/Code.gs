@@ -5,6 +5,9 @@
  *   POST (JSON als text/plain) { code, datum, scores:[{ speler:"Giyo", spel:"Wend", tijd:26 }, ...] }
  *        tijd getal = opslaan/overschrijven, null = bestaande tijd wissen. Wat er niet in staat, blijft zoals het was.
  *        Zo kan het dashboard per spel (alle spelers) of per speler (alle spellen) opslaan.
+ *   GET  ?action=training&datum=2026-11-12   → { ok, training:[{Datum,Speler,Dag,Tijd,Hints,Fouten}] } (zonder datum: alles)
+ *   POST { code, soort:"training", datum, speler, dag:0-6, tijd, hints, fouten }
+ *        Resultaat van de vaste Queens-trainingspuzzel. Eén per speler per dagpuzzel per datum: het eerste blijft staan.
  *
  * De groepscode staat in Projectinstellingen → Scripteigenschappen als GROEPSCODE, nooit in de code.
  * Eenmalig: voer `installeer` uit vanuit de editor (maakt de tabs en haalt de scores van GitHub).
@@ -15,12 +18,14 @@ var STANDAARD_SPELERS = ['Matta', 'Bouw', 'Corne', 'Jari', 'Giyo', 'Cas'];
 var CSV_URL = 'https://raw.githubusercontent.com/Gejgoossens/tour-de-linkedin/main/data/scores.csv';
 var KOP_SCORES = ['Datum', 'Speler', 'Spel', 'Tijd', 'IngevoerdOp'];
 var KOP_SPELERS = ['Naam', 'Startnummer', 'Actief'];
+var KOP_TRAINING = ['Datum', 'Speler', 'Dag', 'Tijd', 'Hints', 'Fouten', 'IngevoerdOp'];
 var MAX_TIJD = 3600;
 
 /* ===== web-app ===== */
 
 function doGet(e) {
   var actie = (e && e.parameter && e.parameter.action) || 'scores';
+  if (actie === 'training') return json_({ ok: true, training: leesTraining_(String((e.parameter && e.parameter.datum) || '')) });
   if (actie !== 'scores') return json_({ ok: false, fout: 'Onbekende actie' });
   return json_({ ok: true, scores: leesScores_(), spelers: leesSpelers_(), spellen: SPELLEN });
 }
@@ -36,6 +41,8 @@ function doPost(e) {
   var code = PropertiesService.getScriptProperties().getProperty('GROEPSCODE');
   if (!code) return json_({ ok: false, fout: 'Er is nog geen groepscode ingesteld in het script' });
   if (String(invoer.code || '').trim() !== code) return json_({ ok: false, fout: 'Verkeerde groepscode', code: 'groepscode' });
+
+  if (invoer.soort === 'training') return postTraining_(invoer);
 
   var datum = String(invoer.datum || '');
   if (!/^\d{4}-\d\d-\d\d$/.test(datum) || isNaN(new Date(datum + 'T12:00:00').getTime())) {
@@ -71,6 +78,49 @@ function doPost(e) {
   } finally {
     lock.releaseLock();
   }
+}
+
+/* ===== Queens-training ===== */
+
+function postTraining_(invoer) {
+  var datum = String(invoer.datum || '');
+  if (!/^\d{4}-\d\d-\d\d$/.test(datum) || isNaN(new Date(datum + 'T12:00:00').getTime())) return json_({ ok: false, fout: 'Ongeldige datum' });
+  /* alleen vandaag, met een dag speling voor tijdzones en een resultaat dat later alsnog wordt verstuurd */
+  var dagen = Math.round((new Date(vandaag_() + 'T12:00:00') - new Date(datum + 'T12:00:00')) / 86400000);
+  if (dagen < -1 || dagen > 2) return json_({ ok: false, fout: 'Deze datum is te oud of ligt in de toekomst', code: 'datum' });
+
+  var speler = String(invoer.speler || '').trim();
+  var bekend = leesSpelers_().filter(function (s) { return s.Actief; }).map(function (s) { return s.Naam; });
+  if (bekend.indexOf(speler) < 0) return json_({ ok: false, fout: 'Onbekende speler: ' + speler });
+  var dag = Number(invoer.dag), tijd = Number(invoer.tijd), hints = Number(invoer.hints || 0), fouten = Number(invoer.fouten || 0);
+  if (!(dag >= 0 && dag <= 6) || Math.round(dag) !== dag) return json_({ ok: false, fout: 'Ongeldige dag' });
+  if (!(tijd >= 1 && tijd <= 86400) || Math.round(tijd) !== tijd) return json_({ ok: false, fout: 'Ongeldige tijd' });
+  if (!(hints >= 0 && hints <= 999) || !(fouten >= 0 && fouten <= 999)) return json_({ ok: false, fout: 'Ongeldige invoer' });
+
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) return json_({ ok: false, fout: 'Het is even druk, probeer het opnieuw' });
+  try {
+    var al = leesTraining_(datum).filter(function (r) { return r.Speler === speler && r.Dag === dag; })[0];
+    if (al) return json_({ ok: true, bestond: true, resultaat: al });
+    var blad = blad_('Training', KOP_TRAINING);
+    var rij = blad.getLastRow() + 1;
+    blad.getRange(rij, 1, 1, 1).setNumberFormat('@');
+    blad.getRange(rij, 1, 1, KOP_TRAINING.length).setValues([[datum, speler, dag, tijd, Math.round(hints), Math.round(fouten), new Date().toISOString()]]);
+    return json_({ ok: true, bestond: false });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function leesTraining_(datum) {
+  var blad = blad_('Training', KOP_TRAINING);
+  var laatste = blad.getLastRow();
+  if (laatste < 2) return [];
+  return blad.getRange(2, 1, laatste - 1, 6).getValues()
+    .filter(function (r) { return r[0] !== '' && r[1] !== '' && r[3] !== '' && (!datum || datumTekst_(r[0]) === datum); })
+    .map(function (r) {
+      return { Datum: datumTekst_(r[0]), Speler: String(r[1]).trim(), Dag: Number(r[2]), Tijd: Number(r[3]), Hints: Number(r[4]) || 0, Fouten: Number(r[5]) || 0 };
+    });
 }
 
 /* ===== Sheet lezen en schrijven ===== */
