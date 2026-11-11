@@ -11,7 +11,7 @@ const KROON = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 17.5 2 
 
 function lees(){ try{ return JSON.parse(localStorage.getItem(OPSLAG)) || {}; }catch(err){ return {}; } }
 function bewaar(o){ try{ localStorage.setItem(OPSLAG, JSON.stringify(o)); }catch(err){} }
-const opslag = Object.assign({ auto:false, partijen:[] }, lees());
+const opslag = Object.assign({ autoX:true, partijen:[] }, lees());
 opslag.partijen = opslag.partijen.filter(x => x.dag >= 0 && x.dag < 7);
 const weekdag = () => (new Date().getDay() + 6) % 7;   // 0 = maandag
 let dag = weekdag();
@@ -68,7 +68,7 @@ doel.innerHTML = `
 
 const bord = doel.querySelector("#krBord"), klokEl = doel.querySelector("#krKlok"), hintEl = doel.querySelector("#krHintTekst");
 const analyseEl = doel.querySelector("#krAnalyse"), autoEl = doel.querySelector("#krAuto");
-autoEl.checked = !!opslag.auto;
+autoEl.checked = opslag.autoX !== false;
 
 /* ---- tekenen ---- */
 function randen(n, reg, i){
@@ -85,7 +85,7 @@ function botsers(n, reg, st){
 }
 function autoKruis(n, reg, st){
   const uit = new Set();
-  if(!opslag.auto) return uit;
+  if(!opslag.autoX) return uit;
   for(let i = 0; i < n * n; i++) if(st[i] === 2) for(let j = 0; j < n * n; j++) if(st[j] === 0 && L.raakt(n, i, j, reg)) uit.add(j);
   return uit;
 }
@@ -381,7 +381,7 @@ doel.querySelector("#krTerug").onclick = ongedaan;
 doel.querySelector("#krHint").onclick = geefHint;
 doel.querySelector("#krWis").onclick = () => { const w = []; staat.forEach((v, i) => { if(v) w.push([i, 0]); }); zet(w); };
 doel.querySelector("#krNieuw").onclick = () => start(false);
-autoEl.onchange = () => { opslag.auto = autoEl.checked; bewaar(opslag); if(p) teken(); };
+autoEl.onchange = () => { opslag.autoX = autoEl.checked; bewaar(opslag); if(p) teken(); };
 
 document.addEventListener("visibilitychange", () => loop(zichtbaar && !document.hidden));
 tik = setInterval(() => { if(sinds !== null) klokEl.textContent = klok(tijd()); }, 250);
