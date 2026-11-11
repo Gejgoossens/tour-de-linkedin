@@ -1,5 +1,5 @@
 /* Kronen: puzzelgenerator en redeneermotor.
-   Regels: één kroon per rij, per kolom en per kleurvlak; kronen raken elkaar niet, ook niet schuin.
+   Regels: één queen per rij, per kolom en per kleurvlak; kronen raken elkaar niet, ook niet schuin.
    De motor lost puzzels op met dezelfde stappen als een mens. Daardoor kan hij op elk moment
    de makkelijkste volgende stap aanwijzen (voor hints en voor de analyse achteraf).
    Geen DOM: dit bestand draait ook in Node (zie scripts/test_kronen.js). */
@@ -20,13 +20,13 @@ const KLEUREN = [
 ];
 
 const TECHNIEKEN = {
-  enkel:      { naam:"Laatste vakje",              zwaarte:0, tip:"Tel per rij, kolom en vlak hoeveel vakjes nog vrij zijn. Is het er één, dan staat daar de kroon." },
+  enkel:      { naam:"Laatste vakje",              zwaarte:0, tip:"Tel per rij, kolom en vlak hoeveel vakjes nog vrij zijn. Is het er één, dan staat daar de queen." },
   opgesloten: { naam:"Vlak in één rij of kolom",   zwaarte:1, tip:"Zoek vlakken die helemaal binnen één rij of kolom liggen. Die lijn is dan van dat vlak: streep de rest van de lijn weg." },
-  claim:      { naam:"Rij of kolom in één vlak",   zwaarte:1, tip:"Kijk per rij en kolom of alle vrije vakjes dezelfde kleur hebben. Dan komt de kroon van die kleur in die lijn: streep de rest van het vlak weg." },
-  aanval:     { naam:"Blokkerend vakje",           zwaarte:3, tip:"Kijk bij kleine vlakken (2 of 3 vrije vakjes) welk vakje ernaast ze allemaal tegelijk raakt. Daar kan geen kroon staan." },
+  claim:      { naam:"Rij of kolom in één vlak",   zwaarte:1, tip:"Kijk per rij en kolom of alle vrije vakjes dezelfde kleur hebben. Dan komt de queen van die kleur in die lijn: streep de rest van het vlak weg." },
+  aanval:     { naam:"Blokkerend vakje",           zwaarte:3, tip:"Kijk bij kleine vlakken (2 of 3 vrije vakjes) welk vakje ernaast ze allemaal tegelijk raakt. Daar kan geen queen staan." },
   groep:      { naam:"Groep van vlakken",          zwaarte:5, tip:"Zoek twee of drie vlakken die samen in net zoveel rijen of kolommen passen. Die lijnen zijn dan bezet: andere kleuren vallen daar af." },
-  gevolg:     { naam:"Vooruitdenken",              zwaarte:6, tip:"Als niets anders lukt: kies een vakje in een klein vlak en denk één of twee stappen door. Loopt een ander vlak of een lijn dan leeg, dan kan daar geen kroon staan." },
-  fout:       { naam:"Fout herstellen",            zwaarte:0, tip:"Zet pas een kruisje of kroon als je kunt uitleggen waarom. Gokken kost later meer tijd dan het nu oplevert." }
+  gevolg:     { naam:"Vooruitdenken",              zwaarte:6, tip:"Als niets anders lukt: kies een vakje in een klein vlak en denk één of twee stappen door. Loopt een ander vlak of een lijn dan leeg, dan kan daar geen queen staan." },
+  fout:       { naam:"Fout herstellen",            zwaarte:0, tip:"Zet pas een kruisje of queen als je kunt uitleggen waarom. Gokken kost later meer tijd dan het nu oplevert." }
 };
 
 /* ---- willekeur met een zaadje, zodat de dagpuzzel voor iedereen gelijk is ---- */
@@ -105,7 +105,7 @@ function hoortBij(n, reg, cel, soort, i){
 }
 
 /* De makkelijkste logische stap vanuit deze stand, of null als de motor er geen ziet.
-   Resultaat: { type, plaats:[cellen voor een kroon], weg:[cellen voor een kruisje], basis:[cellen waar je naar moet kijken], ... } */
+   Resultaat: { type, plaats:[cellen voor een queen], weg:[cellen voor een kruisje], basis:[cellen waar je naar moet kijken], ... } */
 function stap(n, reg, staat){
   const N = n * n, A = analyse(n, reg, staat);
   const eenheden = [];
@@ -168,7 +168,7 @@ function stap(n, reg, staat){
   h = lijnen(2, n - 1);
   if(h) return h;
 
-  /* vooruitdenken: een kroon hier dwingt een of meer andere kronen af, en daarna loopt iets leeg */
+  /* vooruitdenken: een queen hier dwingt een of meer andere kronen af, en daarna loopt iets leeg */
   let best = null;
   for(let c = 0; c < N; c++){
     if(!A.k[c]) continue;
@@ -213,23 +213,23 @@ function naamLijnen(h){
 function naamCel(n, c){ return `rij ${((c / n) | 0) + 1}, kolom ${c % n + 1}`; }
 
 function beschrijf(h){
-  if(h.type === "enkel") return `In ${naamEenheid(h.eenheid)} is nog maar één vakje vrij. Daar moet de kroon komen.`;
-  if(h.type === "vast") return `In ${naamEenheid(h.eenheid)} is geen vrij vakje meer over. Er staat dus ergens een kruisje of kroon verkeerd.`;
+  if(h.type === "enkel") return `In ${naamEenheid(h.eenheid)} is nog maar één vakje vrij. Daar moet de queen komen.`;
+  if(h.type === "vast") return `In ${naamEenheid(h.eenheid)} is geen vrij vakje meer over. Er staat dus ergens een kruisje of queen verkeerd.`;
   if(h.type === "aanval"){
     const wat = h.weg.length === 1 ? "het aangewezen vakje" : "een van de aangewezen vakjes";
-    return `Een kroon op ${wat} zou alle vrije vakjes van ${naamEenheid(h.eenheid)} blokkeren. Daar kan dus geen kroon staan.`;
+    return `Een kroon op ${wat} zou alle vrije vakjes van ${naamEenheid(h.eenheid)} blokkeren. Daar kan dus geen queen staan.`;
   }
   if(h.type === "gevolg"){
-    const stappen = h.keten.map((k, i) => `${i ? "Daarna blijft" : "Dan blijft"} in ${naamEenheid(k.eenheid)} alleen het omlijnde vakje op ${naamCel(Math.round(Math.sqrt(h.n2)), k.cel)} over, dus daar komt een kroon.`).join(" ");
-    return `Stel dat er een kroon op het aangewezen vakje komt. ${stappen} Nu is er in ${naamEenheid(h.eenheid)} geen plek meer. Het aangewezen vakje kan dus geen kroon zijn.`;
+    const stappen = h.keten.map((k, i) => `${i ? "Daarna blijft" : "Dan blijft"} in ${naamEenheid(k.eenheid)} alleen het omlijnde vakje op ${naamCel(Math.round(Math.sqrt(h.n2)), k.cel)} over, dus daar komt een queen.`).join(" ");
+    return `Stel dat er een queen op het aangewezen vakje komt. ${stappen} Nu is er in ${naamEenheid(h.eenheid)} geen plek meer. Het aangewezen vakje kan dus geen queen zijn.`;
   }
   const L = naamLijnen(h), V = naamVlakken(h.regs), een = h.regs.length === 1 && h.k === 1;
   if(h.type === "opgesloten") return een
-    ? `${hoofd(V)} past alleen nog in ${L}. De kroon van ${L} komt dus in dat vlak; de andere vakjes van ${L} vallen af.`
+    ? `${hoofd(V)} past alleen nog in ${L}. De queen van ${L} komt dus in dat vlak; de andere vakjes van ${L} vallen af.`
     : `${hoofd(V)} ${h.regs.length === 1 ? "past" : "passen samen"} alleen nog in ${L}. Die lijnen zijn daarmee bezet; andere kleuren vallen daar af.`;
   return een
-    ? `In ${L} is alleen nog plek in ${V}. De kroon van dat vlak komt dus in ${L}; de rest van het vlak valt af.`
-    : `In ${L} is alleen nog plek in ${V}. De kronen van die kleuren komen dus daar; de rest van die vlakken valt af.`;
+    ? `In ${L} is alleen nog plek in ${V}. De queen van dat vlak komt dus in ${L}; de rest van het vlak valt af.`
+    : `In ${L} is alleen nog plek in ${V}. De queens van die kleuren komen dus daar; de rest van die vlakken valt af.`;
 }
 
 /* ---- oplossen zoals een mens, om te controleren dat een puzzel zonder gokken kan ---- */

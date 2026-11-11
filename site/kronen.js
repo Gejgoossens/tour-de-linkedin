@@ -21,7 +21,7 @@ function vandaag(){ const d = new Date(); return `${d.getFullYear()}-${String(d.
 
 /* ---- stand van de lopende puzzel ---- */
 let p = null;          // puzzel: { n, reg, opl }
-let isOpl = null;      // per vakje: hoort hier een kroon?
+let isOpl = null;      // per vakje: hoort hier een queen?
 let staat = null;      // 0 leeg, 1 kruisje, 2 kroon
 let terug = [];        // ongedaan-stapel: [[cel, vorigeWaarde], ...] per actie
 let log = [];          // elke zet: { t, cel, naar, voor }
@@ -37,8 +37,8 @@ function loop(aan){
 /* ---- opbouw ---- */
 doel.innerHTML = `
 <section class="kr">
-  <h2>Kronen</h2>
-  <p class="toel">Training voor Queens. Zet in elke rij, elke kolom en elk kleurvlak precies één kroon. Kronen mogen elkaar niet raken, ook niet schuin. Kies een dag: maandag is heel makkelijk, zondag extreem moeilijk.</p>
+  <h2>Queens-training</h2>
+  <p class="toel">Zet in elke rij, elke kolom en elk kleurvlak precies één queen. Queens mogen elkaar niet raken, ook niet schuin. Kies een dag: maandag is heel makkelijk, zondag extreem moeilijk.</p>
   <div class="kr-balk">
     <div class="tabs kr-dagen" id="krDag" role="group" aria-label="Kies een dag: maandag is het makkelijkst, zondag het moeilijkst">${L.DAGEN.map((d, i) => `<button data-dag="${i}" title="${d.naam}: ${d.n}×${d.n}, ${d.label}">${d.kort}<small>${d.n}×${d.n}</small></button>`).join("")}</div>
     <div class="kr-klok" id="krKlok" aria-label="Tijd">0:00</div>
@@ -52,13 +52,13 @@ doel.innerHTML = `
     <button id="krNieuw">Nieuwe puzzel</button>
   </div>
   <div class="kr-hint" id="krHintTekst" role="status" aria-live="polite" hidden></div>
-  <label class="kr-auto"><input type="checkbox" id="krAuto"> Kruisjes automatisch zetten rond een kroon</label>
+  <label class="kr-auto"><input type="checkbox" id="krAuto"> Kruisjes automatisch zetten rond een queen</label>
   <details class="kr-uitleg">
     <summary>Zo speel je</summary>
     <ul>
-      <li>Tik één keer voor een kruisje (hier kan geen kroon), nog een keer voor een kroon, nog een keer om te wissen.</li>
+      <li>Tik één keer voor een kruisje (hier kan geen queen), nog een keer voor een queen, nog een keer om te wissen.</li>
       <li>Sleep over het bord om snel meerdere kruisjes te zetten.</li>
-      <li>Rood gestreepte kronen botsen met elkaar.</li>
+      <li>Rood gestreepte queens botsen met elkaar.</li>
       <li>Een hint wijst de makkelijkste logische stap aan en legt uit waarom hij klopt. Je hoeft nooit te gokken.</li>
       <li>Na afloop zie je waar je vastliep en welke stap je daar had kunnen zetten.</li>
     </ul>
@@ -125,7 +125,7 @@ function teken(){
     const el = cellen[i];
     if(el.className !== k) el.className = k;
     if(el._inh !== inh){ el.innerHTML = inh; el._inh = inh; }
-    const wat = staat[i] === 2 ? "kroon" : (staat[i] === 1 || auto.has(i)) ? "kruisje" : "leeg";
+    const wat = staat[i] === 2 ? "queen" : (staat[i] === 1 || auto.has(i)) ? "kruisje" : "leeg";
     el.setAttribute("aria-label", `${L.naamCel(n, i)}, ${L.KLEUREN[p.reg[i]].zn}, ${wat}`);
   }
   bord.classList.toggle("klaar", klaar);
@@ -225,16 +225,16 @@ function geefHint(){
   if(f){
     const k = f.kroon.length > 0, cellen = k ? f.kroon : f.kruis;
     toonHint({ plaats:[], weg:cellen, basis:[] }, `<b>Eerst iets rechtzetten.</b> ${k
-      ? (cellen.length === 1 ? "De aangewezen kroon staat" : "De aangewezen kronen staan") + " niet goed. Haal die weg en kijk opnieuw."
-      : (cellen.length === 1 ? "Op het aangewezen vakje staat een kruisje, maar daar hoort" : "Op de aangewezen vakjes staan kruisjes, maar daar horen") + " juist een kroon. Haal het kruisje weg."}`);
+      ? (cellen.length === 1 ? "De aangewezen queen staat" : "De aangewezen queens staan") + " niet goed. Haal die weg en kijk opnieuw."
+      : (cellen.length === 1 ? "Op het aangewezen vakje staat een kruisje, maar daar hoort" : "Op de aangewezen vakjes staan kruisjes, maar daar horen") + " juist een queen. Haal het kruisje weg."}`);
   } else {
     const h = L.stap(p.n, p.reg, staat);
     if(h && h.type !== "vast"){
-      const actie = h.plaats.length ? "Zet een kroon op het aangewezen vakje." : `Zet een kruisje op ${h.weg.length === 1 ? "het aangewezen vakje" : "de aangewezen vakjes"}.`;
+      const actie = h.plaats.length ? "Zet een queen op het aangewezen vakje." : `Zet een kruisje op ${h.weg.length === 1 ? "het aangewezen vakje" : "de aangewezen vakjes"}.`;
       toonHint(h, `<b>${L.TECHNIEKEN[L.techniek(h)].naam}.</b> ${L.beschrijf(h)} <span class="kr-actie">${actie}</span>`);
     } else {
       const c = p.opl.find(i => staat[i] !== 2);
-      toonHint({ plaats:[c], weg:[], basis:[] }, "<b>Hier hoort een kroon.</b>");
+      toonHint({ plaats:[c], weg:[], basis:[] }, "<b>Hier hoort een queen.</b>");
     }
   }
   teken();
@@ -246,7 +246,7 @@ function klaarMaken(){
   klaar = true;
   const totaal = tijd(), n = p.n;
   /* per zet: hoe lang dacht je na, en wat was op dat moment de makkelijkste stap? */
-  /* een kroon zet je met twee tikken (kruisje, dan kroon): dat telt als één zet */
+  /* een queen zet je met twee tikken (kruisje, dan kroon): dat telt als één zet */
   const zetten = [];
   for(const z of log){
     const v = zetten[zetten.length - 1];
@@ -297,14 +297,14 @@ function tekenAnalyse({ totaal, vast, perTech, record, eerder, partij }){
     if(m.fout){
       const cellen = m.fout.kroon.length ? m.fout.kroon : m.fout.kruis;
       h = { plaats:[], weg:cellen, basis:[] };
-      uitleg = `<b>Er stond een fout op het bord.</b> ${m.fout.kroon.length ? "De aangewezen kroon stond verkeerd" : "Op het aangewezen vakje stond een kruisje waar een kroon hoort"}. Daardoor liep je vast: de puzzel klopte niet meer.`;
+      uitleg = `<b>Er stond een fout op het bord.</b> ${m.fout.kroon.length ? "De aangewezen queen stond verkeerd" : "Op het aangewezen vakje stond een kruisje waar een queen hoort"}. Daardoor liep je vast: de puzzel klopte niet meer.`;
     } else if(h && h.type !== "vast"){
       uitleg = `<b>${T[m.tech].naam}.</b> ${L.beschrijf(h)}`;
     } else uitleg = "Hier was geen eenvoudige stap te vinden.";
     let deed = "";
     if(h && !m.fout){
       const raak = (h.plaats.includes(m.z.cel) && m.z.naar === 2) || (h.weg.includes(m.z.cel) && m.z.naar === 1);
-      const wat = m.z.terug ? "maakte je een zet ongedaan" : m.z.naar === 2 ? `zette je een kroon op ${L.naamCel(n, m.z.cel)}` : m.z.naar === 1 ? `zette je een kruisje op ${L.naamCel(n, m.z.cel)}` : `maakte je ${L.naamCel(n, m.z.cel)} leeg`;
+      const wat = m.z.terug ? "maakte je een zet ongedaan" : m.z.naar === 2 ? `zette je een queen op ${L.naamCel(n, m.z.cel)}` : m.z.naar === 1 ? `zette je een kruisje op ${L.naamCel(n, m.z.cel)}` : `maakte je ${L.naamCel(n, m.z.cel)} leeg`;
       deed = `<p class="kr-deed">Daarna ${wat}. ${raak ? "Dat was precies deze stap: je zag hem, het duurde alleen even." : "De stap hiernaast was makkelijker te zien."}</p>`;
     }
     return `<div class="kr-kaart">
@@ -343,7 +343,7 @@ function tekenAnalyse({ totaal, vast, perTech, record, eerder, partij }){
   </section>
   <section class="kr-na">
     <h2>Waar liep je vast</h2>
-    ${vast.length ? `<p class="toel">De rode blokken zijn je langste denkpauzes, de streepjes zijn je kronen. Per pauze zie je de stand van dat moment en de makkelijkste stap die er lag.</p>
+    ${vast.length ? `<p class="toel">De rode blokken zijn je langste denkpauzes, de streepjes zijn je queens. Per pauze zie je de stand van dat moment en de makkelijkste stap die er lag.</p>
     <div class="kr-lijn" aria-hidden="true">${blokken}${tikken}</div>
     <div class="kr-lijn-as" aria-hidden="true"><span>0:00</span><span>${klok(totaal)}</span></div>
     ${kaarten}` : `<p class="conclusie">Nergens. Je hebt geen enkele keer langer dan 5 seconden stilgestaan.</p>`}
