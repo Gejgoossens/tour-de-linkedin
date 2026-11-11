@@ -536,3 +536,6 @@ body.huld-open{overflow:hidden}
   .kr-bord:not(.kr-mini) .kr-cel.streep{animation:kr-streep .35s ease-out}
   @keyframes kr-streep{from{background-image:none}}
 }
+.kr-lijn s{position:absolute;top:0;bottom:0;width:3px;background:var(--geel)}
+.kr-nr.hint{background:var(--geel)}
+.kr-deed b{color:var(--asfalt);font-weight:600}
