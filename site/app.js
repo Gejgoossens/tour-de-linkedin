@@ -884,11 +884,13 @@ function toonView(v){
   view = v;
   document.getElementById("tourView").hidden = v !== "tour";
   document.getElementById("statView").hidden = v !== "stats";
+  document.getElementById("speelView").hidden = v !== "spelen";
+  if(window.Kronen) v === "spelen" ? Kronen.toon() : Kronen.verberg();
   document.querySelector(".nav").hidden = v !== "tour";
   document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === v));
-  try{ history.replaceState(null, "", v === "stats" ? "#statistieken" : "#tour"); }catch(err){}
-  v === "stats" ? renderStatView() : render();
-  const doel = document.getElementById(v === "stats" ? "statView" : "tourView");
+  try{ history.replaceState(null, "", v === "stats" ? "#statistieken" : v === "spelen" ? "#trainen" : "#tour"); }catch(err){}
+  if(v === "stats") renderStatView(); else if(v === "tour") render();
+  const doel = document.getElementById(v === "stats" ? "statView" : v === "spelen" ? "speelView" : "tourView");
   doel.classList.remove("instroom"); void doel.offsetWidth; doel.classList.add("instroom");
 }
 document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => toonView(b.dataset.view));
@@ -909,7 +911,7 @@ async function laad(){
     status.textContent = bronMelding;
     document.getElementById("inhoud").hidden = false;
     toonView(view);
-    huldigingAuto();
+    if(view !== "spelen") huldigingAuto(); // niet over een lopende puzzel heen
   }catch(err){
     status.hidden = false;
     status.textContent = `Kon de scores niet laden: ${err.message}.`;
@@ -919,7 +921,7 @@ async function laad(){
 }
 
 document.getElementById("regel").textContent = ALLEEN_VOLLEDIG ? "Een spel telt alleen mee als iedereen het gespeeld heeft." : `Heb je een spel niet gespeeld, dan krijg je de langzaamste tijd van die dag plus ${STRAFSECONDEN} seconden. Dat geldt vanaf je eerste gespeelde dag, ook als je op vakantie bent.`;
-view = location.hash === "#statistieken" ? "stats" : "tour";
+view = location.hash === "#statistieken" ? "stats" : location.hash === "#trainen" ? "spelen" : "tour";
 laad();
 let breedte = window.innerWidth;
-window.addEventListener("resize", () => { clearTimeout(window._rt); window._rt = setTimeout(() => { if(window.innerWidth !== breedte && etappes.length){ breedte = window.innerWidth; view === "stats" ? renderStatView() : render(); } }, 200); });
+window.addEventListener("resize", () => { clearTimeout(window._rt); window._rt = setTimeout(() => { if(window.innerWidth !== breedte && etappes.length){ breedte = window.innerWidth; if(view === "stats") renderStatView(); else if(view === "tour") render(); } }, 200); });
