@@ -107,6 +107,8 @@ tour-de-linkedin/
 - [x] Generator die alleen puzzels maakt die zonder gokken oplosbaar zijn (`site/kronen-logica.js`, test: `node scripts/test_kronen.js`)
 - [x] Dagkeuze: maandag 7×7 heel makkelijk tot zondag 9×9 extreem moeilijk (ma/di 7×7, wo t/m vr 8×8, za/zo 9×9, zoals Queens-archieven voor LinkedIn laten zien)
 - [x] Hints met uitleg, en na afloop een analyse: waar liep je vast, welke stap lag er, denktijd per techniek
+- [x] Vaste puzzel één keer per dag per speler; je kiest wie je bent ("Start als Giyo") en het resultaat gaat naar tab **Training** in de Sheet (`Datum | Speler | Dag | Tijd | Hints | Fouten | IngevoerdOp`)
+- [x] Uitslag van vandaag per dagpuzzel onder het bord
 - [ ] Punten, leaderboard en verzamelobjecten
 - [ ] Trainingsversies van de andere spellen
 

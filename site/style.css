@@ -539,3 +539,21 @@ body.huld-open{overflow:hidden}
 .kr-lijn s{position:absolute;top:0;bottom:0;width:3px;background:var(--geel)}
 .kr-nr.hint{background:var(--geel)}
 .kr-deed b{color:var(--asfalt);font-weight:600}
+.kr-wie{display:flex;align-items:center;gap:8px;font-weight:600;margin:4px 0 8px}
+.kr-wie select{height:38px;border:1.5px solid var(--geel);background:var(--wit);border-radius:4px;padding:0 10px;font:700 18px/1 var(--cond);min-width:120px}
+.kr-start{padding:16px;text-align:center}
+.kr-start button[hidden]{display:none}
+.kr-start button:disabled{opacity:.45;cursor:default;background:var(--geel)}
+.kr-start span{max-width:300px;padding:6px 10px}
+.kr-start span b{color:var(--asfalt)}
+.kr-uitslag td,.kr-uitslag th{padding:8px 6px;text-align:center;font-size:15px}
+.kr-uitslag td:nth-child(2),.kr-uitslag th:nth-child(2){text-align:left;font-weight:600;width:auto}
+.kr-uitslag td:first-child,.kr-uitslag th:first-child{width:28px;text-align:center;color:var(--sub)}
+.kr-uitslag tr.ik td{background:var(--geel-zacht)}
+.kr-uitslag tr.leeg td{color:var(--sub);font-weight:400}
+.kr-uitslag small{font-weight:400;color:var(--sub)}
+.kr-let{color:var(--geel)}
+.kr-code{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin:0 0 10px}
+.kr-code label{display:flex;flex-direction:column;gap:4px;font-size:14px;flex:1 1 180px}
+.kr-code input{height:40px;border:1.5px solid var(--asfalt);background:var(--pagina);color:var(--asfalt);border-radius:4px;padding:0 10px;font:inherit}
+.kr-code button{height:40px;border:0;border-radius:20px;background:var(--geel);color:var(--inkt);font-weight:600;padding:0 16px;cursor:pointer}
