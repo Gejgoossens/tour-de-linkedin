@@ -67,7 +67,14 @@
     </div>
   </div>
 
-  <div id="speelView" hidden></div>
+  <div id="speelView" hidden>
+    <div class="tabs vm-sub" id="speelKies" role="group" aria-label="Kies een spel">
+      <button data-spel="queens" aria-pressed="true">Queens</button>
+      <button data-spel="tango" aria-pressed="false">Tango</button>
+    </div>
+    <div id="speelQueens"></div>
+    <div id="speelTango" hidden></div>
+  </div>
 
   </div>
 
@@ -105,6 +112,9 @@
 <script src="statistiek.js?v=dev"></script>
 <script src="kronen-logica.js?v=dev"></script>
 <script src="kronen.js?v=dev"></script>
+<script src="tango-logica.js?v=dev"></script>
+<script src="tango.js?v=dev"></script>
+<script src="trainen.js?v=dev"></script>
 <script src="app.js?v=dev"></script>
 <script src="invoer.js?v=dev"></script>
 </body>
