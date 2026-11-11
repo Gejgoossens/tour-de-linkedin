@@ -124,9 +124,9 @@ function botsers(n, reg, st){
   for(const a of q) for(const b of q) if(a < b && L.raakt(n, a, b, reg)){ uit.add(a); uit.add(b); }
   return uit;
 }
-function autoKruis(n, reg, st){
+function autoKruis(n, reg, st, altijd){
   const uit = new Set();
-  if(!opslag.autoX) return uit;
+  if(!opslag.autoX && !altijd) return uit;
   for(let i = 0; i < n * n; i++) if(st[i] === 2) for(let j = 0; j < n * n; j++) if(st[j] === 0 && L.raakt(n, i, j, reg)) uit.add(j);
   return uit;
 }
@@ -143,11 +143,12 @@ function celInhoud(n, reg, st, i, h, bots, auto){
   }
   return [k, inh];
 }
+/* in de analyse staan de kruisjes rond elke queen er altijd bij, zodat de stand duidelijk leesbaar is */
 function miniBord(n, reg, st, h){
-  const bots = botsers(n, reg, st), leeg = new Set();
+  const bots = botsers(n, reg, st), auto = autoKruis(n, reg, st, true);
   let html = "";
   for(let i = 0; i < n * n; i++){
-    const [k, inh] = celInhoud(n, reg, st, i, h, bots, leeg);
+    const [k, inh] = celInhoud(n, reg, st, i, h, bots, auto);
     html += `<div class="${k}" style="background-color:${L.KLEUREN[reg[i]].hex}">${inh}</div>`;
   }
   return `<div class="kr-bord kr-mini" style="--n:${n}" aria-hidden="true">${html}</div>`;
