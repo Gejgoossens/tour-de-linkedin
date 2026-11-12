@@ -84,12 +84,16 @@ button{font:inherit;color:inherit}
 .kunst{width:66px;height:66px;font-size:12px;line-height:1;letter-spacing:-.01em}
 .kunst span,#rook span{position:absolute;inset:5px;border-radius:50%;background:var(--inkt);display:grid;place-items:center;text-align:center}
 .kunst.klaar span{background:var(--k);color:var(--inkt)}
+.kunst.klaar{animation:erbij .45s cubic-bezier(.2,2.2,.4,1),gloei .7s .45s ease-in-out infinite alternate}
+@keyframes erbij{from{transform:scale(0) rotate(-40deg)}}
+@keyframes gloei{from{box-shadow:0 0 0 0 var(--k)}to{box-shadow:0 0 18px 6px var(--k);transform:scale(1.08)}}
 .kunst.actief span{background:var(--wit);color:var(--inkt)}
-.kunst.weg{opacity:.35}
-.kunst.weg span{text-decoration:line-through}
 #rook{position:absolute;right:var(--rechts);bottom:calc(14px + var(--onder));width:88px;height:88px;font-size:18px;line-height:1}
+#rook{opacity:.55;transform:scale(.72);transform-origin:100% 100%;transition:opacity .2s,transform .3s cubic-bezier(.2,2.2,.4,1)}
+#rook.klaar,#rook.actief{opacity:1;transform:none}
+#rook.actief span{background:var(--wit);color:var(--inkt)}
 #rook.klaar span{background:var(--roze);color:var(--inkt)}
-#rook.klaar{animation:pols .6s ease-in-out infinite alternate}
+#rook.klaar{animation:pols .6s ease-in-out infinite alternate;box-shadow:0 0 22px 8px var(--roze)}
 @keyframes pols{to{transform:scale(1.1)}}
 
 #sprintbalk{left:50%;bottom:calc(112px + var(--onder));transform:translateX(-50%);width:min(80%,320px);background:var(--paneel);padding:6px 10px 8px;font:800 15px/1.2 var(--cond);text-transform:uppercase;text-align:center}
@@ -146,9 +150,9 @@ button{font:inherit;color:inherit}
   <div class="hud" id="sprintbalk" hidden>Tik, tik, tik!<i id="sprintVul"></i></div>
 
   <div id="knoppen">
-    <button class="kunst" id="k0" type="button" style="--k:#F0525A"><span>Sleuren</span></button>
-    <button class="kunst" id="k1" type="button" style="--k:#5AA2F0"><span>Wind&shy;schild</span></button>
-    <button class="kunst" id="k2" type="button" style="--k:#4CC38A"><span>Magneet</span></button>
+    <button class="kunst" id="k0" type="button" hidden style="--k:#F0525A"><span>Sleuren</span></button>
+    <button class="kunst" id="k1" type="button" hidden style="--k:#5AA2F0"><span>Wind&shy;schild</span></button>
+    <button class="kunst" id="k2" type="button" hidden style="--k:#4CC38A"><span>Magneet</span></button>
   </div>
   <button id="rook" type="button" aria-label="Meer rook"><span>Meer<br>rook!</span></button>
 
@@ -162,6 +166,8 @@ button{font:inherit;color:inherit}
         <li style="display:contents"><b>Veeg omhoog</b><span>lint, langs alles wat in de weg staat</span></li>
         <li style="display:contents"><b>Groep ingelopen</b><span>kies een kracht die blijft</span></li>
         <li style="display:contents"><b>Bezemwagen</b><span>rijd je te traag, dan eet hij je op</span></li>
+        <li style="display:contents"><b>Musette</b><span>pak de lichtzuil: één renner krijgt eenmalig zijn knop</span></li>
+        <li style="display:contents"><b>Meer rook!</b><span>verdien je met rakelings rijden en inlopen</span></li>
       </ul>
       <button class="groot" id="startKnop" type="button">Start</button>
       <a class="terug" href="index.html">Terug naar het klassement</a>

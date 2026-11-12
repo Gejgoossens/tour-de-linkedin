@@ -28,7 +28,21 @@
 
   const grad = new THREE.DataTexture(new Uint8Array([120, 190, 255]), 3, 1, THREE.LuminanceFormat);
   grad.minFilter = grad.magFilter = THREE.NearestFilter; grad.needsUpdate = true;
-  const toon = o => new THREE.MeshToonMaterial(Object.assign({ gradientMap: grad }, o));
+  // De wereld buigt naar de einder weg, zoals in Subway Surfers: dat geeft diepte en vaart. Elk materiaal krijgt
+  // dezelfde buiging mee. `voor` is extra GLSL die de vorm zelf mag bewegen (springend publiek, draaiende bidons).
+  const BUIG = '0.00055', tijdU = { value: 0 };
+  function buig(mat, voor) {
+    mat.onBeforeCompile = sh => {
+      sh.uniforms.uTijd = tijdU;
+      sh.vertexShader = 'uniform float uTijd;\n' + sh.vertexShader
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\n' + (voor || ''))
+        .replace('#include <project_vertex>', '#include <project_vertex>\nmvPosition.y -= mvPosition.z * mvPosition.z * ' + BUIG + ';\ngl_Position = projectionMatrix * mvPosition;');
+    };
+    mat.customProgramCacheKey = () => 'buig' + (voor || '');
+    return mat;
+  }
+  const toon = (o, voor) => buig(new THREE.MeshToonMaterial(Object.assign({ gradientMap: grad }, o)), voor);
+  const basis = (o, voor) => { const recht = o.recht; delete o.recht; const m = new THREE.MeshBasicMaterial(o); return recht ? m : buig(m, voor); };
   const toonV = toon({ vertexColors: true });
 
   // voegt losse vormen samen tot één geometrie met een kleur per vorm
@@ -80,16 +94,36 @@
   const bergen = [];
   for (let i = 0; i < 9; i++) {
     const h = rnd(35, 70);
-    const b = new THREE.Mesh(new THREE.ConeGeometry(rnd(28, 50), h, 5), new THREE.MeshBasicMaterial({ color: 0x8fa6d6, fog: false }));
-    b.position.set(-200 + i * 50 + rnd(-10, 10), 14, -330); b.rotation.y = rnd(0, 3); scene.add(b); bergen.push(b);
-    const sneeuw = new THREE.Mesh(new THREE.ConeGeometry(9, 12, 5), new THREE.MeshBasicMaterial({ color: 0xf6fbff, fog: false }));
-    sneeuw.position.set(b.position.x, 14 + h / 2 - 5.5, -330); sneeuw.rotation.y = b.rotation.y; scene.add(sneeuw);
+    const b = new THREE.Mesh(new THREE.ConeGeometry(rnd(28, 50), h, 5), basis({ color: 0x8fa6d6, fog: false, recht: true }));
+    b.position.set(-200 + i * 50 + rnd(-10, 10), -2, -330); b.rotation.y = rnd(0, 3); scene.add(b); bergen.push(b);
+    const sneeuw = new THREE.Mesh(new THREE.ConeGeometry(9, 12, 5), basis({ color: 0xf6fbff, fog: false, recht: true }));
+    sneeuw.position.set(b.position.x, -2 + h / 2 - 5.5, -330); sneeuw.rotation.y = b.rotation.y; scene.add(sneeuw);
   }
 
+  // lucht: donkerder bovenin, licht aan de einder, met een zon
+  let luchtTex = null;
+  function zetLucht(th) {
+    const c = document.createElement('canvas'); c.width = 64; c.height = 256; const g = c.getContext('2d');
+    const boven = new THREE.Color(th.lucht).multiplyScalar(0.72), mid = new THREE.Color(th.lucht), onder = new THREE.Color(th.mist);
+    const v = g.createLinearGradient(0, 0, 0, 256);
+    v.addColorStop(0, '#' + boven.getHexString()); v.addColorStop(0.14, '#' + mid.getHexString()); v.addColorStop(0.27, '#' + onder.getHexString()); v.addColorStop(1, '#' + onder.getHexString());
+    g.fillStyle = v; g.fillRect(0, 0, 64, 256);
+    const z = g.createRadialGradient(46, 26, 0, 46, 26, 30); z.addColorStop(0, 'rgba(255,250,220,' + (th.licht > 0.7 ? 0.95 : 0.55) + ')'); z.addColorStop(0.25, 'rgba(255,245,200,0.35)'); z.addColorStop(1, 'rgba(255,245,200,0)');
+    g.fillStyle = z; g.fillRect(0, 0, 64, 256);
+    if (luchtTex) luchtTex.dispose();
+    luchtTex = new THREE.CanvasTexture(c); scene.background = luchtTex;
+  }
   const matTex = (function () {
     const c = document.createElement('canvas'); c.width = 128; c.height = 128; const g = c.getContext('2d');
     g.fillStyle = '#16e0ff'; g.fillRect(0, 0, 128, 128); g.strokeStyle = '#ffffff'; g.lineWidth = 14;
     for (let y = 30; y < 150; y += 40) { g.beginPath(); g.moveTo(14, y); g.lineTo(64, y - 34); g.lineTo(114, y); g.stroke(); }
+    const t = new THREE.CanvasTexture(c); t.wrapT = THREE.RepeatWrapping; return t;
+  })();
+  // rood-witte strepen op de weg vlak voor een hindernis: je ziet hem aankomen
+  const waarschuwTex = (function () {
+    const c = document.createElement('canvas'); c.width = 64; c.height = 64; const g = c.getContext('2d');
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, 64, 64); g.strokeStyle = '#f0525a'; g.lineWidth = 11;
+    for (let x = -64; x < 128; x += 26) { g.beginPath(); g.moveTo(x, 70); g.lineTo(x + 64, -6); g.stroke(); }
     return new THREE.CanvasTexture(c);
   })();
   function bord(tekst, kleur) {
@@ -101,6 +135,8 @@
     return new THREE.CanvasTexture(c);
   }
   const bidonGeo = merge([[new THREE.CylinderGeometry(0.2, 0.2, 0.5, 8), 0x2fc4ff], [new THREE.CylinderGeometry(0.1, 0.16, 0.18, 8).translate(0, 0.34, 0), 0xffffff]]);
+  const bidonMat = basis({ vertexColors: true }, 'float bh = uTijd * 4.0 + instanceMatrix[3].z * 0.6; float bc = cos(bh), bs = sin(bh);\ntransformed.xz = mat2(bc, -bs, bs, bc) * transformed.xz; transformed.y += sin(bh) * 0.1;');
+  const pubMat = toon({ vertexColors: true }, 'transformed.y += abs(sin(uTijd * 7.0 + instanceMatrix[3].z * 1.7 + instanceMatrix[3].x * 3.0)) * 0.32 * step(0.45, position.y);');
   const paalGeo = new THREE.CylinderGeometry(0.16, 0.16, 4.8, 8).translate(0, 2.4, 0), paalMat = toon({ color: 0xf4f1e4 });
   const BASIS_V = 22, WEG = 5.7;
 
@@ -113,11 +149,11 @@
       scene.remove(W.groep);
       W.groep.traverse(o => {
         if (o.geometry && o.geometry !== paalGeo && o.geometry !== bidonGeo) o.geometry.dispose();
-        if (o.material && o.material.map && o.material.map !== matTex) { o.material.map.dispose(); o.material.dispose(); }
+        if (o.material && o.material.map && o.material.map !== matTex && o.material.map !== waarschuwTex) { o.material.map.dispose(); o.material.dispose(); }
       });
     }
     const th = THEMA[(nr - 1) % THEMA.length], v0 = BASIS_V * Math.pow(1.15, nr - 1), sc = Math.pow(v0 / BASIS_V, 0.7);
-    const w = { nr, th, v0, sc, winden: [], dorpen: [], poorten: [], matten: [], blokken: [], bidons: [], losserStart: [], fakkels: [], sectorEind: [] };
+    const w = { nr, th, v0, sc, winden: [], dorpen: [], poorten: [], matten: [], blokken: [], bidons: [], losserStart: [], fakkels: [], sectorEind: [], musettes: [] };
     const stap = 3.2 * Math.sqrt(sc);
     const slinger = (d0, lenU, fx) => { for (let t = 0; t < lenU * sc; t += stap) w.bidons.push({ d: d0 + t, x0: clamp(fx(t / sc), -4.6, 4.6) }); };
     const blok = (soort, d, x, hw, hl) => w.blokken.push({ soort, d, x, hw, hl });
@@ -179,15 +215,18 @@
       w.losserStart.push({ d: d + 118 * sc, x: rnd(-2, 2) });
       return d + 124 * sc;
     }
-    let d = 30;
+    let d = 30; const beurt = Math.floor(rnd(0, 3));
     for (let k = 0; k < 4; k++) {
-      const g = (nr - 1) * 4 + k, zwaar = Math.min(3, Math.floor(g / 2));
+      const g = (nr - 1) * 4 + k, zwaar = Math.min(3, Math.floor(g / 2)), b0 = w.blokken.length, d0 = d;
       d = aanloop(d);
       const soorten = g === 0 ? ['slalom', 'wind'] : schud2(['slalom', 'wind', 'autos', 'chicane', 'dorp']).slice(0, 3);
       for (const srt of soorten) {
         if (srt === 'slalom') d = slalom(d, 3 + zwaar); else if (srt === 'wind') d = wind(d); else if (srt === 'autos') d = autos(d, 4 + zwaar);
         else if (srt === 'chicane') d = chicane(d, 2 + Math.min(2, zwaar)); else d = dorp(d);
       }
+      // Eén musette per sector, vlak achter een hindernis: je moet er meteen na het ontwijken voor insturen.
+      const kand = w.blokken.slice(b0).filter(b => b.soort !== 'baal'), bij = kand.length ? kies(kand) : null;
+      w.musettes.push(bij ? { d: bij.d + bij.hl + 6 * sc, x: bij.x, wie: (beurt + k) % 3 } : { d: d0 + 60 * sc, x: kies([-4.2, 4.2]), wie: (beurt + k) % 3 });
       w.sectorEind.push(d);
     }
     w.inhoudEind = d + 20; w.lengte = d + 700 * sc;
@@ -208,7 +247,8 @@
     for (let i = 0; i < nStreep; i++) zet(strepen, i, 0, 0, -(i * 7 - 30));
     G.add(strepen);
 
-    const boomGeo = merge([[new THREE.CylinderGeometry(0.22, 0.3, 1.4, 6).translate(0, 0.7, 0), th.stam],
+    const schaduwWeg = new THREE.Color(th.weg).multiplyScalar(0.62).getHex(), schaduwGrond = new THREE.Color(th.grond).multiplyScalar(0.8).getHex();
+    const boomGeo = merge([[new THREE.CylinderGeometry(1.5, 1.5, 0.04, 10).translate(0.4, 0.02, 0.4), schaduwGrond], [new THREE.CylinderGeometry(0.22, 0.3, 1.4, 6).translate(0, 0.7, 0), th.stam],
       [new THREE.ConeGeometry(1.25, 2.6, 7).translate(0, 2.5, 0), th.blad[0]], [new THREE.ConeGeometry(0.9, 2.0, 7).translate(0, 3.8, 0), th.blad[1]]]);
     const bp = [];
     for (let dd = -25; dd < w.lengte; dd += 3.4) { const s = Math.random() < 0.5 ? -1 : 1, min = inDorp(dd) ? 10 : 7.2; bp.push([s * (min + Math.pow(Math.random(), 2) * 34), dd]); }
@@ -238,13 +278,13 @@
 
     // hindernissen die je kunt raken (en met de juiste kracht kunt slopen)
     const vormen = {
-      eiland: merge([[box(1.9, 0.3, 6, 0, 0.15, 0), 0xf4f1e4], [box(1.5, 0.34, 5.6, 0, 0.17, 0), 0x6fbf5a], [box(0.12, 1.7, 0.12, 0, 0.85, 2.4), 0xdfe3ea],
+      eiland: merge([[box(2.5, 0.03, 6.7, 0.3, 0.015, 0.3), schaduwWeg], [box(1.9, 0.3, 6, 0, 0.15, 0), 0xf4f1e4], [box(1.5, 0.34, 5.6, 0, 0.17, 0), 0x6fbf5a], [box(0.12, 1.7, 0.12, 0, 0.85, 2.4), 0xdfe3ea],
         [new THREE.CylinderGeometry(0.55, 0.55, 0.1, 12).rotateX(Math.PI / 2).translate(0, 1.9, 2.4), 0x2f6fe0]]),
-      auto: merge([[box(2.0, 0.8, 4.2, 0, 0.75, 0), 0xe0453a], [box(1.8, 0.7, 2.2, 0, 1.45, 0.2), 0xf4f4f4], [box(1.7, 0.08, 2.6, 0, 1.9, 0.2), 0x2b2b33],
+      auto: merge([[box(2.7, 0.03, 4.9, 0.35, 0.015, 0.35), schaduwWeg], [box(2.0, 0.8, 4.2, 0, 0.75, 0), 0xe0453a], [box(1.8, 0.7, 2.2, 0, 1.45, 0.2), 0xf4f4f4], [box(1.7, 0.08, 2.6, 0, 1.9, 0.2), 0x2b2b33],
         [box(0.1, 0.7, 1.4, -0.4, 2.3, 0.2), 0x2fc4ff], [box(0.1, 0.7, 1.4, 0.4, 2.3, 0.2), 0xffd400],
         [new THREE.CylinderGeometry(0.38, 0.38, 2.1, 10).rotateZ(Math.PI / 2).translate(0, 0.38, -1.3), 0x2b2b33],
         [new THREE.CylinderGeometry(0.38, 0.38, 2.1, 10).rotateZ(Math.PI / 2).translate(0, 0.38, 1.3), 0x2b2b33]]),
-      baal: merge([[new THREE.CylinderGeometry(0.62, 0.62, 1.15, 10).rotateZ(Math.PI / 2).translate(0, 0.62, 0), 0xe6c659]])
+      baal: merge([[box(1.5, 0.03, 1.7, 0.25, 0.015, 0.25), schaduwWeg], [new THREE.CylinderGeometry(0.62, 0.62, 1.15, 10).rotateZ(Math.PI / 2).translate(0, 0.62, 0), 0xe6c659]])
     };
     for (const soort of Object.keys(vormen)) {
       const lijst = w.blokken.filter(b => b.soort === soort), m = inst(vormen[soort], toonV, lijst.length);
@@ -252,10 +292,34 @@
       G.add(m);
     }
 
-    const matMesh = inst(new THREE.PlaneGeometry(3.4, 4.4).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: matTex }), w.matten.length);
+    const gewaarschuwd = w.blokken.filter(b => b.soort !== 'baal');
+    const wm = inst(new THREE.PlaneGeometry(2.1, 2.6).rotateX(-Math.PI / 2), basis({ map: waarschuwTex }), gewaarschuwd.length);
+    gewaarschuwd.forEach((b, i) => zet(wm, i, b.x, 0.025, -(b.d - b.hl - 2.2)));
+    G.add(wm);
+
+    // publiek langs de weg: bij poorten, waar je een groep inloopt, en dik op elkaar in het laatste rechte stuk
+    const pub = [], rijPubliek = (dA, len, tussen) => { for (let dd = dA; dd < dA + len; dd += tussen) for (const sd of [-1, 1]) if (!inDorp(dd)) pub.push([sd * rnd(6.5, 8.8), dd + rnd(-0.5, 0.5)]); };
+    w.poorten.forEach(p => rijPubliek(p.d - 9, 18, 1.5));
+    w.sectorEind.forEach(e => rijPubliek(e - 30, 40, 1.2));
+    rijPubliek(w.inhoudEind, 420 * sc, 1.0);
+    for (let dd = 50; dd < w.inhoudEind; dd += rnd(45, 85)) rijPubliek(dd, 9, 1.3);
+    const pubGeo = merge([[box(0.55, 0.9, 0.38, 0, 0.85, 0), 0xffffff], [new THREE.SphereGeometry(0.26, 8, 6).translate(0, 1.56, 0), 0xffd9b8],
+      [box(0.15, 0.62, 0.15, -0.37, 1.5, 0), 0xffffff], [box(0.15, 0.62, 0.15, 0.37, 1.5, 0), 0xffffff], [box(0.45, 0.42, 0.32, 0, 0.21, 0), 0x3a4252]]);
+    const pubKleur = [0xffd400, 0xf0525a, 0x5aa2f0, 0x4cc38a, 0xff8a2a, 0xffffff, 0xff7ab8].map(c => new THREE.Color(c));
+    const pm = inst(pubGeo, pubMat, pub.length);
+    pub.forEach((q, i) => { zet(pm, i, q[0], 0, -q[1], 1, rnd(0.9, 1.15), 1, q[0] > 0 ? -1.2 : 1.2); pm.setColorAt(i, kies(pubKleur)); });
+    G.add(pm);
+
+    const matMesh = inst(new THREE.PlaneGeometry(3.4, 4.4).rotateX(-Math.PI / 2), basis({ map: matTex }), w.matten.length);
     w.matten.forEach((m, i) => zet(matMesh, i, m.x, 0.03, -m.d)); G.add(matMesh);
 
-    w.bidonMesh = inst(bidonGeo, toonV, w.bidons.length); G.add(w.bidonMesh);
+    w.bidonMesh = inst(bidonGeo, bidonMat, w.bidons.length); G.add(w.bidonMesh);
+
+    // musettes: een tas in de kleur van de renner, met een lichtzuil zodat je hem van ver ziet
+    w.tasMesh = inst(merge([[box(0.9, 0.8, 0.35, 0, 1.1, 0), 0xffffff], [box(0.12, 0.5, 0.12, -0.3, 1.7, 0), 0xffffff], [box(0.12, 0.5, 0.12, 0.3, 1.7, 0), 0xffffff], [box(0.72, 0.12, 0.12, 0, 1.95, 0), 0xffffff]]), toon({ color: 0xffffff }), w.musettes.length);
+    w.zuilMesh = inst(new THREE.CylinderGeometry(0.75, 0.75, 9, 12, 1, true).translate(0, 4.5, 0), basis({ color: 0xffffff, transparent: true, opacity: 0.32, depthWrite: false, side: THREE.DoubleSide }), w.musettes.length);
+    w.musettes.forEach((m, i) => { m.i = i; zet(w.tasMesh, i, m.x, 0, -m.d, 1.2, 1.2, 1.2); zet(w.zuilMesh, i, m.x, 0, -m.d); w.tasMesh.setColorAt(i, KUNST[m.wie].kleur); w.zuilMesh.setColorAt(i, KUNST[m.wie].kleur); });
+    G.add(w.tasMesh, w.zuilMesh);
 
     w.poorten.forEach((p, i) => {
       const klein = { t: '+' + kies([1, 2]) }, groot = i % 3 === 2 ? { t: '×2', keer: 2 } : { t: '+' + kies([4, 5]) };
@@ -265,8 +329,8 @@
       for (const x of [-5.6, 0, 5.6]) { const m = new THREE.Mesh(paalGeo, paalMat); m.position.x = x; g.add(m); }
       [[-2.8, p.links], [2.8, p.rechts]].forEach(([x, k]) => {
         const kleur = k === groot ? '#ffd300' : '#c9d6ea';
-        const b = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 2.2), new THREE.MeshBasicMaterial({ map: bord(k.t, kleur) })); b.position.set(x, 3.7, 0); g.add(b);
-        const mat = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 4), new THREE.MeshBasicMaterial({ color: kleur, transparent: true, opacity: 0.4 }));
+        const b = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 2.2), basis({ map: bord(k.t, kleur) })); b.position.set(x, 3.7, 0); g.add(b);
+        const mat = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 4), basis({ color: kleur, transparent: true, opacity: 0.4 }));
         mat.rotation.x = -Math.PI / 2; mat.position.set(x, 0.03, 0); g.add(mat);
       });
       G.add(g);
@@ -278,11 +342,11 @@
     w.fakkels.forEach((f, i) => zet(fm, i, f.x, 0, -f.d)); G.add(fm);
 
     // decor
-    scene.background.setHex(th.lucht); scene.fog.color.setHex(th.mist); grond.material.color.setHex(th.grond); wegVlak.material.color.setHex(th.weg);
+    zetLucht(th); scene.fog.color.setHex(th.mist); grond.material.color.setHex(th.grond); wegVlak.material.color.setHex(th.weg);
     hemel.intensity = th.licht; bergen.forEach((b, i) => b.material.color.setHex(th.berg[i % 3]));
     scene.add(G); W = w;
   }
-  function zetBidon(i) { const b = W.bidons[i]; if (b.weg) verberg(W.bidonMesh, i); else zet(W.bidonMesh, i, b.x, 0.75, -b.d, 1.5, 1.5, 1.5, 0, 0.35); }
+  function zetBidon(i) { const b = W.bidons[i]; if (b.weg) verberg(W.bidonMesh, i); else zet(W.bidonMesh, i, b.x, 0.8, -b.d, 1.75, 1.75, 1.75, 0, 0.3); }
 
   // finishboog: wordt neergezet zodra de sprint begint
   const boog = new THREE.Group();
@@ -291,31 +355,39 @@
     const c = document.createElement('canvas'); c.width = 512; c.height = 64; const x = c.getContext('2d');
     x.fillStyle = '#14161a'; x.fillRect(0, 0, 512, 64); x.fillStyle = '#ffd300'; x.textAlign = 'center'; x.textBaseline = 'middle';
     x.font = 'italic 900 50px "Barlow Condensed", "Arial Narrow", sans-serif'; x.fillText('ARRIVÉE', 256, 34);
-    const b = new THREE.Mesh(new THREE.PlaneGeometry(12.4, 1.5), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), fog: false })); b.position.y = 5.6; boog.add(b);
+    const b = new THREE.Mesh(new THREE.PlaneGeometry(12.4, 1.5), basis({ map: new THREE.CanvasTexture(c), fog: false })); b.position.y = 5.6; boog.add(b);
     const c2 = document.createElement('canvas'); c2.width = 64; c2.height = 16; const y = c2.getContext('2d');
     for (let i = 0; i < 16; i++) for (let j = 0; j < 4; j++) { y.fillStyle = (i + j) % 2 ? '#14161a' : '#ffffff'; y.fillRect(i * 4, j * 4, 4, 4); }
     const t = new THREE.CanvasTexture(c2); t.magFilter = THREE.NearestFilter;
-    const lijn = new THREE.Mesh(new THREE.PlaneGeometry(11, 2.2).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: t })); lijn.position.y = 0.03; boog.add(lijn);
+    const lijn = new THREE.Mesh(new THREE.PlaneGeometry(11, 2.2).rotateX(-Math.PI / 2), basis({ map: t })); lijn.position.y = 0.03; boog.add(lijn);
     boog.visible = false; scene.add(boog);
   })();
 
   /* ================= renners ================= */
   const MAXI = 320, VOL = 30;   // elke renner telt: het peloton wordt nooit groter dan dit
-  const wiel = z => new THREE.CylinderGeometry(0.3, 0.3, 0.07, 10).rotateZ(Math.PI / 2).translate(0, 0.3, z);
+  const wiel = z => new THREE.CylinderGeometry(0.32, 0.32, 0.13, 10).rotateZ(Math.PI / 2).translate(0, 0.3, z);
   const basisGeo = merge([[wiel(-0.5), 0x2b2b33], [wiel(0.5), 0x2b2b33], [box(0.06, 0.06, 0.95, 0, 0.55, 0), 0xf2f2f2], [box(0.2, 0.5, 0.22, 0, 0.7, 0.14), 0xe8b48c]]);
-  const truiGeo = merge([[new THREE.BoxGeometry(0.36, 0.3, 0.62).rotateX(0.45).translate(0, 1.02, -0.06), 0xffffff], [new THREE.SphereGeometry(0.18, 8, 6).translate(0, 1.24, -0.4), 0xffffff]]);
+  const truiGeo = merge([[new THREE.BoxGeometry(0.48, 0.36, 0.68).rotateX(0.45).translate(0, 1.04, -0.06), 0xffffff], [new THREE.SphereGeometry(0.25, 10, 7).translate(0, 1.32, -0.42), 0xffffff]]);
   const rBasis = inst(basisGeo, toonV, MAXI), rTrui = inst(truiGeo, toon({ color: 0xffffff }), MAXI);
   for (let i = 0; i < MAXI; i++) rTrui.setColorAt(i, new THREE.Color(0xffffff));
   scene.add(rBasis, rTrui);
+  // Contourlijn zoals in Clash Royale: dezelfde vorm, iets opgeblazen en van binnenuit zwart getekend.
+  const rOmtrek = inst(merge([[basisGeo, 0], [truiGeo, 0]]), basis({ color: 0x14161a, side: THREE.BackSide }, 'transformed += normal * 0.055;'), MAXI);
+  rOmtrek.instanceMatrix = rBasis.instanceMatrix; scene.add(rOmtrek);
+  // schaduw onder elke renner; de drie benoemde renners krijgen een ring in hun kleur
+  const rSchaduw = inst(new THREE.CircleGeometry(0.42, 12).rotateX(-Math.PI / 2), basis({ color: 0xffffff, transparent: true, opacity: 0.2, depthWrite: false }), MAXI);
+  const ZWART = new THREE.Color(0x000000);
+  for (let i = 0; i < MAXI; i++) rSchaduw.setColorAt(i, ZWART);
+  scene.add(rSchaduw);
   const ploegen = [0x2f6fe0, 0xff8a2a, 0xf4f4f4, 0x9a5be0, 0x19b8c9, 0x8a6a4a].map(c => new THREE.Color(c));
   const ROOD = new THREE.Color(0xff2d2d), GEEL = new THREE.Color(0xffd400), GRIJS = new THREE.Color(0xb9c0cc), GEEST = new THREE.Color(0xd8fbff), tmpK = new THREE.Color();
-  const pijl = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1, 4).rotateX(Math.PI), new THREE.MeshBasicMaterial({ color: 0xffd400, fog: false })); scene.add(pijl);
+  const pijl = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1, 4).rotateX(Math.PI), basis({ color: 0xffd400, fog: false })); scene.add(pijl);
 
-  // de drie benoemde renners en hun knop
+  // De drie benoemde renners. Hun knop verschijnt pas als je hun musette van de weg hebt gepakt, en is na één keer op.
   const KUNST = [
-    { naam: 'De Locomotief', knop: 'Sleuren', kleur: new THREE.Color(0xf0525a), laad: 13, duur: 4 },
-    { naam: 'De Waaierkoning', knop: 'Windschild', kleur: new THREE.Color(0x5aa2f0), laad: 15, duur: 5 },
-    { naam: 'De Waterdrager', knop: 'Magneet', kleur: new THREE.Color(0x4cc38a), laad: 14, duur: 6 }
+    { naam: 'De Locomotief', knop: 'Sleuren', kleur: new THREE.Color(0xf0525a), duur: 5 },      // veel harder, en dwars door alles heen
+    { naam: 'De Waaierkoning', knop: 'Windschild', kleur: new THREE.Color(0x5aa2f0), duur: 7 }, // gouden koepel: geen wind, geen valpartijen
+    { naam: 'De Waterdrager', knop: 'Magneet', kleur: new THREE.Color(0x4cc38a), duur: 7 }      // alles vliegt naar je toe, en het regent bidons
   ];
 
   /* ================= bezemwagen, en wat je krachten laten zien ================= */
@@ -334,11 +406,13 @@
   heli.add(new THREE.Mesh(merge([[new THREE.SphereGeometry(1.1, 10, 8).scale(1, 0.85, 1.5), 0xe0453a], [box(0.3, 0.3, 2.6, 0, 0.2, 2.3), 0xe0453a], [box(0.1, 1.0, 0.5, 0, 0.7, 3.4), 0xf4f4f4],
     [box(1.5, 0.1, 0.1, 0, -1.0, -0.4), 0x2b2b33], [box(1.5, 0.1, 0.1, 0, -1.0, 0.6), 0x2b2b33]]), toonV));
   const rotor = new THREE.Mesh(merge([[box(6.4, 0.06, 0.3, 0, 1.1, 0), 0x2b2b33], [box(0.3, 0.06, 6.4, 0, 1.1, 0), 0x2b2b33]]), toonV); heli.add(rotor);
-  const heliSchaduw = new THREE.Mesh(new THREE.CircleGeometry(1.8, 16).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25 }));
+  const heliSchaduw = new THREE.Mesh(new THREE.CircleGeometry(1.8, 16).rotateX(-Math.PI / 2), basis({ color: 0x000000, transparent: true, opacity: 0.25 }));
   heli.visible = heliSchaduw.visible = false; scene.add(heli, heliSchaduw);
-  const veld = new THREE.Mesh(new THREE.RingGeometry(0.9, 1, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x7fefff, transparent: true, opacity: 0.7 }));
+  const veld = new THREE.Mesh(new THREE.RingGeometry(0.9, 1, 40).rotateX(-Math.PI / 2), basis({ color: 0x7fefff, transparent: true, opacity: 0.7 }));
   veld.visible = false; scene.add(veld);
-  const REGEN = 90, regenMesh = inst(bidonGeo, toonV, REGEN), regen = []; scene.add(regenMesh);
+  const koepel = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 14, 0, Math.PI * 2, 0, Math.PI / 2), basis({ color: 0xffd84a, transparent: true, opacity: 0.28, depthWrite: false, side: THREE.DoubleSide }));
+  koepel.visible = false; scene.add(koepel);
+  const REGEN = 90, regenMesh = inst(bidonGeo, bidonMat, REGEN), regen = []; scene.add(regenMesh);
   for (let i = 0; i < REGEN; i++) regen.push({ weg: true });
 
   /* ================= rook, vuur en stof (één draw call) ================= */
@@ -351,7 +425,7 @@
   const pMat = new THREE.ShaderMaterial({
     uniforms: { uSchaal: { value: 600 } }, transparent: true, depthWrite: false,
     vertexShader: 'attribute vec3 aKleur;attribute float aMaat;attribute float aAlfa;uniform float uSchaal;varying vec3 vK;varying float vA;' +
-      'void main(){vK=aKleur;vA=aAlfa;vec4 mv=modelViewMatrix*vec4(position,1.0);gl_PointSize=aMaat*uSchaal/-mv.z;gl_Position=projectionMatrix*mv;}',
+      'void main(){vK=aKleur;vA=aAlfa;vec4 mv=modelViewMatrix*vec4(position,1.0);mv.y-=mv.z*mv.z*' + BUIG + ';gl_PointSize=aMaat*uSchaal/-mv.z;gl_Position=projectionMatrix*mv;}',
     fragmentShader: 'varying vec3 vK;varying float vA;void main(){vec2 p=gl_PointCoord-0.5;float d=length(p);if(d>0.5)discard;' +
       'float licht=p.y<-0.08&&d<0.42?1.08:(p.y>0.16?0.86:1.0);gl_FragColor=vec4(vK*licht,smoothstep(0.5,0.45,d)*vA);}'
   });
@@ -433,7 +507,7 @@
     { id: 'heli', t: 'Helikopter', max: 3, s: n => n > 1 ? 'Laat nog meer bidons voor je vallen.' : 'Laat een spoor van bidons voor je vallen.' },
     { id: 'veld', t: 'Magneetveld', max: 3, s: () => 'Bidons in een steeds grotere kring vliegen naar je toe.' },
     { id: 'reus', t: 'Reuzenkopman', max: 3, s: n => 'Je kopman groeit en beukt na elke ingelopen groep ' + n * 2 + ' hindernissen opzij.' },
-    { id: 'rook', t: 'Rookmachine', max: 3, s: () => 'De rookknop vult sneller en rook maakt je sneller.' },
+    { id: 'rook', t: 'Rookmachine', max: 3, s: () => 'Je verdient de rookknop sneller, en rook duurt langer en maakt je sneller.' },
     { id: 'jack', t: 'Windjacks', max: 3, s: () => 'Renners houden het veel langer vol in de wind.' },
     { id: 'vuur', t: 'Vuurtempo', max: 3, s: () => 'De tempometer zakt een derde trager.' },
     { id: 'knecht', t: 'Superknechten', max: 99, s: () => 'Vijf renners erbij, nu meteen.' }
@@ -453,8 +527,8 @@
     S = {
       etappe: 1, dist: 0, v: BASIS_V, cx: 0, f: 0, fDoel: 0, fRuw: 0, K: 6, t: 0, windDir: 1, top: 0,
       score: 0, hitte: 0, mult: 1, keten: 0, ketenT: 0, kaartRij: 0, sk: {}, bezem: 28, eetT: 0, reusLading: 0, gevaarT: 0,
-      meter: 0.5, rook: 0, boost: 0, boostKeten: 0, sleur: 0, schild: 0, magneet: 0, adem: 0, heliT: 0,
-      kunst: KUNST.map(() => ({ laad: 0, levend: true })), spoor: [], voor: 0,
+      meter: 0, rookKlaar: false, rook: 0, boost: 0, boostKeten: 0, sleur: 0, schild: 0, magneet: 0, adem: 0, heliT: 0,
+      kunst: KUNST.map(() => ({ lading: false, levend: true })), spoor: [], voor: 0,
       flits: 0, flitsTitel: '', flitsTekst: '', sprint: null, terug: 0, ladderT: 0, kopVrij: false
     };
     peloton = []; gelost = [];
@@ -524,6 +598,12 @@
     return false;
   }
 
+  // De rookknop vul je alleen met lef en werk: rakelings langs een hindernis, lossers oprapen, een groep inlopen.
+  function rookErbij(n) {
+    if (S.rook > 0) return;
+    S.meter = Math.min(1, S.meter + n * (1 + 0.5 * sk('rook')));
+    if (S.meter >= 1 && !S.rookKlaar) { S.rookKlaar = true; pop('Meer rook! klaar', S.cx, 4, 'roze'); G.niveau(); tril([15, 30, 15]); }
+  }
   function laatLos(r, val) {
     r.val = val; r.vz = val ? 0 : rnd(4.5, 7); gelost.push(r);
     S.hitte = Math.max(0, S.hitte - 10); S.mult = multVan(S.hitte);
@@ -549,7 +629,6 @@
   function pakBidon(b, x, z, viaBliksem) {
     b.weg = true; S.keten++; S.ketenT = S.t;
     pak(10, viaBliksem ? 0 : 1);   // bidons via de bliksem tellen voor de score, niet voor het tempo
-    S.meter = Math.min(1, S.meter + 0.006 * (1 + sk('rook')));
     G.bidon(S.keten); wolk(x, 0.9, z, 0, 3, 0, 0.3, 0.9, CYAAN, 0.8);
     if (S.keten % 25 === 0) { pop(S.keten + ' op rij!', x, z, 'geel'); tril(8); }
     if (!viaBliksem && sk('bliksem')) bliksem(x, z);
@@ -584,7 +663,7 @@
       else if (w.d > S.dist && w.d - S.dist < 85 * W.sc) S.windDir = w.dir;
     }
     if (wind) S.windDir = wind.dir;
-    const beschermd = S.rook > 0 || S.schild > 0, ramt = S.boost > 0 && sk('brander') > 0, onkwetsbaar = S.adem > 0;
+    const beschermd = S.rook > 0 || S.schild > 0, ramt = (S.boost > 0 && sk('brander') > 0) || S.sleur > 0, onkwetsbaar = S.adem > 0 || S.schild > 0;
 
     // plekken, beschutting, energie, botsen
     const n = peloton.length; let beschut = 0, gevallen = null;
@@ -627,7 +706,7 @@
     doel *= 1 + 0.04 * (S.mult - 1);
     doel *= 1 + 0.08 * sk('motor');
     if (S.boost > 0) doel *= 1.4 + 0.1 * sk('brander');
-    if (S.sleur > 0) doel *= 1.2;
+    if (S.sleur > 0) doel *= 1.5;
     if (S.rook > 0) doel *= 1.15 + 0.07 * sk('rook');
     doel = Math.min(doel, W.v0 * 2.8);
     S.v += (doel - S.v) * Math.min(1, dt * (doel > S.v ? 3.5 : 1.6));
@@ -648,10 +727,9 @@
     // tellers
     for (const k of ['boost', 'sleur', 'schild', 'magneet', 'adem']) if (S[k] > 0) S[k] -= dt;
     if (S.boost <= 0) S.boostKeten = 0;
-    S.kunst.forEach(k => { if (k.laad > 0) k.laad -= dt; });
     // het tempo zakt altijd, en harder naarmate het hoger staat: je moet blijven pakken om het vast te houden
     if (S.rook <= 0) { S.hitte = Math.max(0, S.hitte - dt * (1 + 0.9 * S.mult) * Math.pow(0.67, sk('vuur'))); S.mult = multVan(S.hitte); }
-    S.meter = Math.min(1, S.meter + dt * (wind && frac > 0.75 ? 0.035 : 0.012) * (1 + 0.6 * sk('rook')));
+    if (S.schild > 0 || S.rook > 0) S.bezem = 32;   // onder de koepel of in de rook krijgt de bezemwagen je niet te pakken
     if (S.t - S.ketenT > 1) S.keten = 0;
 
     // bidons op de weg
@@ -665,11 +743,11 @@
     }
     if (anders) W.bidonMesh.instanceMatrix.needsUpdate = true;
     // bidons uit de helikopter
-    if (sk('heli')) {
+    if (sk('heli') || S.magneet > 0) {
       S.heliT -= dt;
       if (S.heliT <= 0) {
-        S.heliT = [0, 0.2, 0.13, 0.085][sk('heli')]; const r = regen.find(q => q.weg);
-        if (r) { r.weg = false; r.d = S.dist + 42; r.x = clamp(S.cx + Math.sin(S.t * 2.3) * 1.2, -4.6, 4.6); r.y = 8; }
+        S.heliT = S.magneet > 0 ? 0.06 : [0, 0.2, 0.13, 0.085][sk('heli')]; const r = regen.find(q => q.weg);
+        if (r) { r.weg = false; r.d = S.dist + 42; r.x = clamp(S.cx + (S.magneet > 0 ? rnd(-4, 4) : Math.sin(S.t * 2.3) * 1.2), -4.6, 4.6); r.y = 8; }
       }
     }
     for (const r of regen) {
@@ -686,8 +764,21 @@
       l.x = clamp(l.x, -hb, hb);
       if (S.magneet > 0 && z > -20) l.x += (S.cx - l.x) * Math.min(1, dt * 3);
       if (z > -22 && raakt(l.x, z, 1.0, 1.3 + S.v * dt)) {
-        l.weg = true; if (peloton.length < VOL) peloton.push(nieuweRenner(l.x, z, l.kleur)); pak(50, 4); pop('+1', l.x, z); G.losser(); tril(10);
+        l.weg = true; if (peloton.length < VOL) peloton.push(nieuweRenner(l.x, z, l.kleur)); pak(50, 4); rookErbij(0.05); pop('+1', l.x, z); G.losser(); tril(10);
       } else if (z > 24) l.weg = true;
+    }
+
+    // musettes: geven één renner zijn knop
+    for (const m of W.musettes) {
+      if (m.weg) continue; const z = S.dist - m.d;
+      if (z > 24) { m.weg = true; continue; }
+      if (z > -20 && raakt(m.x, z, 1.2, 1.4 + S.v * dt)) {
+        m.weg = true; verberg(W.tasMesh, m.i); verberg(W.zuilMesh, m.i); W.tasMesh.instanceMatrix.needsUpdate = W.zuilMesh.instanceMatrix.needsUpdate = true;
+        const st = S.kunst[m.wie], k = KUNST[m.wie];
+        for (let i = 0; i < 16; i++) wolk(m.x + rnd(-1, 1), rnd(0.5, 3), z, rnd(-3, 3), rnd(2, 6), rnd(-2, 2), 0.7, rnd(0.8, 1.5), k.kleur, 0.9);
+        if (st.levend && !st.lading) { st.lading = true; pop(k.knop + ' klaar!', m.x, z, 'geel'); G.niveau(); tril([15, 30, 15]); }
+        else { pak(300, 6); pop(st.levend ? 'Al op zak: +punten' : k.naam + ' is weg', m.x, z); G.poort(); }
+      }
     }
 
     // boostmatten, poorten, rakelings
@@ -702,13 +793,13 @@
     for (const p of W.poorten) if (!p.klaar && dKop >= p.d) {
       p.klaar = true; const k = S.cx < 0 ? p.links : p.rechts;
       const erbij = k.keer ? Math.min(6, peloton.length) : k.n;
-      voegToe(erbij); pak(40, 5); S.meter = Math.min(1, S.meter + 0.06);
+      voegToe(erbij); pak(40, 5);
       pop('+' + erbij + ' renners', S.cx, S.voor, 'geel'); G.poort(); tril(15);
     }
     for (const b of W.blokken) if (!b.klaar && S.dist >= b.d + b.hl + 3) {
       b.klaar = true;
       if (!b.kapot && !b.geraakt && b.soort !== 'baal' && peloton.some(r => Math.abs(r.x - b.x) < b.hw + 1.1)) {
-        pak(60, 4); S.meter = Math.min(1, S.meter + 0.04); pop('Rakelings!', b.x, 2, 'roze'); G.rakelings(); tril(10);
+        pak(60, 4); rookErbij(0.2); pop('Rakelings!', b.x, 2, 'roze'); G.rakelings(); tril(10);
       }
     }
 
@@ -721,7 +812,7 @@
         g.gepakt = true; stil = 0.09; schud = 0.45; G.groep(); tril([20, 30, 40]);
         const erbij = g.kop ? g.n - 1 : g.n;
         g.leden.slice(0, erbij).forEach(l => { if (peloton.length < VOL) peloton.push(nieuweRenner(l.ox + (g.x || 0), -(g.d - S.dist) - l.oz, g.kleur)); });
-        pak(500, 15); S.meter = Math.min(1, S.meter + 0.15);
+        pak(500, 15); rookErbij(0.3);
         for (let i = 0; i < 24; i++) wolk(rnd(-4, 4), rnd(0.5, 2), rnd(-8, 2), rnd(-3, 3), rnd(2, 5), rnd(-2, 2), rnd(0.8, 1.4), rnd(1.5, 3), rookKleur[i % 4], 0.85);
         S.reusLading = 2 * sk('reus'); S.bezem = Math.min(32, S.bezem + 6);
         ladder(true);
@@ -737,7 +828,7 @@
       for (let i = 0; i < 4; i++) { const kant = Math.random() < 0.5 ? -1 : 1; wolk(kant * rnd(4.5, 9), rnd(0.3, 1.5), rnd(-30, 10), rnd(-1, 1), rnd(1.2, 3), rnd(-2, 2), rnd(1.2, 2), rnd(2.2, 4), rookKleur[i % 2], 0.75); }
       if (S.rook <= 0) $('tint').classList.remove('aan');
     }
-    if (S.boost > 0 || S.sleur > 0) for (let i = 0; i < 3; i++) wolk(S.cx + rnd(-2.5, 2.5), 0.4, rnd(2, 9), rnd(-0.5, 0.5), rnd(0.3, 1.5), 12, 0.4, rnd(0.7, 1.4), sk('brander') || S.sleur > 0 ? kies(VUUR) : CYAAN, 0.8);
+    if (S.boost > 0 || S.sleur > 0) for (let i = 0; i < (S.sleur > 0 ? 7 : 3); i++) wolk(S.cx + rnd(-2.5, 2.5), 0.4, rnd(2, 9), rnd(-0.5, 0.5), rnd(0.3, 1.5), 12, 0.4, rnd(0.7, 1.4), sk('brander') || S.sleur > 0 ? kies(VUUR) : CYAAN, 0.8);
     if (sk('rook') && Math.random() < dt * 14) wolk(S.cx + rnd(-2, 2), 0.5, rnd(4, 9), rnd(-1, 1), rnd(1, 2.5), 2, 1.4, rnd(1.4, 2.6), rookKleur[Math.floor(S.t * 2) % 4], 0.7);
     for (const f of W.fakkels) {
       const z = S.dist - f.d;
@@ -807,12 +898,15 @@
   function teken() {
     W.groep.position.z = S.dist;
     let i = 0;
-    const renner = (x, z, kleur, kantel, schaal) => {
+    const renner = (x, z, kleur, kantel, schaal, ring) => {
       if (i >= MAXI || z < -185 || z > 30) return;
-      zet(rBasis, i, x, 0, z, schaal, schaal, schaal, 0, kantel); rTrui.setMatrixAt(i, dummy.matrix); rTrui.setColorAt(i, kleur); i++;
+      zet(rSchaduw, i, x + 0.15, 0.03, z + 0.2, schaal * (ring ? 1.9 : 1), 1, schaal * (ring ? 2.6 : 1.5)); rSchaduw.setColorAt(i, ring || ZWART);
+      // trappen: een klein wiegje op en neer en heen en weer
+      const wieg = kantel > 1 ? 0 : Math.sin(S.t * 13 + x * 3 + z * 2);
+      zet(rBasis, i, x, Math.abs(wieg) * 0.05 * schaal, z, schaal, schaal, schaal, 0, kantel + wieg * 0.07); rTrui.setMatrixAt(i, dummy.matrix); rTrui.setColorAt(i, kleur); i++;
     };
     const reus = S.reusLading > 0 ? 1 + 0.9 * sk('reus') : 1;
-    peloton.forEach((r, k) => renner(r.x, r.z + S.terug, tmpK.copy(r.kleur).lerp(ROOD, clamp(1 - r.e, 0, 1) * 0.9), r.kanteling, (r.kunst >= 0 ? 1.7 : 1.35) * (k === 0 ? reus : 1)));
+    peloton.forEach((r, k) => renner(r.x, r.z + S.terug, tmpK.copy(r.kleur).lerp(ROOD, clamp(1 - r.e, 0, 1) * 0.9), r.kanteling, (r.kunst >= 0 ? 1.7 : 1.35) * (k === 0 ? reus : 1), r.kunst >= 0 ? r.kleur : null));
     for (const r of gelost) renner(r.x, r.z + S.terug, tmpK.copy(r.kleur).lerp(ROOD, 0.8), r.kanteling, r.kunst >= 0 ? 1.7 : 1.35);
     if (!S.sprint) for (const b of geestBanen()) for (let k = 0; k < GEEST_LEN; k++) {
       const z = S.voor + 1 + k * 1.4, x = stuurOp(S.dist - k * 1.4) + b;
@@ -838,8 +932,8 @@
       boog.position.z = S.dist - S.sprint.fin;
     }
     pijl.visible = geelZ !== null && geelZ > -185; if (pijl.visible) pijl.position.set(geelX, 3.1 + Math.sin(S.t * 5) * 0.2, geelZ);
-    rBasis.count = rTrui.count = i;
-    rBasis.instanceMatrix.needsUpdate = rTrui.instanceMatrix.needsUpdate = true; rTrui.instanceColor.needsUpdate = true;
+    rBasis.count = rTrui.count = rOmtrek.count = rSchaduw.count = i;
+    rBasis.instanceMatrix.needsUpdate = rTrui.instanceMatrix.needsUpdate = rSchaduw.instanceMatrix.needsUpdate = true; rTrui.instanceColor.needsUpdate = rSchaduw.instanceColor.needsUpdate = true;
     bus.position.z = (S.busZ || 30) + S.terug; bus.visible = bus.position.z < 30;
 
     // wat je krachten laten zien
@@ -853,6 +947,8 @@
     }
     const straal = Math.max(S.magneet > 0 ? 9 : 0, sk('veld') * 2.6); veld.visible = straal > 0 && !S.sprint;
     if (veld.visible) { const s = straal * (1 + Math.sin(S.t * 8) * 0.04); veld.scale.set(s, 1, s); veld.position.set(S.cx, 0.05, S.voor + 1); }
+    koepel.visible = S.schild > 0 && !S.sprint;
+    if (koepel.visible) { let a = 0, z = 0; for (const o of peloton) { a = Math.min(a, o.z); z = Math.max(z, o.z); } koepel.position.set(S.cx, 0, (a + z) / 2); koepel.scale.set(4.6 + Math.sin(S.t * 10) * 0.15, 3.2, (z - a) / 2 + 3.5); }
     regen.forEach((r, k) => { if (r.weg) verberg(regenMesh, k); else zet(regenMesh, k, r.x, r.y, S.dist - r.d, 1.5, 1.5, 1.5, 0, S.t * 6 + k); });
     regenMesh.instanceMatrix.needsUpdate = true;
 
@@ -886,11 +982,15 @@
     $('tempo').classList.toggle('heet', S.mult >= 4);
     $('kmu').textContent = Math.round(S.v * 3.6) + ' km/u'; $('kmu').classList.toggle('hard', S.v > W.v0 * 1.45);
     S.ladderT -= dt; if (S.ladderT <= 0) { S.ladderT = 0.1; ladder(false); }
-    const rk = $('rook'); rk.style.setProperty('--m', Math.round(S.meter * 100)); rk.classList.toggle('klaar', S.meter >= 1 && S.rook <= 0 && !S.sprint);
+    // De rookknop laat zien hoe ver je bent; de knoppen van de renners bestaan alleen zolang je hun musette hebt.
+    const rk = $('rook'), rookDuur = 6 + sk('rook');
+    rk.style.setProperty('--m', Math.round((S.rook > 0 ? S.rook / rookDuur : S.meter) * 100));
+    rk.classList.toggle('klaar', S.meter >= 1 && S.rook <= 0 && !S.sprint); rk.classList.toggle('actief', S.rook > 0); rk.hidden = !!S.sprint;
     KUNST.forEach((k, i) => {
-      const st = S.kunst[i], el = $('k' + i), actief = [S.sleur, S.schild, S.magneet][i] > 0;
-      el.style.setProperty('--m', st.levend ? Math.round(clamp(1 - st.laad / k.laad, 0, 1) * 100) : 0);
-      el.classList.toggle('klaar', st.levend && st.laad <= 0 && !actief); el.classList.toggle('actief', actief); el.classList.toggle('weg', !st.levend);
+      const st = S.kunst[i], el = $('k' + i), over = [S.sleur, S.schild, S.magneet][i];
+      el.hidden = !!S.sprint || !(st.lading || over > 0);
+      el.style.setProperty('--m', over > 0 ? Math.round(over / k.duur * 100) : 100);
+      el.classList.toggle('klaar', st.lading && over <= 0); el.classList.toggle('actief', over > 0);
     });
 
     // Eén kleine regel boven de knoppen. Uitleg over wind, dorp en hindernissen komt alleen de allereerste keer.
@@ -953,17 +1053,19 @@
   /* ================= knoppen en besturing ================= */
   function meerRook() {
     if (fase !== 'spel' || S.sprint || S.meter < 1 || S.rook > 0) return;
-    S.meter = 0; S.rook = 5 + sk('rook'); schud = 0.3; $('tint').classList.add('aan');
+    S.meter = 0; S.rookKlaar = false; S.rook = 6 + sk('rook'); schud = 0.4; stil = 0.08; $('tint').classList.add('aan');
     for (const r of peloton) r.e = 1;
     for (let i = 0; i < 60; i++) { const kant = i % 2 ? -1 : 1; wolk(kant * rnd(4, 10), rnd(0.3, 2), rnd(-30, 12), rnd(-2, 2), rnd(1, 4), rnd(-3, 3), rnd(1.2, 2.2), rnd(2.5, 4.5), rookKleur[i % 2], 0.85); }
     G.rook(); tril([20, 40, 60]);
   }
   function kunst(i) {
     if (fase !== 'spel' || S.sprint) return;
-    const st = S.kunst[i], k = KUNST[i]; if (!st.levend || st.laad > 0) return;
-    st.laad = k.laad; S[['sleur', 'schild', 'magneet'][i]] = k.duur;
+    const st = S.kunst[i], k = KUNST[i]; if (!st.levend || !st.lading) return;
+    st.lading = false; S[['sleur', 'schild', 'magneet'][i]] = k.duur;
     if (i === 1) for (const r of peloton) r.e = 1;
-    pop(k.knop + '!', S.cx, -3, 'geel'); G.knop(); tril(15);
+    schud = 0.4; stil = 0.08;
+    for (let n = 0; n < 22; n++) { const kant = n % 2 ? -1 : 1; wolk(S.cx + kant * rnd(2.5, 5), rnd(0.3, 2.5), rnd(-8, 8), kant * rnd(2, 6), rnd(2, 7), rnd(-3, 3), rnd(0.5, 0.9), rnd(0.9, 1.7), k.kleur, 0.9); }
+    pop(k.knop + '!', S.cx, -3, 'geel'); G.knop(); G.boost(); tril([30, 30, 60]);
   }
   KUNST.forEach((k, i) => $('k' + i).addEventListener('click', () => kunst(i)));
   $('rook').addEventListener('click', meerRook);
@@ -1019,6 +1121,7 @@
     }
     if (S.flits > 0) S.flits -= echt;
     schud = Math.max(0, schud - echt * 1.2);
+    tijdU.value += echt; matTex.offset.y = (tijdU.value * 1.6) % 1;
     updateRook(fase === 'kaart' ? 0 : echt, fase === 'spel' ? S.v : 0);
     try { teken(); hud(echt); } catch (fout) { console.error(fout); }
     requestAnimationFrame(lus);
@@ -1027,5 +1130,5 @@
 
   // voor de tests en voor afstellen in de console
   window.__spel = { get S() { return S; }, get W() { return W; }, get peloton() { return peloton; }, get groepen() { return groepen; }, get fase() { return fase; },
-    KRACHT, sprintTik, kunst, meerRook };
+    KRACHT, sprintTik, kunst, meerRook, stap: dt => update(dt), teken: () => { teken(); hud(0.016); }, naarEtappe: n => startEtappe(n), geheugen: () => renderer.info.memory };
 })();

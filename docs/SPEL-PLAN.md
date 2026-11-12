@@ -39,6 +39,15 @@ De eerste versie (één lange etappe, geel inhalen voor de finish) voelde te tra
 - **Elke etappe harder en in een nieuw decor:** Provence, De Alpen, De Hel van het Noorden, Parijs bij nacht, De Vulkaan, en dan opnieuw maar sneller.
 - **Meer hindernissen:** vluchtheuvels, ploegauto's, chicanes van strobalen, dorpen en zijwind, dichter naarmate je verder komt.
 
+### Speciale knoppen moet je verdienen
+
+- De drie renners hebben geen afkoeltijd meer. Hun knop verschijnt pas als je hun **musette** van de weg pakt: een tas met een lichtzuil in hun kleur, één per sector, vlak achter een hindernis. Eén keer gebruiken en hij is weer weg. Daar staat tegenover dat ze veel sterker zijn: de Locomotief ramt vijf seconden overal doorheen, de Waaierkoning zet een gouden koepel over het peloton (geen wind, geen valpartijen), de Waterdrager trekt alles aan en laat het bidons regenen.
+- **Meer rook!** vul je alleen met rakelings rijden, lossers oprapen en groepen inlopen, niet meer vanzelf.
+
+### Graphics, eerste ronde
+
+Geleend van Subway Surfers en Clash Royale: een wereld die naar de einder wegbuigt, felle kleuren, contourlijnen en schaduwen onder de renners, een lucht met verloop en zon, springend publiek langs de weg, draaiende bidons, rollende boostmatten en rood-witte strepen op de weg vóór een hindernis.
+
 De ploeg samenstellen en de routekaart uit "De ronde" hierboven komen hier bovenop, in fase 2.
 
 ## Fases
