@@ -605,3 +605,7 @@ body.huld-open{overflow:hidden}
 @media (max-width:520px){.kr-kaart .tg-bord{max-width:260px;margin:0}}
 #speelKies{margin-bottom:0}
 @media (max-width:480px){.tg-knoppen button{flex:1 1 40%;max-width:none}}
+
+/* link naar het losse spel (site/spel.html), in de rij met weergaven */
+.tabs .spel-link{border:1.5px solid #4A505A;background:var(--wit);color:var(--asfalt);border-radius:4px;padding:8px 18px;font:italic 800 18px/1 var(--cond);text-transform:uppercase;text-decoration:none}
+.tabs .spel-link:hover{border-color:var(--geel)}

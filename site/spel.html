@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#14161A">
+<title>Tour de LinkedIn: het spel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,700;0,800;1,800;1,900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* tv-uitzending van een grote ronde, zelfde kleuren als het dashboard */
+  --geel:#FFD300; --inkt:#14161A; --paneel:rgba(20,22,26,.86); --wit:#F2F3F5; --sub:#A3A9B3;
+  --roze:#FF5FA2; --groen:#4CC38A; --rood:#F0525A; --vuur:#FF7A1A;
+  --cond:'Barlow Condensed','Arial Narrow',sans-serif;
+  --boven:env(safe-area-inset-top,0px); --onder:env(safe-area-inset-bottom,0px);
+  --links:max(10px,env(safe-area-inset-left,0px)); --rechts:max(10px,env(safe-area-inset-right,0px));
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--inkt);color:var(--wit);font:16px/1.4 Barlow,system-ui,sans-serif;overflow:hidden;overscroll-behavior:none}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--geel);outline-offset:2px}
+#app{position:fixed;inset:0;overflow:hidden;background:#9fd8f0;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#tint{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(circle at 50% 55%,transparent 25%,var(--roze) 130%)}
+#tint.aan{opacity:.7}
+.hud{position:absolute;pointer-events:none}
+
+/* ladder: de koerssituatie zoals op tv */
+#ladder{top:calc(8px + var(--boven));left:var(--links);width:min(56vw,230px);font-family:var(--cond);text-transform:uppercase;display:flex;flex-direction:column;gap:2px}
+.lrij{display:flex;justify-content:space-between;align-items:baseline;gap:8px;background:var(--paneel);padding:3px 8px;font-weight:700;font-size:15px;line-height:1.15;white-space:nowrap}
+.lrij small{font-size:12px;font-weight:500;color:var(--sub);display:block;letter-spacing:.03em}
+.lrij b{font-weight:800;font-variant-numeric:tabular-nums}
+.lrij.wij{background:var(--geel);color:var(--inkt)}
+.lrij.wij small{color:var(--inkt)}
+.lrij.weg{animation:lweg .5s forwards}
+@keyframes lweg{to{opacity:0;transform:translateX(-30px)}}
+#nog{align-self:flex-start;background:var(--inkt);color:var(--wit);padding:2px 8px;font-weight:700;font-size:13px;letter-spacing:.06em}
+
+/* score en tempo */
+#scorebord{top:calc(8px + var(--boven));right:var(--rechts);text-align:right;font-family:var(--cond);display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+#score{font:900 italic 34px/1 var(--cond);font-variant-numeric:tabular-nums;text-shadow:0 2px 0 var(--inkt),0 0 8px rgba(20,22,26,.6)}
+#tempo{background:var(--paneel);padding:3px 8px 5px;min-width:92px}
+#tempo b{font:900 italic 26px/1 var(--cond);color:var(--geel);display:block}
+#tempo i{display:block;height:5px;background:#3a3f48;margin-top:3px;position:relative}
+#tempo i::after{content:"";position:absolute;inset:0;width:var(--h,0%);background:var(--geel)}
+#tempo.heet{background:var(--vuur);animation:vuur .25s infinite alternate}
+#tempo.heet b{color:var(--inkt)}
+#tempo.heet i::after{background:var(--inkt)}
+@keyframes vuur{from{box-shadow:0 0 10px 2px var(--vuur),0 -6px 14px var(--geel)}to{box-shadow:0 0 18px 6px var(--vuur),0 -10px 22px var(--rood)}}
+#bidons{background:var(--paneel);padding:2px 8px;font-weight:700;font-size:15px;text-transform:uppercase;font-variant-numeric:tabular-nums}
+#bidons.tik{animation:tik .12s}
+@keyframes tik{50%{transform:scale(1.2)}}
+#geluid{pointer-events:auto;border:0;background:var(--paneel);padding:3px 8px;font:700 13px/1.3 var(--cond);text-transform:uppercase;letter-spacing:.05em;cursor:pointer}
+
+#banner{top:27%;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);text-align:center;background:var(--paneel);padding:6px 16px 8px;border-bottom:4px solid var(--geel);transition:opacity .15s}
+#banner strong{display:block;font:900 italic 30px/1.05 var(--cond);text-transform:uppercase;color:var(--geel)}
+#banner span{font-size:15px;font-weight:500}
+#banner.weg{opacity:0}
+#banner.groot{border-color:var(--roze)}
+#banner.groot strong{font-size:40px;color:var(--wit)}
+
+/* zwevende getallen */
+#pops{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.pop{position:absolute;transform:translate(-50%,-50%);font:900 italic 24px/1 var(--cond);color:var(--wit);text-shadow:0 2px 0 var(--inkt),0 0 6px var(--inkt);white-space:nowrap;opacity:0}
+.pop.aan{animation:pop .8s ease-out forwards}
+.pop.geel{color:var(--geel);font-size:30px}
+.pop.rood{color:var(--rood)}
+.pop.roze{color:var(--roze);font-size:28px}
+@keyframes pop{0%{opacity:0;transform:translate(-50%,-30%) scale(.6)}15%{opacity:1;transform:translate(-50%,-70%) scale(1.25)}100%{opacity:0;transform:translate(-50%,-260%) scale(1)}}
+
+/* knoppen: drie renners en de rook */
+#knoppen{position:absolute;left:var(--links);bottom:calc(14px + var(--onder));display:flex;gap:8px}
+.kunst,#rook{position:relative;border:0;padding:0;border-radius:50%;cursor:pointer;touch-action:manipulation;--m:100;
+  background:conic-gradient(var(--k,var(--roze)) calc(var(--m)*1%),var(--paneel) 0);font-family:var(--cond);text-transform:uppercase;font-weight:800}
+.kunst{width:66px;height:66px;font-size:12px;line-height:1;letter-spacing:-.01em}
+.kunst span,#rook span{position:absolute;inset:5px;border-radius:50%;background:var(--inkt);display:grid;place-items:center;text-align:center}
+.kunst.klaar span{background:var(--k);color:var(--inkt)}
+.kunst.actief span{background:var(--wit);color:var(--inkt)}
+.kunst.weg{opacity:.35}
+.kunst.weg span{text-decoration:line-through}
+#rook{position:absolute;right:var(--rechts);bottom:calc(14px + var(--onder));width:88px;height:88px;font-size:18px;line-height:1}
+#rook.klaar span{background:var(--roze);color:var(--inkt)}
+#rook.klaar{animation:pols .6s ease-in-out infinite alternate}
+@keyframes pols{to{transform:scale(1.1)}}
+
+#sprintbalk{left:50%;bottom:calc(120px + var(--onder));transform:translateX(-50%);width:min(80%,320px);background:var(--paneel);padding:6px 10px 8px;font:800 15px/1.2 var(--cond);text-transform:uppercase;text-align:center}
+#sprintbalk i{display:block;height:12px;background:#3a3f48;margin-top:4px;position:relative}
+#sprintbalk i::after{content:"";position:absolute;inset:0;width:var(--p,0%);background:var(--geel)}
+
+/* bladen */
+.blad{position:absolute;inset:0;display:grid;place-items:center;background:rgba(20,22,26,.6);padding:calc(16px + var(--boven)) 16px calc(16px + var(--onder));overflow:auto}
+.vel{width:min(100%,400px);background:var(--inkt);border-top:8px solid var(--geel);padding:18px 18px 20px;display:flex;flex-direction:column;gap:12px}
+.vel h1{margin:0;font:900 italic 46px/.95 var(--cond);text-transform:uppercase;color:var(--geel)}
+.vel p{margin:0;color:var(--sub)}
+.vel p b{color:var(--wit);font-weight:600}
+.uitleg{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:15px}
+.uitleg b{font:800 16px/1.3 var(--cond);text-transform:uppercase;color:var(--wit);white-space:nowrap}
+.uitleg span{color:var(--sub);min-width:0}
+.ploeg{display:flex;flex-direction:column;gap:5px}
+.ploeg div{display:flex;gap:10px;align-items:baseline;font-size:15px;color:var(--sub)}
+.ploeg i{flex:0 0 12px;height:12px;border-radius:50%;background:var(--k);align-self:center}
+.ploeg b{font:800 17px/1.2 var(--cond);text-transform:uppercase;color:var(--wit);white-space:nowrap}
+.groot{border:0;padding:12px;background:var(--geel);color:var(--inkt);font:900 italic 26px/1 var(--cond);text-transform:uppercase;cursor:pointer}
+.terug{color:var(--sub);font-size:14px;text-align:center}
+.kaarten{display:flex;flex-direction:column;gap:8px}
+.kaart{text-align:left;border:2px solid #3a3f48;background:transparent;padding:9px 12px;cursor:pointer}
+.kaart strong{display:block;font:800 italic 22px/1.1 var(--cond);text-transform:uppercase;color:var(--geel)}
+.kaart span{font-size:14px;color:var(--sub)}
+.cijfers{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-family:var(--cond);text-transform:uppercase;font-size:15px;color:var(--sub)}
+.cijfers b{display:block;font:900 italic 28px/1 var(--cond);color:var(--wit);font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){#rook.klaar,#tempo.heet{animation:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="c"></canvas>
+  <div id="tint"></div>
+  <div id="pops"></div>
+
+  <div class="hud" id="ladder"><div id="rijen"></div><div id="nog"></div></div>
+
+  <div class="hud" id="scorebord">
+    <div id="score">0</div>
+    <div id="tempo"><b id="mult">×1</b><i id="hitte"></i></div>
+    <div id="bidons">0 bidons</div>
+    <button id="geluid" type="button" aria-pressed="true">Geluid aan</button>
+  </div>
+
+  <div class="hud weg" id="banner"><strong id="bTitel"></strong><span id="bTekst"></span></div>
+  <div class="hud" id="sprintbalk" hidden>Tik, tik, tik!<i id="sprintVul"></i></div>
+
+  <div id="knoppen">
+    <button class="kunst" id="k0" type="button" style="--k:#F0525A"><span>Sleuren</span></button>
+    <button class="kunst" id="k1" type="button" style="--k:#5AA2F0"><span>Wind&shy;schild</span></button>
+    <button class="kunst" id="k2" type="button" style="--k:#4CC38A"><span>Magneet</span></button>
+  </div>
+  <button id="rook" type="button" aria-label="Meer rook"><span>Meer<br>rook!</span></button>
+
+  <div class="blad" id="start">
+    <div class="vel">
+      <h1>De etappe</h1>
+      <p>Jij bent het <b>peloton</b>. Je begint achteraan, loopt groep na groep in en moet als eerste over de streep. De bezemwagen veegt op wie lost.</p>
+      <ul class="uitleg">
+        <li style="display:contents"><b>Sleep opzij</b><span>sturen</span></li>
+        <li style="display:contents"><b>Veeg omlaag</b><span>waaier: beschut tegen zijwind, pakt meer bidons</span></li>
+        <li style="display:contents"><b>Veeg omhoog</b><span>lint: snel en smal, voor dorp en vluchtheuvels</span></li>
+        <li style="display:contents"><b>Pak alles</b><span>bidons, lossers en boostmatten jagen je tempo op</span></li>
+      </ul>
+      <div class="ploeg">
+        <div style="--k:#F0525A"><i></i><b>De Locomotief</b><span>sleurt op kop: even veel harder</span></div>
+        <div style="--k:#5AA2F0"><i></i><b>De Waaierkoning</b><span>windschild: niemand in de wind</span></div>
+        <div style="--k:#4CC38A"><i></i><b>De Waterdrager</b><span>magneet: bidons vliegen naar je toe</span></div>
+      </div>
+      <p>Wordt een van hen opgeveegd, dan is zijn knop weg.</p>
+      <button class="groot" id="startKnop" type="button">Start</button>
+      <a class="terug" href="index.html">Terug naar het klassement</a>
+    </div>
+  </div>
+
+  <div class="blad" id="kaartBlad" hidden>
+    <div class="vel">
+      <h1>Bevoorrading</h1>
+      <p>Kies één musette.</p>
+      <div class="kaarten" id="kaarten"></div>
+    </div>
+  </div>
+
+  <div class="blad" id="eind" hidden>
+    <div class="vel">
+      <h1 id="eTitel"></h1>
+      <p id="eTekst"></p>
+      <div class="cijfers">
+        <div>Score<b id="eScore">0</b></div>
+        <div>Beste score<b id="eBest">0</b></div>
+        <div>Bidons<b id="eBidons">0</b></div>
+        <div>Hoogste tempo<b id="eTempo">×1</b></div>
+      </div>
+      <button class="groot" id="opnieuw" type="button">Nog een keer</button>
+      <a class="terug" href="index.html">Terug naar het klassement</a>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="spel.js?v=dev"></script>
+</body>
+</html>
