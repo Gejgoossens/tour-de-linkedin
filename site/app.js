@@ -480,7 +480,15 @@ function tourStanden(lijst, wie){
 }
 
 let tourHover = null;
+/* twee weergaven: "gat" (achterstand op de gele trui, leider op 0) of "totaal" (opgetelde tijd per renner, lager is beter) */
+const TOUR_MODUS_KEY = "tdl-tour-modus";
+let tourModus = (() => { try{ return localStorage.getItem(TOUR_MODUS_KEY) === "totaal" ? "totaal" : "gat"; }catch(err){ return "gat"; } })();
+const TOUR_UITLEG = {
+  gat:"De lijnen tonen de achterstand op de gele trui na elke etappe: hoe lager, hoe verder achter.",
+  totaal:"De lijnen tonen de opgetelde tijd van elke renner over de hele Tour: hoe lager, hoe beter."
+};
 function tourGrafiek(mk, lijst, wie){
+  const totaal = tourModus === "totaal";
   const box = document.getElementById("tourGrafiek");
   const laatste = lijst[lijst.length - 1].datum;
   const dagen = tourDagen(mk).filter(ds => ds <= laatste); // alleen tot en met de getoonde etappe
@@ -488,15 +496,19 @@ function tourGrafiek(mk, lijst, wie){
   const smal = box.clientWidth < 520;
   const W = Math.max(300, Math.round(box.clientWidth)), H = smal ? 230 : 260;
   const L = 46, R = smal ? 104 : 116, T = 12, B = 28;
-  const achter = v => v ? `+${Math.floor(v / 60)}:${String(Math.round(v % 60)).padStart(2, "0")}` : "0:00"; // in minuten, ook boven het uur
+  const klok = v => { const s = Math.round(v); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; }; // in minuten, ook boven het uur
+  const achter = v => v ? `+${klok(v)}` : "0:00";
+  const tijdVan = {}; standen.forEach((s, i) => { tijdVan[i] = {}; s.rang.forEach(r => tijdVan[i][r.p] = r.t); });
+  const waarde = (i, p) => totaal ? tijdVan[i][p] : standen[i].gap[p];
   const xVan = ds => L + (W - L - R) * (dagen.length === 1 ? .5 : dagen.indexOf(ds) / (dagen.length - 1));
-  const maxGap = Math.max(1, ...standen.flatMap(s => wie.map(p => s.gap[p])));
-  const stap = [10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600].find(s => maxGap / s <= 4) || 7200;
+  const maxGap = Math.max(1, ...standen.flatMap((s, i) => wie.map(p => waarde(i, p))));
+  const stap = [10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 14400].find(s => maxGap / s <= 4) || 28800;
   const yMax = Math.ceil(maxGap / stap) * stap;
-  const y = v => T + (H - T - B) * (v / yMax);
+  /* achterstand: 0 (geel) bovenaan; opgetelde tijd: 0 onderaan, zodat lager beter is */
+  const y = v => totaal ? H - B - (H - T - B) * (v / yMax) : T + (H - T - B) * (v / yMax);
 
   let grid = "";
-  for(let v = 0; v <= yMax; v += stap) grid += `<line x1="${L}" x2="${W - R + 4}" y1="${y(v)}" y2="${y(v)}" stroke="#2E333B"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" font-size="12" fill="#A3A9B3">${achter(v)}</text>`;
+  for(let v = 0; v <= yMax; v += stap) grid += `<line x1="${L}" x2="${W - R + 4}" y1="${y(v)}" y2="${y(v)}" stroke="#2E333B"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" font-size="12" fill="#A3A9B3">${totaal ? klok(v) : achter(v)}</text>`;
   /* weken: dun lijntje en datum bij elke maandag */
   /* x-as: elke dag zolang het past, anders alleen de maandagen */
   const perDag = (W - L - R) / Math.max(1, dagen.length - 1) >= 26;
@@ -505,7 +517,7 @@ function tourGrafiek(mk, lijst, wie){
   const toekomst = "";
 
   const lijnen = wie.slice().reverse().map(p => {
-    const pts = standen.map(s => [xVan(s.e.datum), y(s.gap[p])]);
+    const pts = standen.map((s, i) => [xVan(s.e.datum), y(waarde(i, p))]);
     const d = pts.map((q, i) => (i ? "L" : "M") + q[0].toFixed(1) + " " + q[1].toFixed(1)).join(" ");
     const eind = pts[pts.length - 1];
     return `<g data-p="${esc(p)}"><path class="teken" pathLength="1" d="${d}" fill="none" stroke="${kleurVan(p)}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
@@ -513,17 +525,18 @@ function tourGrafiek(mk, lijst, wie){
   }).join("");
 
   /* eindlabels: naam + achterstand, uit elkaar geschoven zodat ze niet overlappen */
-  const nu = standen[standen.length - 1];
-  const labels = nu.rang.map(r => ({ p:r.p, gap:nu.gap[r.p], y0:y(nu.gap[r.p]) }));
+  const nu = standen[standen.length - 1], nuI = standen.length - 1;
+  const labels = nu.rang.map(r => ({ p:r.p, gap:nu.gap[r.p], t:r.t, y0:y(waarde(nuI, r.p)) }));
+  if(totaal) labels.reverse(); // van boven naar beneden: de leider staat nu onderaan
   labels.forEach((l, i) => l.y = i ? Math.max(l.y0, labels[i - 1].y + 15) : l.y0);
   const over = labels.length ? labels[labels.length - 1].y - (H - B + 4) : 0;
   if(over > 0) labels.forEach(l => l.y = Math.max(T, l.y - over));
   for(let i = labels.length - 2; i >= 0; i--) labels[i].y = Math.min(labels[i].y, labels[i + 1].y - 15);
   const lx = xVan(laatste) + 10;
   const eindLabels = labels.map(l => `<g class="eindpunt"><line x1="${lx}" x2="${lx + 10}" y1="${l.y}" y2="${l.y}" stroke="${kleurVan(l.p)}" stroke-width="3" stroke-linecap="round"/>
-    <text x="${lx + 15}" y="${l.y + 4}" font-size="${smal ? 12 : 13}" fill="#F2F3F5"><tspan font-weight="600">${esc(l.p)}</tspan><tspan fill="#A3A9B3"> ${l.gap ? achter(l.gap) : "geel"}</tspan></text></g>`).join("");
+    <text x="${lx + 15}" y="${l.y + 4}" font-size="${smal ? 12 : 13}" fill="#F2F3F5"><tspan font-weight="600">${esc(l.p)}</tspan><tspan fill="#A3A9B3"> ${totaal ? klok(l.t) : l.gap ? achter(l.gap) : "geel"}</tspan></text></g>`).join("");
 
-  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Achterstand op de gele trui na elke etappe van de Tour van ${maandNaam(mk)}">
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${totaal ? "Opgetelde tijd per renner" : "Achterstand op de gele trui"} na elke etappe van de Tour van ${maandNaam(mk)}">
     ${toekomst}${grid}${xl}${lijnen}${eindLabels}
     <line class="tv-kruis" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="#F2F3F5" stroke-width="1" visibility="hidden"/></svg>
     <div class="tv-tip" hidden></div>`;
@@ -537,7 +550,7 @@ function tourGrafiek(mk, lijst, wie){
     const s = standen[i], x = xs[i];
     kruis.setAttribute("x1", x); kruis.setAttribute("x2", x); kruis.setAttribute("visibility", "visible");
     tip.innerHTML = `<div class="tv-tip-kop">Etappe ${s.e.tourNr}, ${datumKort(s.e.datum)}</div>` + s.rang.map(r =>
-      `<div class="tv-tip-rij"><span class="d">${r.pos}</span><i style="background:${kleurVan(r.p)}"></i><span>${esc(r.p)}</span><b>${s.gap[r.p] ? achter(s.gap[r.p]) : fmt(r.t)}</b></div>`).join("");
+      `<div class="tv-tip-rij"><span class="d">${r.pos}</span><i style="background:${kleurVan(r.p)}"></i><span>${esc(r.p)}</span><b>${totaal ? klok(r.t) : s.gap[r.p] ? achter(s.gap[r.p]) : fmt(r.t)}</b></div>`).join("");
     tip.hidden = false;
     const schaal = box.clientWidth / W, links = x * schaal;
     tip.style.left = (links + tip.offsetWidth + 16 > box.clientWidth ? links - tip.offsetWidth - 10 : links + 10) + "px";
@@ -748,10 +761,17 @@ function render(){
   document.getElementById("tourSectie").innerHTML = `
     <h2>Tour van ${maandNaam(mk)}</h2>
     <div class="tv-kalender" aria-hidden="true">${kalender}</div>
-    <p class="toel">Etappe ${e.tourNr} van ${dagen.length}, ${datumKort(dagen[0])} t/m ${datumKort(dagen[dagen.length - 1])}. De lijnen tonen de achterstand op de gele trui na elke etappe: hoe lager, hoe verder achter.</p>
+    <p class="toel">Etappe ${e.tourNr} van ${dagen.length}, ${datumKort(dagen[0])} t/m ${datumKort(dagen[dagen.length - 1])}. <span id="tourToel">${TOUR_UITLEG[tourModus]}</span></p>
+    <div class="tabs" id="tourModus" role="group" aria-label="Kies weergave van het verloop"><button data-m="gat" aria-pressed="${tourModus === "gat"}">Achterstand op geel</button><button data-m="totaal" aria-pressed="${tourModus === "totaal"}">Totale tijd</button></div>
     <div id="tourGrafiek" class="tv-grafiek" tabindex="0" aria-describedby="tourUitleg"></div>
     <p id="tourUitleg" class="d tv-uitleg">Wijs een etappe aan (of gebruik de pijltjestoetsen) voor de stand op die dag.</p>`;
   tourGrafiek(mk, tour, wieTour);
+  document.querySelectorAll("#tourModus [data-m]").forEach(b => b.onclick = () => {
+    tourModus = b.dataset.m; try{ localStorage.setItem(TOUR_MODUS_KEY, tourModus); }catch(err){}
+    document.querySelectorAll("#tourModus [data-m]").forEach(x => x.setAttribute("aria-pressed", x.dataset.m === tourModus));
+    document.getElementById("tourToel").textContent = TOUR_UITLEG[tourModus];
+    tourGrafiek(mk, tour, wieTour);
+  });
 
   // uitslag: tabel zoals de foto's in de groepsapp (spellen als rijen, spelers als kolommen, tijden in seconden)
   const wieRit = spelers.filter(p => deelnemers([e]).includes(p));
