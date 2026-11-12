@@ -1,5 +1,5 @@
 /* Het spel: het peloton. Zie docs/SPEL-PLAN.md.
-   Opbouw zoals Archero: korte sectoren, bij elke volle ervaringsbalk een kracht die blijft en stapelt,
+   Opbouw zoals Archero: korte sectoren, bij elke ingelopen groep een kracht die blijft en stapelt,
    elke etappe harder en in een nieuw decor, en opgeveegd betekent opnieuw beginnen.
    Afstanden zijn in meters vanaf de start van de etappe (d). De wereld staat op z = -d en schuift onder het
    peloton door; het peloton blijft rond z = 0, positieve z is achter je (richting bezemwagen). */
@@ -258,7 +258,7 @@
     w.bidonMesh = inst(bidonGeo, toonV, w.bidons.length); G.add(w.bidonMesh);
 
     w.poorten.forEach((p, i) => {
-      const klein = { t: '+' + kies([2, 3, 4]) }, groot = i % 3 === 2 ? { t: '×2', keer: 2 } : { t: '+' + kies([7, 8, 10]) };
+      const klein = { t: '+' + kies([1, 2]) }, groot = i % 3 === 2 ? { t: '×2', keer: 2 } : { t: '+' + kies([4, 5]) };
       klein.n = +klein.t.slice(1); if (!groot.keer) groot.n = +groot.t.slice(1);
       const lg = Math.random() < 0.5; p.links = lg ? groot : klein; p.rechts = lg ? klein : groot;
       const g = new THREE.Group(); g.position.z = -p.d;
@@ -300,7 +300,7 @@
   })();
 
   /* ================= renners ================= */
-  const MAXI = 320, VOL = 80;
+  const MAXI = 320, VOL = 30;   // elke renner telt: het peloton wordt nooit groter dan dit
   const wiel = z => new THREE.CylinderGeometry(0.3, 0.3, 0.07, 10).rotateZ(Math.PI / 2).translate(0, 0.3, z);
   const basisGeo = merge([[wiel(-0.5), 0x2b2b33], [wiel(0.5), 0x2b2b33], [box(0.06, 0.06, 0.95, 0, 0.55, 0), 0xf2f2f2], [box(0.2, 0.5, 0.22, 0, 0.7, 0.14), 0xe8b48c]]);
   const truiGeo = merge([[new THREE.BoxGeometry(0.36, 0.3, 0.62).rotateX(0.45).translate(0, 1.02, -0.06), 0xffffff], [new THREE.SphereGeometry(0.18, 8, 6).translate(0, 1.24, -0.4), 0xffffff]]);
@@ -424,19 +424,19 @@
   function leerde(wat) { gezien[wat] = true; try { localStorage.setItem('tdl-spel-uitleg', JSON.stringify(gezien)); } catch (_) {} }
 
   /* ================= krachten =================
-     Je kiest er één bij elke volle ervaringsbalk. Ze blijven tot je bent opgeveegd en stapelen. */
+     Je kiest er één bij elke ingelopen groep. Ze blijven tot je bent opgeveegd en stapelen. */
   const KRACHT = [
     { id: 'geest', t: 'Spooklint', max: 2, s: n => 'Een lichtgevend lint aan ' + (n > 1 ? 'elke kant erbij: vier in totaal.' : 'elke kant pakt alles mee.') },
-    { id: 'brander', t: 'Nabrander', max: 3, s: () => 'Boosts zijn feller en langer. Tijdens een boost ram je dwars door alles heen.' },
+    { id: 'brander', t: 'Nabrander', max: 2, s: () => 'Boosts zijn feller en langer. Tijdens een boost ram je dwars door alles heen.' },
     { id: 'bliksem', t: 'Bidonbliksem', max: 3, s: n => 'Elke bidon slaat over naar ' + n * 2 + ' andere.' },
     { id: 'motor', t: 'Motor op kop', max: 4, s: () => 'Een motor erbij om achter te zuigen: altijd 8% sneller.' },
     { id: 'heli', t: 'Helikopter', max: 3, s: n => n > 1 ? 'Laat nog meer bidons voor je vallen.' : 'Laat een spoor van bidons voor je vallen.' },
     { id: 'veld', t: 'Magneetveld', max: 3, s: () => 'Bidons in een steeds grotere kring vliegen naar je toe.' },
-    { id: 'reus', t: 'Reuzenkopman', max: 3, s: () => 'Je kopman groeit en beukt hindernissen opzij.' },
+    { id: 'reus', t: 'Reuzenkopman', max: 3, s: n => 'Je kopman groeit en beukt na elke ingelopen groep ' + n * 2 + ' hindernissen opzij.' },
     { id: 'rook', t: 'Rookmachine', max: 3, s: () => 'De rookknop vult sneller en rook maakt je sneller.' },
     { id: 'jack', t: 'Windjacks', max: 3, s: () => 'Renners houden het veel langer vol in de wind.' },
     { id: 'vuur', t: 'Vuurtempo', max: 3, s: () => 'De tempometer zakt een derde trager.' },
-    { id: 'knecht', t: 'Superknechten', max: 99, s: () => 'Acht renners erbij, nu meteen.' }
+    { id: 'knecht', t: 'Superknechten', max: 99, s: () => 'Vijf renners erbij, nu meteen.' }
   ];
   const sk = id => S.sk[id] || 0;
 
@@ -452,7 +452,7 @@
   function herstart() {
     S = {
       etappe: 1, dist: 0, v: BASIS_V, cx: 0, f: 0, fDoel: 0, fRuw: 0, K: 6, t: 0, windDir: 1, top: 0,
-      score: 0, hitte: 0, mult: 1, keten: 0, ketenT: 0, xp: 0, lv: 1, kaartRij: 0, sk: {},
+      score: 0, hitte: 0, mult: 1, keten: 0, ketenT: 0, kaartRij: 0, sk: {}, bezem: 28, eetT: 0, reusLading: 0, gevaarT: 0,
       meter: 0.5, rook: 0, boost: 0, boostKeten: 0, sleur: 0, schild: 0, magneet: 0, adem: 0, heliT: 0,
       kunst: KUNST.map(() => ({ laad: 0, levend: true })), spoor: [], voor: 0,
       flits: 0, flitsTitel: '', flitsTekst: '', sprint: null, terug: 0, ladderT: 0, kopVrij: false
@@ -465,12 +465,12 @@
   }
   function startEtappe(nr) {
     bouw(nr);
-    Object.assign(S, { etappe: nr, dist: 0, v: W.v0, spoor: [], sprint: null, terug: 0, kopVrij: false, boost: 0, cx: clamp(S.cx, -3, 3) });
+    Object.assign(S, { etappe: nr, dist: 0, v: W.v0, spoor: [], sprint: null, terug: 0, kopVrij: false, boost: 0, cx: clamp(S.cx, -3, 3), bezem: 28, reusLading: 2 * (S.sk.reus || 0) });
     gelost = [];
     lossers = W.losserStart.map(l => ({ d: l.d, x: l.x, wakker: false, weg: false, kleur: kies(ploegen), fase: rnd(0, 6) }));
     const namen = ['Groep 4', 'Groep 3', 'Achtervolgers', 'Kop van de koers'], grootte = [4, 5, 7, 3], kleuren = [0xff8a2a, 0x9a5be0, 0x19b8c9, 0xf4f4f4];
     groepen = namen.map((naam, i) => {
-      const g = { naam, d: Math.max(120 * W.sc, W.sectorEind[i] * 0.52), v: W.v0 * 0.6, n: grootte[i], kleur: new THREE.Color(kleuren[i]), kop: i === 3, gepakt: false, leden: [] };
+      const g = { naam, d: i === 0 ? W.sectorEind[0] * 0.27 : W.sectorEind[i] * 0.52, v: W.v0 * 0.6, n: grootte[i], kleur: new THREE.Color(kleuren[i]), kop: i === 3, gepakt: false, leden: [] };
       for (let k = 0; k < g.n; k++) g.leden.push({ ox: (k % 3 - 1) * 0.75 + rnd(-0.1, 0.1), oz: Math.floor(k / 3) * 1.3 });
       return g;
     });
@@ -484,17 +484,13 @@
   const TRAP = [0, 10, 24, 42, 64, 90, 120, 155], HITTE_MAX = 175;
   function multVan(h) { let m = 1; while (m < TRAP.length && h >= TRAP[m]) m++; return m; }
   function trapDeel(h) { const m = multVan(h); return m >= TRAP.length ? 1 : (h - TRAP[m - 1]) / (TRAP[m] - TRAP[m - 1]); }
-  // De eerste balk is na een paar bidons vol; elke volgende vraagt bijna de helft meer.
-  const nodig = lv => Math.round(8 * Math.pow(1.45, lv - 1));
   function flits(titel, tekst, duur) { S.flits = duur || 1.5; S.flitsTitel = titel; S.flitsTekst = tekst || ''; }
-  function pak(punten, hitte, ervaring) {
+  function pak(punten, hitte) {
     const keer = S.rook > 0 ? 2 : 1;
     S.score += punten * S.mult * keer * S.etappe; S.hitte = Math.min(HITTE_MAX, S.hitte + hitte * keer);
     const m = multVan(S.hitte);
     if (m > S.mult) { pop('TEMPO ×' + m, S.cx, -4, 'geel'); if (m >= 4) tril(12); }
     S.mult = m;
-    S.xp += ervaring || 0;
-    while (S.xp >= nodig(S.lv)) { S.xp -= nodig(S.lv); S.lv++; S.kaartRij++; }
   }
 
   // Je stuurt de kop; wie erachter rijdt volgt hetzelfde spoor, zoals een slang. `spoor` onthoudt waar de kop stuurde.
@@ -533,15 +529,27 @@
     S.hitte = Math.max(0, S.hitte - 10); S.mult = multVan(S.hitte);
     if (r.kunst >= 0) { S.kunst[r.kunst].levend = false; flits(KUNST[r.kunst].naam + ' lost', 'zijn knop ben je kwijt', 2); }
   }
+  // Valpartij: wie botst, neemt iedereen mee die in zijn wiel zit. Hoe harder je rijdt, hoe meer er vallen.
+  // Daarna ben je vaart kwijt en zit de bezemwagen dichter op je.
+  function valpartij(r) {
+    const hard = S.v / W.v0, ver = 2.6 + 3.2 * hard, maxN = Math.round(2 + 3 * hard);
+    const mee = peloton.filter(o => o !== r && o.tz >= r.tz - 0.1 && o.tz - r.tz < ver && Math.abs(o.tx - r.tx) < 0.95)
+      .sort((a, b) => a.tz - b.tz).slice(0, maxN - 1);
+    for (const o of [r].concat(mee)) { peloton.splice(peloton.indexOf(o), 1); laatLos(o, true); plof(o.x, o.z, STOF, 4); }
+    S.v *= 0.62; S.bezem -= 4 + mee.length; S.adem = 0.6; S.boost = 0;
+    schud = 0.55; stil = Math.max(stil, 0.07);
+    pop(mee.length ? 'Valpartij! −' + (mee.length + 1) : 'Au!', r.x, r.z, 'rood'); G.klap(); tril(mee.length ? [40, 30, 60] : 30);
+  }
   function sloop(b, z) {
     b.kapot = true; verberg(b.mesh, b.i); b.mesh.instanceMatrix.needsUpdate = true;
     plof(b.x, z, b.soort === 'baal' ? rookKleur[0] : STOF, 10, 1.8);
     for (let i = 0; i < 5; i++) wolk(b.x, 1, z, rnd(-6, 6), rnd(3, 8), rnd(-4, 4), 0.5, 1.2, kies(VUUR));
-    pak(80, 3, 1); pop('Beuk!', b.x, z, 'roze'); G.sloop(); tril(18); schud = Math.max(schud, 0.25);
+    pak(80, 3); pop('Beuk!', b.x, z, 'roze'); G.sloop(); tril(18); schud = Math.max(schud, 0.25);
   }
   function pakBidon(b, x, z, viaBliksem) {
     b.weg = true; S.keten++; S.ketenT = S.t;
-    pak(10, viaBliksem ? 0 : 1, 1);   // bidons via de bliksem tellen voor score en ervaring, niet voor het tempo S.meter = Math.min(1, S.meter + 0.006 * (1 + sk('rook')));
+    pak(10, viaBliksem ? 0 : 1);   // bidons via de bliksem tellen voor de score, niet voor het tempo
+    S.meter = Math.min(1, S.meter + 0.006 * (1 + sk('rook')));
     G.bidon(S.keten); wolk(x, 0.9, z, 0, 3, 0, 0.3, 0.9, CYAAN, 0.8);
     if (S.keten % 25 === 0) { pop(S.keten + ' op rij!', x, z, 'geel'); tril(8); }
     if (!viaBliksem && sk('bliksem')) bliksem(x, z);
@@ -579,15 +587,15 @@
     const beschermd = S.rook > 0 || S.schild > 0, ramt = S.boost > 0 && sk('brander') > 0, onkwetsbaar = S.adem > 0;
 
     // plekken, beschutting, energie, botsen
-    const n = peloton.length; let beschut = 0;
+    const n = peloton.length; let beschut = 0, gevallen = null;
     S.voor = voorkant(n);
     if (!S.spoor.length || S.dist - S.spoor[S.spoor.length - 1].d > 0.4) { S.spoor.push({ d: S.dist, x: S.cx }); if (S.spoor.length > 160) S.spoor.shift(); }
     const dKop = S.dist - S.voor - 1;   // waar de kop van het peloton nu rijdt
     for (let i = 0; i < n; i++) { const r = peloton[i], s = slot(i, n); r.tx = s.x; r.tz = s.z; r.kop = s.kop; }
     // de reuzenkopman beukt hindernissen opzij voor wie achter hem rijdt
-    if (sk('reus')) {
+    if (S.reusLading > 0) {
       const br = 0.9 + 0.75 * sk('reus');
-      for (const b of W.blokken) if (!b.kapot && Math.abs(b.d - dKop) < b.hl + 1.5 && Math.abs(b.x - S.cx) < br + b.hw) sloop(b, S.dist - b.d);
+      for (const b of W.blokken) if (S.reusLading > 0 && !b.kapot && Math.abs(b.d - dKop) < b.hl + 1.5 && Math.abs(b.x - S.cx) < br + b.hw) { sloop(b, S.dist - b.d); S.reusLading--; }
     }
     for (let i = n - 1; i >= 0; i--) {
       const r = peloton[i];
@@ -602,17 +610,15 @@
       if (veilig) { beschut++; r.e = Math.min(1, r.e + dt * 0.4); }
       else if (!(S.f > 0.8 && r.kop)) r.e -= dt / (2.4 * (1 + 0.6 * sk('jack')) * (r.kunst >= 0 ? 2 : 1));
       if (r.e <= 0) { peloton.splice(i, 1); laatLos(r, false); continue; }
-      if (onkwetsbaar) continue;
+      if (onkwetsbaar || gevallen) continue;
       const dr = S.dist - r.z; let klap = Math.abs(r.x) > W.halveBreedte(dr) + 0.12;
       if (!klap) for (const b of W.blokken) if (!b.kapot && Math.abs(dr - b.d) < b.hl + 0.3 && Math.abs(r.x - b.x) < b.hw + 0.2) {
-        if (ramt) sloop(b, S.dist - b.d); else { klap = true; b.geraakt = true; }
+        if (ramt) sloop(b, S.dist - b.d); else { klap = true; b.geraakt = true; b.kapot = true; verberg(b.mesh, b.i); b.mesh.instanceMatrix.needsUpdate = true; }
         break;
       }
-      if (klap) {
-        peloton.splice(i, 1); laatLos(r, true); plof(r.x, r.z, STOF, 6); schud = 0.35; stil = Math.max(stil, 0.04);
-        pop('Au!', r.x, r.z, 'rood'); G.klap(); tril(30);
-      }
+      if (klap) gevallen = r;
     }
+    if (gevallen) valpartij(gevallen);
     const frac = n ? beschut / n : 0;
 
     // Snelheid: alles vermenigvuldigt met elkaar. Zo wordt een boost op een hoog tempo echt gevaarlijk snel.
@@ -626,6 +632,18 @@
     doel = Math.min(doel, W.v0 * 2.8);
     S.v += (doel - S.v) * Math.min(1, dt * (doel > S.v ? 3.5 : 1.6));
     S.dist += S.v * dt; S.top = Math.max(S.top, S.v);
+    // De bezemwagen rijdt het tempo van de etappe. Rijd je trager, dan komt hij dichterbij; op je staart eet hij renners op.
+    S.bezem = clamp(S.bezem + (S.v - W.v0 * (1 + 0.05 * sector)) * dt * 0.55, -0.5, 32);
+    if (S.bezem <= 0 && peloton.length) {
+      S.eetT -= dt;
+      if (S.eetT <= 0) {
+        S.eetT = 0.38; let a = 0; peloton.forEach((o, k) => { if (o.z > peloton[a].z) a = k; });
+        const o = peloton.splice(a, 1)[0]; plof(o.x, o.z, STOF, 8); pop('Opgeveegd', o.x, o.z, 'rood'); G.toeter(); tril(25); schud = Math.max(schud, 0.25);
+        S.hitte = Math.max(0, S.hitte - 6);
+        if (o.kunst >= 0) { S.kunst[o.kunst].levend = false; flits(KUNST[o.kunst].naam + ' opgeveegd', 'zijn knop ben je kwijt', 2); }
+      }
+    }
+    if (S.bezem < 9) { S.gevaarT -= dt; if (S.gevaarT <= 0) { S.gevaarT = 1.1; G.toeter(); } }
 
     // tellers
     for (const k of ['boost', 'sleur', 'schild', 'magneet', 'adem']) if (S[k] > 0) S[k] -= dt;
@@ -668,7 +686,7 @@
       l.x = clamp(l.x, -hb, hb);
       if (S.magneet > 0 && z > -20) l.x += (S.cx - l.x) * Math.min(1, dt * 3);
       if (z > -22 && raakt(l.x, z, 1.0, 1.3 + S.v * dt)) {
-        l.weg = true; if (peloton.length < VOL) peloton.push(nieuweRenner(l.x, z, l.kleur)); pak(50, 4, 3); pop('+1', l.x, z); G.losser(); tril(10);
+        l.weg = true; if (peloton.length < VOL) peloton.push(nieuweRenner(l.x, z, l.kleur)); pak(50, 4); pop('+1', l.x, z); G.losser(); tril(10);
       } else if (z > 24) l.weg = true;
     }
 
@@ -677,20 +695,20 @@
       m.klaar = true;
       if (Math.abs(S.cx - m.x) < 2.2) {
         S.boostKeten = S.boost > 0 ? S.boostKeten + 1 : 1; S.boost = (2.0 + 0.5 * sk('brander')) * (1 + 0.3 * (S.boostKeten - 1));
-        pak(30, 4, 2); pop(S.boostKeten > 1 ? 'BOOST ×' + S.boostKeten : 'BOOST', S.cx, S.voor, 'roze'); G.boost(); tril(22); schud = Math.max(schud, 0.3);
+        pak(30, 4); pop(S.boostKeten > 1 ? 'BOOST ×' + S.boostKeten : 'BOOST', S.cx, S.voor, 'roze'); G.boost(); tril(22); schud = Math.max(schud, 0.3);
         for (let i = 0; i < 20; i++) wolk(S.cx + rnd(-2, 2), 0.5, rnd(-2, 6), rnd(-1, 1), rnd(0.5, 2), 10, 0.5, rnd(0.8, 1.4), sk('brander') ? kies(VUUR) : CYAAN, 0.85);
       }
     }
     for (const p of W.poorten) if (!p.klaar && dKop >= p.d) {
       p.klaar = true; const k = S.cx < 0 ? p.links : p.rechts;
-      const erbij = k.keer ? Math.min(15, peloton.length) : k.n;
-      voegToe(erbij); pak(40, 5, 2); S.meter = Math.min(1, S.meter + 0.06);
+      const erbij = k.keer ? Math.min(6, peloton.length) : k.n;
+      voegToe(erbij); pak(40, 5); S.meter = Math.min(1, S.meter + 0.06);
       pop('+' + erbij + ' renners', S.cx, S.voor, 'geel'); G.poort(); tril(15);
     }
     for (const b of W.blokken) if (!b.klaar && S.dist >= b.d + b.hl + 3) {
       b.klaar = true;
       if (!b.kapot && !b.geraakt && b.soort !== 'baal' && peloton.some(r => Math.abs(r.x - b.x) < b.hw + 1.1)) {
-        pak(60, 4, 2); S.meter = Math.min(1, S.meter + 0.04); pop('Rakelings!', b.x, 2, 'roze'); G.rakelings(); tril(10);
+        pak(60, 4); S.meter = Math.min(1, S.meter + 0.04); pop('Rakelings!', b.x, 2, 'roze'); G.rakelings(); tril(10);
       }
     }
 
@@ -703,18 +721,20 @@
         g.gepakt = true; stil = 0.09; schud = 0.45; G.groep(); tril([20, 30, 40]);
         const erbij = g.kop ? g.n - 1 : g.n;
         g.leden.slice(0, erbij).forEach(l => { if (peloton.length < VOL) peloton.push(nieuweRenner(l.ox + (g.x || 0), -(g.d - S.dist) - l.oz, g.kleur)); });
-        pak(500, 15, 6); S.meter = Math.min(1, S.meter + 0.15);
+        pak(500, 15); S.meter = Math.min(1, S.meter + 0.15);
         for (let i = 0; i < 24; i++) wolk(rnd(-4, 4), rnd(0.5, 2), rnd(-8, 2), rnd(-3, 3), rnd(2, 5), rnd(-2, 2), rnd(0.8, 1.4), rnd(1.5, 3), rookKleur[i % 4], 0.85);
-        flits(g.kop ? 'Geel ingelopen' : g.naam + ' ingelopen', g.kop ? 'tik om te sprinten' : '+' + erbij + ' renners', 1.6);
+        S.reusLading = 2 * sk('reus'); S.bezem = Math.min(32, S.bezem + 6);
         ladder(true);
-        if (g.kop) return startSprint();
+        if (g.kop) { flits('Geel ingelopen', 'tik om te sprinten', 1.6); return startSprint(); }
+        S.kaartRij++;
       }
     }
 
     // rook, vuur en fakkels
     if (S.rook > 0) {
       S.rook -= dt;
-      for (let i = 0; i < 5; i++) wolk(S.cx + rnd(-8, 8), rnd(0.3, 1.5), rnd(-16, 12), rnd(-1.5, 1.5), rnd(1.2, 3), rnd(-2, 2), rnd(1.2, 2), rnd(2.2, 4), rookKleur[i % 2], 0.8);
+      // rook langs de kanten en achter je, zodat je je eigen renners blijft zien
+      for (let i = 0; i < 4; i++) { const kant = Math.random() < 0.5 ? -1 : 1; wolk(kant * rnd(4.5, 9), rnd(0.3, 1.5), rnd(-30, 10), rnd(-1, 1), rnd(1.2, 3), rnd(-2, 2), rnd(1.2, 2), rnd(2.2, 4), rookKleur[i % 2], 0.75); }
       if (S.rook <= 0) $('tint').classList.remove('aan');
     }
     if (S.boost > 0 || S.sleur > 0) for (let i = 0; i < 3; i++) wolk(S.cx + rnd(-2.5, 2.5), 0.4, rnd(2, 9), rnd(-0.5, 0.5), rnd(0.3, 1.5), 12, 0.4, rnd(0.7, 1.4), sk('brander') || S.sleur > 0 ? kies(VUUR) : CYAAN, 0.8);
@@ -725,16 +745,17 @@
     }
 
     // gelosten en bezemwagen
-    let prooi = null;
+    let prooi = null, staart = 0; for (const o of peloton) staart = Math.max(staart, o.z);
+    const busZ = staart + 3.2 + Math.max(0, S.bezem) * 0.9; S.busZ = busZ;
     for (let i = gelost.length - 1; i >= 0; i--) {
       const r = gelost[i];
       r.z += (r.val ? S.v : r.vz) * dt;
       if (!r.val) r.x += Math.sin(S.t * 5 + r.fase) * dt * 1.2;
       r.kanteling = r.val ? 1.45 : Math.sin(S.t * 6 + r.fase) * 0.25;
       if (!prooi || r.z > prooi.z) prooi = r;
-      if (r.z > 9.6) { gelost.splice(i, 1); plof(r.x, 9.4, STOF, 8); schud = Math.max(schud, 0.2); G.toeter(); tril(20); }
+      if (r.z > busZ - 2.4) { gelost.splice(i, 1); if (busZ < 26) { plof(r.x, busZ - 2.4, STOF, 8); schud = Math.max(schud, 0.2); G.toeter(); tril(20); } }
     }
-    bus.position.x += ((prooi ? prooi.x : S.cx * 0.5) - bus.position.x) * Math.min(1, dt * 3);
+    bus.position.x += ((prooi && busZ < 26 ? prooi.x : stuurOp(S.dist - 30)) - bus.position.x) * Math.min(1, dt * 3);
     bus.position.y = Math.abs(Math.sin(S.t * 9)) * 0.06; bezem.rotation.y = Math.sin(S.t * 10) * 0.22;
 
     if (!peloton.length) return einde();
@@ -790,7 +811,7 @@
       if (i >= MAXI || z < -185 || z > 30) return;
       zet(rBasis, i, x, 0, z, schaal, schaal, schaal, 0, kantel); rTrui.setMatrixAt(i, dummy.matrix); rTrui.setColorAt(i, kleur); i++;
     };
-    const reus = 1 + 0.9 * sk('reus');
+    const reus = S.reusLading > 0 ? 1 + 0.9 * sk('reus') : 1;
     peloton.forEach((r, k) => renner(r.x, r.z + S.terug, tmpK.copy(r.kleur).lerp(ROOD, clamp(1 - r.e, 0, 1) * 0.9), r.kanteling, (r.kunst >= 0 ? 1.7 : 1.35) * (k === 0 ? reus : 1)));
     for (const r of gelost) renner(r.x, r.z + S.terug, tmpK.copy(r.kleur).lerp(ROOD, 0.8), r.kanteling, r.kunst >= 0 ? 1.7 : 1.35);
     if (!S.sprint) for (const b of geestBanen()) for (let k = 0; k < GEEST_LEN; k++) {
@@ -819,7 +840,7 @@
     pijl.visible = geelZ !== null && geelZ > -185; if (pijl.visible) pijl.position.set(geelX, 3.1 + Math.sin(S.t * 5) * 0.2, geelZ);
     rBasis.count = rTrui.count = i;
     rBasis.instanceMatrix.needsUpdate = rTrui.instanceMatrix.needsUpdate = true; rTrui.instanceColor.needsUpdate = true;
-    bus.position.z = 12 + S.terug; bus.visible = S.terug < 14;
+    bus.position.z = (S.busZ || 30) + S.terug; bus.visible = bus.position.z < 30;
 
     // wat je krachten laten zien
     const nm = S.sprint ? 0 : sk('motor'); motoren.count = nm;
@@ -845,21 +866,18 @@
   }
 
   /* ================= hud ================= */
-  function tijd(m) { const s = Math.max(0, Math.round(m / (4.6 * W.v0 / BASIS_V))); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
-  let ladderSleutel = '';
-  function ladder(nu) {
-    const open = groepen.filter(g => !g.gepakt).sort((a, b) => b.d - a.d), voor = open.length ? open[0].d : S.dist;
-    const rijen = open.map((g, i) => ({ id: g.naam, naam: g.naam, sub: g.kop ? 'Geel + ' + (g.n - 1) : g.n + ' renners', gat: i ? '+' + tijd(voor - g.d) : '' }));
-    rijen.push({ id: 'wij', naam: open.length ? 'Peloton' : 'Kop van de koers', sub: (open.length ? '' : 'Peloton, ') + peloton.length + ' renners', gat: open.length ? '+' + tijd(voor - S.dist) : '', wij: true });
-    const sleutel = rijen.map(r => r.id + r.sub + r.gat).join('|') + S.etappe;
-    if (sleutel === ladderSleutel && !nu) return; ladderSleutel = sleutel;
-    const el = $('rijen'); el.textContent = '';
-    for (const r of rijen) {
-      const d = document.createElement('div'); d.className = 'lrij' + (r.wij ? ' wij' : '');
-      const l = document.createElement('span'); l.textContent = r.naam; const sm = document.createElement('small'); sm.textContent = r.sub; l.append(sm);
-      const b = document.createElement('b'); b.textContent = r.gat; d.append(l, b); el.append(d);
+  // De koers als één smalle balk bovenaan: wij links, de groepen als stippen, de streep rechts.
+  function ladder(nieuw) {
+    const L = W.inhoudEind + 160 * W.sc, pos = d => clamp(d / L * 100, 0, 100) + '%';
+    if (nieuw) {
+      const el = $('stippen'); el.textContent = '';
+      groepen.forEach(g => { const i = document.createElement('i'); if (g.kop) i.className = 'geel'; el.append(i); g.stip = i; });
     }
-    $('nog').textContent = 'Etappe ' + S.etappe + ' · ' + W.th.naam;
+    let volgende = null;
+    for (const g of groepen) { if (g.stip) { g.stip.hidden = g.gepakt; g.stip.style.left = pos(g.d); } if (!g.gepakt && !volgende) volgende = g; }
+    $('ikStip').style.left = pos(S.dist);
+    $('nog').textContent = 'Etappe ' + S.etappe + (S.sprint ? ' · sprint' : volgende ? ' · ' + (volgende.kop ? 'Geel' : volgende.naam) + ' over ' + Math.max(0, Math.round(volgende.d - S.dist)) + ' m' : '');
+    $('aantal').textContent = peloton.length;
   }
 
   function hud(dt) {
@@ -867,8 +885,7 @@
     $('mult').textContent = '×' + S.mult; $('hitte').style.setProperty('--h', (trapDeel(S.hitte) * 100) + '%');
     $('tempo').classList.toggle('heet', S.mult >= 4);
     $('kmu').textContent = Math.round(S.v * 3.6) + ' km/u'; $('kmu').classList.toggle('hard', S.v > W.v0 * 1.45);
-    $('xp').firstElementChild.style.setProperty('--x', clamp(S.xp / nodig(S.lv) * 100, 0, 100) + '%'); $('xpTekst').textContent = 'Niveau ' + S.lv;
-    S.ladderT -= dt; if (S.ladderT <= 0) { S.ladderT = 0.25; ladder(false); }
+    S.ladderT -= dt; if (S.ladderT <= 0) { S.ladderT = 0.1; ladder(false); }
     const rk = $('rook'); rk.style.setProperty('--m', Math.round(S.meter * 100)); rk.classList.toggle('klaar', S.meter >= 1 && S.rook <= 0 && !S.sprint);
     KUNST.forEach((k, i) => {
       const st = S.kunst[i], el = $('k' + i), actief = [S.sleur, S.schild, S.magneet][i] > 0;
@@ -879,7 +896,9 @@
     // Eén kleine regel boven de knoppen. Uitleg over wind, dorp en hindernissen komt alleen de allereerste keer.
     let titel = '', tekst = '';
     const d = S.dist, ver = 110 * W.sc;
+    $('app').classList.toggle('gevaar', S.bezem < 9 && !S.sprint && fase === 'spel');
     if (S.flits > 0) { titel = S.flitsTitel; tekst = S.flitsTekst; }
+    else if (!S.sprint && S.bezem < 9) { titel = 'Bezemwagen!'; tekst = 'rijd harder'; }
     else if (!S.sprint) {
       const w = W.winden.find(x => x.d + x.len > d), e = W.dorpen.find(x => x.d + x.len > d), v = W.blokken.find(x => x.d > d - 10);
       if (!gezien.wind && w && d > w.d - ver) { if (d > w.d + w.len - 12) leerde('wind'); else { titel = w.dir > 0 ? 'Zijwind van links' : 'Zijwind van rechts'; tekst = 'veeg omlaag: waaier'; } }
@@ -894,7 +913,7 @@
   function toonKaarten(soort) {
     fase = 'kaart'; sleep = null;
     const dubbel = soort === 'zege';
-    $('kTitel').textContent = soort === 'zege' ? 'Etappezege!' : soort === 'tweede' ? 'Tweede' : 'Niveau ' + S.lv;
+    $('kTitel').textContent = soort === 'zege' ? 'Etappezege!' : soort === 'tweede' ? 'Tweede' : 'Groep ingelopen';
     $('kTekst').textContent = soort === 'zege' ? 'Je klopt geel op de streep. Kies je prijs: hij telt dubbel.'
       : soort === 'tweede' ? 'Geel was net sneller. Kies een troostprijs.' : 'Kies een kracht. Hij blijft tot je bent opgeveegd.';
     const keuze = schud2(KRACHT.filter(k => sk(k.id) < k.max)).slice(0, 3), el = $('kaarten');
@@ -908,14 +927,15 @@
       b.append(st, sp);
       b.addEventListener('click', () => {
         S.sk[k.id] = k.max < 99 ? straks : nu + 1;
-        if (k.id === 'knecht') voegToe(dubbel ? 16 : 8);
+        if (k.id === 'knecht') voegToe(dubbel ? 10 : 5);
+        if (k.id === 'reus') S.reusLading = 2 * S.sk.reus;
         $('kaartBlad').hidden = true; G.niveau(); tril(20); fase = 'spel';
         // even onkwetsbaar na het kiezen, zodat je niet blind een hindernis in rijdt
-        if (soort === 'niveau') { S.adem = 0.8; pop(k.t + (k.max < 99 ? ' ' + ROMEINS[straks] : ''), S.cx, -3, 'geel'); } else startEtappe(S.etappe + 1);
+        if (soort === 'niveau') { S.adem = 0.8; S.bezem = Math.max(S.bezem, 6); pop(k.t + (k.max < 99 ? ' ' + ROMEINS[straks] : ''), S.cx, -3, 'geel'); } else startEtappe(S.etappe + 1);
       });
       el.append(b);
     });
-    $('kaartBlad').hidden = false; if (soort === 'niveau') G.niveau();
+    $('kaartBlad').hidden = false;
   }
 
   function einde() {
@@ -935,7 +955,7 @@
     if (fase !== 'spel' || S.sprint || S.meter < 1 || S.rook > 0) return;
     S.meter = 0; S.rook = 5 + sk('rook'); schud = 0.3; $('tint').classList.add('aan');
     for (const r of peloton) r.e = 1;
-    for (let i = 0; i < 70; i++) wolk(S.cx + rnd(-9, 9), rnd(0.3, 2), rnd(-18, 12), rnd(-3, 3), rnd(1, 4), rnd(-3, 3), rnd(1.2, 2.2), rnd(2.5, 4.5), rookKleur[i % 2], 0.85);
+    for (let i = 0; i < 60; i++) { const kant = i % 2 ? -1 : 1; wolk(kant * rnd(4, 10), rnd(0.3, 2), rnd(-30, 12), rnd(-2, 2), rnd(1, 4), rnd(-3, 3), rnd(1.2, 2.2), rnd(2.5, 4.5), rookKleur[i % 2], 0.85); }
     G.rook(); tril([20, 40, 60]);
   }
   function kunst(i) {

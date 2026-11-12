@@ -29,10 +29,13 @@ Een roguelike in de Tour. Je stelt een ploeg samen en rijdt een ronde van meerde
 De eerste versie (één lange etappe, geel inhalen voor de finish) voelde te traag en te vlak. Het rijden is daarom omgebouwd naar het model van Archero:
 
 - **Korte stukken.** Een etappe is vier sectoren van ongeveer tien seconden. Aan het eind van elke sector loop je een groep in; de laatste is geel, daarna volgt de sprint.
-- **Ervaringsbalk.** Bidons vullen de balk bovenaan. Vol is een niveau erbij en je kiest één van drie krachten. De eerste komt na een paar seconden.
+- **Een kracht per ingelopen groep.** Je kiest één van drie. (Eerst was er een ervaringsbalk die bij bidons volliep; dat gaf veel te veel krachten.)
 - **Krachten blijven en stapelen**, en je ziet ze: spooklinten naast je, een helikopter die bidons laat vallen, motoren op kop, een reuzenkopman die hindernissen wegbeukt, bidonbliksem, een nabrander waarmee je tijdens een boost overal doorheen ramt.
 - **Snelheid vermenigvuldigt.** Tempo, boost, sleuren, rook en motoren vermenigvuldigen met elkaar. Op topsnelheid wordt sturen echt moeilijk.
-- **Renners zijn je levens.** Er is geen tijdslimiet meer; je bent af als je hele peloton is opgeveegd.
+- **Renners zijn je levens**, hooguit dertig. Je bent af als je hele peloton is opgeveegd.
+- **Valpartij.** Wie botst, neemt iedereen in zijn wiel mee; hoe harder je rijdt, hoe meer er vallen.
+- **De bezemwagen jaagt.** Hij rijdt het tempo van de etappe. Rijd je trager, bijvoorbeeld na een valpartij of in de wind, dan komt hij dichterbij en eet hij renners van je staart.
+- **De koers als smalle balk bovenaan:** wij, de groepen voor ons als stippen, en de streep.
 - **Elke etappe harder en in een nieuw decor:** Provence, De Alpen, De Hel van het Noorden, Parijs bij nacht, De Vulkaan, en dan opnieuw maar sneller.
 - **Meer hindernissen:** vluchtheuvels, ploegauto's, chicanes van strobalen, dorpen en zijwind, dichter naarmate je verder komt.
 
