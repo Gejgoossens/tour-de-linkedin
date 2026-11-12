@@ -24,14 +24,28 @@ Een roguelike in de Tour. Je stelt een ploeg samen en rijdt een ronde van meerde
 - Materiaal en renners versterken elkaar, zodat elke Tour een andere ploeg oplevert.
 - Tussen runs speel je vooral opties vrij (renners, kopmannen, materiaal, rondes) en weinig pure kracht.
 
+## Koerswijziging na het eerste spelen
+
+De eerste versie (één lange etappe, geel inhalen voor de finish) voelde te traag en te vlak. Het rijden is daarom omgebouwd naar het model van Archero:
+
+- **Korte stukken.** Een etappe is vier sectoren van ongeveer tien seconden. Aan het eind van elke sector loop je een groep in; de laatste is geel, daarna volgt de sprint.
+- **Ervaringsbalk.** Bidons vullen de balk bovenaan. Vol is een niveau erbij en je kiest één van drie krachten. De eerste komt na een paar seconden.
+- **Krachten blijven en stapelen**, en je ziet ze: spooklinten naast je, een helikopter die bidons laat vallen, motoren op kop, een reuzenkopman die hindernissen wegbeukt, bidonbliksem, een nabrander waarmee je tijdens een boost overal doorheen ramt.
+- **Snelheid vermenigvuldigt.** Tempo, boost, sleuren, rook en motoren vermenigvuldigen met elkaar. Op topsnelheid wordt sturen echt moeilijk.
+- **Renners zijn je levens.** Er is geen tijdslimiet meer; je bent af als je hele peloton is opgeveegd.
+- **Elke etappe harder en in een nieuw decor:** Provence, De Alpen, De Hel van het Noorden, Parijs bij nacht, De Vulkaan, en dan opnieuw maar sneller.
+- **Meer hindernissen:** vluchtheuvels, ploegauto's, chicanes van strobalen, dorpen en zijwind, dichter naarmate je verder komt.
+
+De ploeg samenstellen en de routekaart uit "De ronde" hierboven komen hier bovenop, in fase 2.
+
 ## Fases
 
 | Fase | Inhoud | Stand |
 |------|--------|-------|
-| 1 | **De etappe.** Eén vlakke etappe met ladder, groepen inlopen, bidons, lossers, poorten, boostmatten, vluchtheuvels, tempometer, drie renners met een knop, rook, bezemwagen, bevoorradingskaarten, sprint, geluid. Beste score in de browser. | gebouwd, wordt afgesteld |
-| 2 | **De Tour.** Routekaart, ploeg samenstellen, klassement over etappes, renners die wegvallen, ploegbus en rustdag. | |
-| 3 | **Opslaan en vrijspelen.** Voortgang per telefoon (browseropslag), missies van drie opdrachten, etappe van de dag. | |
-| 4 | **Meer inhoud.** Tactiekbord met Queens en Tango (hergebruik van `kronen-logica.js` en `tango-logica.js`), bergrit, kasseien, tijdrit, voorvallen. Nieuwe rondes als losse pakketjes ("Tour van …"). | |
+| 1 | **Het rijden.** Etappes met sectoren, ladder, ervaringsbalk en krachten, tempometer, drie renners met een knop, rook, bezemwagen, sprint, decors, geluid. Beste score in de browser. | gebouwd, wordt afgesteld |
+| 2 | **De Tour.** Routekaart tussen etappes, ploeg samenstellen, ploegbus en rustdag. | |
+| 3 | **Opslaan en vrijspelen.** Voortgang per telefoon (browseropslag): nieuwe krachten, renners en decors vrijspelen; missies van drie opdrachten; etappe van de dag. | |
+| 4 | **Meer inhoud.** Tactiekbord met Queens en Tango (hergebruik van `kronen-logica.js` en `tango-logica.js`), eindbazen, voorvallen, nieuwe rondes als losse pakketjes ("Tour van …"). | |
 | 5 | **Aankleding.** Mooiere graphics, de zes spelers als kopmannen, commentaar, rijker geluid. Eventueel gedeelde records via de Google Sheet. | |
 
 Na fase 1 eerst spelen en bijstellen tot het rijden verslavend is. De rest bouwt daarop.

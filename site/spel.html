@@ -28,10 +28,20 @@ button{font:inherit;color:inherit}
 #c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #tint{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(circle at 50% 55%,transparent 25%,var(--roze) 130%)}
 #tint.aan{opacity:.7}
+/* snelheidsstrepen: hoe harder je gaat, hoe feller */
+#vaart{position:absolute;inset:-30%;pointer-events:none;opacity:0;
+  background:repeating-conic-gradient(from 0deg at 50% 42%,rgba(255,255,255,0) 0 2.6deg,rgba(255,255,255,.7) 2.6deg 3.1deg);
+  -webkit-mask-image:radial-gradient(circle at 50% 42%,transparent 22%,#000 60%);mask-image:radial-gradient(circle at 50% 42%,transparent 22%,#000 60%);
+  animation:vaart .15s steps(3) infinite}
+@keyframes vaart{to{transform:rotate(3.1deg)}}
+/* ervaringsbalk bovenaan: vol is een nieuwe kracht */
+#xp{top:var(--boven);left:0;right:0;height:16px;background:var(--inkt)}
+#xp i{position:absolute;inset:0;width:var(--x,0%);background:var(--groen);transition:width .12s}
+#xp b{position:absolute;inset:0;text-align:center;font:800 12px/16px var(--cond);letter-spacing:.08em;text-transform:uppercase}
 .hud{position:absolute;pointer-events:none}
 
 /* ladder: de koerssituatie zoals op tv */
-#ladder{top:calc(8px + var(--boven));left:var(--links);width:min(56vw,230px);font-family:var(--cond);text-transform:uppercase;display:flex;flex-direction:column;gap:2px}
+#ladder{top:calc(22px + var(--boven));left:var(--links);width:min(56vw,230px);font-family:var(--cond);text-transform:uppercase;display:flex;flex-direction:column;gap:2px}
 .lrij{display:flex;justify-content:space-between;align-items:baseline;gap:8px;background:var(--paneel);padding:3px 8px;font-weight:700;font-size:15px;line-height:1.15;white-space:nowrap}
 .lrij small{font-size:12px;font-weight:500;color:var(--sub);display:block;letter-spacing:.03em}
 .lrij b{font-weight:800;font-variant-numeric:tabular-nums}
@@ -42,7 +52,7 @@ button{font:inherit;color:inherit}
 #nog{align-self:flex-start;background:var(--inkt);color:var(--wit);padding:2px 8px;font-weight:700;font-size:13px;letter-spacing:.06em}
 
 /* score en tempo */
-#scorebord{top:calc(8px + var(--boven));right:var(--rechts);text-align:right;font-family:var(--cond);display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+#scorebord{top:calc(22px + var(--boven));right:var(--rechts);text-align:right;font-family:var(--cond);display:flex;flex-direction:column;align-items:flex-end;gap:3px}
 #score{font:900 italic 34px/1 var(--cond);font-variant-numeric:tabular-nums;text-shadow:0 2px 0 var(--inkt),0 0 8px rgba(20,22,26,.6)}
 #tempo{background:var(--paneel);padding:3px 8px 5px;min-width:92px}
 #tempo b{font:900 italic 26px/1 var(--cond);color:var(--geel);display:block}
@@ -52,9 +62,8 @@ button{font:inherit;color:inherit}
 #tempo.heet b{color:var(--inkt)}
 #tempo.heet i::after{background:var(--inkt)}
 @keyframes vuur{from{box-shadow:0 0 10px 2px var(--vuur),0 -6px 14px var(--geel)}to{box-shadow:0 0 18px 6px var(--vuur),0 -10px 22px var(--rood)}}
-#bidons{background:var(--paneel);padding:2px 8px;font-weight:700;font-size:15px;text-transform:uppercase;font-variant-numeric:tabular-nums}
-#bidons.tik{animation:tik .12s}
-@keyframes tik{50%{transform:scale(1.2)}}
+#kmu{background:var(--paneel);padding:2px 8px;font-weight:800;font-size:17px;text-transform:uppercase;font-variant-numeric:tabular-nums}
+#kmu.hard{background:var(--roze);color:var(--inkt)}
 #geluid{pointer-events:auto;border:0;background:var(--paneel);padding:3px 8px;font:700 13px/1.3 var(--cond);text-transform:uppercase;letter-spacing:.05em;cursor:pointer}
 
 /* één kleine regel boven de knoppen, zodat de weg vrij blijft */
@@ -109,23 +118,27 @@ button{font:inherit;color:inherit}
 .kaart{text-align:left;border:2px solid #3a3f48;background:transparent;padding:9px 12px;cursor:pointer}
 .kaart strong{display:block;font:800 italic 22px/1.1 var(--cond);text-transform:uppercase;color:var(--geel)}
 .kaart span{font-size:14px;color:var(--sub)}
+.kaart em{float:right;font:800 14px/1.6 var(--cond);font-style:normal;color:var(--wit);letter-spacing:.06em}
+.kaart.goud{border-color:var(--geel)}
 .cijfers{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-family:var(--cond);text-transform:uppercase;font-size:15px;color:var(--sub)}
 .cijfers b{display:block;font:900 italic 28px/1 var(--cond);color:var(--wit);font-variant-numeric:tabular-nums}
-@media (prefers-reduced-motion:reduce){#rook.klaar,#tempo.heet{animation:none}}
+@media (prefers-reduced-motion:reduce){#rook.klaar,#tempo.heet{animation:none}#vaart{display:none}}
 </style>
 </head>
 <body>
 <div id="app">
   <canvas id="c"></canvas>
   <div id="tint"></div>
+  <div id="vaart"></div>
   <div id="pops"></div>
 
+  <div class="hud" id="xp"><i></i><b id="xpTekst">Niveau 1</b></div>
   <div class="hud" id="ladder"><div id="rijen"></div><div id="nog"></div></div>
 
   <div class="hud" id="scorebord">
     <div id="score">0</div>
     <div id="tempo"><b id="mult">×1</b><i id="hitte"></i></div>
-    <div id="bidons">0 bidons</div>
+    <div id="kmu">0 km/u</div>
     <button id="geluid" type="button" aria-pressed="true">Geluid aan</button>
   </div>
 
@@ -141,20 +154,14 @@ button{font:inherit;color:inherit}
 
   <div class="blad" id="start">
     <div class="vel">
-      <h1>De etappe</h1>
-      <p>Jij bent het <b>peloton</b>. Je begint achteraan, loopt groep na groep in en moet als eerste over de streep. De bezemwagen veegt op wie lost.</p>
+      <h1>Het peloton</h1>
+      <p>Loop groep na groep in en win de etappe. Elke etappe gaat harder. <b>Je renners zijn je levens:</b> wie botst of lost, wordt opgeveegd.</p>
       <ul class="uitleg">
-        <li style="display:contents"><b>Sleep opzij</b><span>sturen</span></li>
-        <li style="display:contents"><b>Veeg omlaag</b><span>waaier: beschut tegen zijwind, pakt meer bidons</span></li>
-        <li style="display:contents"><b>Veeg omhoog</b><span>lint: snel en smal, voor dorp en vluchtheuvels</span></li>
-        <li style="display:contents"><b>Pak alles</b><span>bidons, lossers en boostmatten jagen je tempo op</span></li>
+        <li style="display:contents"><b>Sleep opzij</b><span>sturen; het lint volgt de kop</span></li>
+        <li style="display:contents"><b>Veeg omlaag</b><span>waaier, tegen zijwind</span></li>
+        <li style="display:contents"><b>Veeg omhoog</b><span>lint, langs alles wat in de weg staat</span></li>
+        <li style="display:contents"><b>Bidons</b><span>vullen de groene balk: vol is een nieuwe kracht</span></li>
       </ul>
-      <div class="ploeg">
-        <div style="--k:#F0525A"><i></i><b>De Locomotief</b><span>sleurt op kop: even veel harder</span></div>
-        <div style="--k:#5AA2F0"><i></i><b>De Waaierkoning</b><span>windschild: niemand in de wind</span></div>
-        <div style="--k:#4CC38A"><i></i><b>De Waterdrager</b><span>magneet: bidons vliegen naar je toe</span></div>
-      </div>
-      <p>Wordt een van hen opgeveegd, dan is zijn knop weg.</p>
       <button class="groot" id="startKnop" type="button">Start</button>
       <a class="terug" href="index.html">Terug naar het klassement</a>
     </div>
@@ -162,8 +169,8 @@ button{font:inherit;color:inherit}
 
   <div class="blad" id="kaartBlad" hidden>
     <div class="vel">
-      <h1>Bevoorrading</h1>
-      <p>Kies één musette.</p>
+      <h1 id="kTitel">Nieuwe kracht</h1>
+      <p id="kTekst">Kies er één. Hij blijft tot je bent opgeveegd.</p>
       <div class="kaarten" id="kaarten"></div>
     </div>
   </div>
@@ -175,8 +182,8 @@ button{font:inherit;color:inherit}
       <div class="cijfers">
         <div>Score<b id="eScore">0</b></div>
         <div>Beste score<b id="eBest">0</b></div>
-        <div>Bidons<b id="eBidons">0</b></div>
-        <div>Hoogste tempo<b id="eTempo">×1</b></div>
+        <div>Etappe<b id="eEtappe">1</b></div>
+        <div>Topsnelheid<b id="eTop">0</b></div>
       </div>
       <button class="groot" id="opnieuw" type="button">Nog een keer</button>
       <a class="terug" href="index.html">Terug naar het klassement</a>
