@@ -57,12 +57,10 @@ button{font:inherit;color:inherit}
 @keyframes tik{50%{transform:scale(1.2)}}
 #geluid{pointer-events:auto;border:0;background:var(--paneel);padding:3px 8px;font:700 13px/1.3 var(--cond);text-transform:uppercase;letter-spacing:.05em;cursor:pointer}
 
-#banner{top:27%;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);text-align:center;background:var(--paneel);padding:6px 16px 8px;border-bottom:4px solid var(--geel);transition:opacity .15s}
-#banner strong{display:block;font:900 italic 30px/1.05 var(--cond);text-transform:uppercase;color:var(--geel)}
-#banner span{font-size:15px;font-weight:500}
+/* één kleine regel boven de knoppen, zodat de weg vrij blijft */
+#banner{left:50%;bottom:calc(112px + var(--onder));transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);text-align:center;background:var(--paneel);padding:4px 12px;font-size:14px;transition:opacity .15s}
+#banner strong{font:800 italic 17px/1.2 var(--cond);text-transform:uppercase;color:var(--geel);margin-right:6px}
 #banner.weg{opacity:0}
-#banner.groot{border-color:var(--roze)}
-#banner.groot strong{font-size:40px;color:var(--wit)}
 
 /* zwevende getallen */
 #pops{position:absolute;inset:0;pointer-events:none;overflow:hidden}
@@ -88,7 +86,7 @@ button{font:inherit;color:inherit}
 #rook.klaar{animation:pols .6s ease-in-out infinite alternate}
 @keyframes pols{to{transform:scale(1.1)}}
 
-#sprintbalk{left:50%;bottom:calc(120px + var(--onder));transform:translateX(-50%);width:min(80%,320px);background:var(--paneel);padding:6px 10px 8px;font:800 15px/1.2 var(--cond);text-transform:uppercase;text-align:center}
+#sprintbalk{left:50%;bottom:calc(112px + var(--onder));transform:translateX(-50%);width:min(80%,320px);background:var(--paneel);padding:6px 10px 8px;font:800 15px/1.2 var(--cond);text-transform:uppercase;text-align:center}
 #sprintbalk i{display:block;height:12px;background:#3a3f48;margin-top:4px;position:relative}
 #sprintbalk i::after{content:"";position:absolute;inset:0;width:var(--p,0%);background:var(--geel)}
 

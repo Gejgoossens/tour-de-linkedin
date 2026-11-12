@@ -50,7 +50,7 @@
   }
 
   /* ================= parcours ================= */
-  const FIN = 2100, SPRINT = 170, LENGTE = FIN + 160, WEG = 5.4;
+  const FIN = 2660, SPRINT = 170, LENGTE = FIN + 160, WEG = 5.4;
   const winden = [], dorpen = [], poorten = [], kaartPunten = [], matten = [], eilanden = [], bidons = [], losserStart = [];
   function slinger(d0, len, fx) { for (let t = 0; t < len; t += 3.2) bidons.push({ d: d0 + t, x0: clamp(fx(t), -4.6, 4.6) }); }
   function blokAanloop(d) {
@@ -88,7 +88,7 @@
   }
   (function () {
     let d = 45, kant = 1;
-    for (let c = 0; c < 3; c++) {
+    for (let c = 0; c < 4; c++) {
       d = blokAanloop(d); d = blokWind(d, kant); kant = -kant; d = blokSlalom(d); d = blokDorp(d);
       kaartPunten.push({ d: d - 6 });
     }
@@ -365,6 +365,11 @@
     void e.offsetWidth; e.classList.add('aan');
   }
 
+  // welke uitleg deze speler al een keer gehad heeft
+  let gezien = {};
+  try { gezien = JSON.parse(localStorage.getItem('tdl-spel-uitleg') || '{}') || {}; } catch (_) { gezien = {}; }
+  function leerde(wat) { gezien[wat] = true; try { localStorage.setItem('tdl-spel-uitleg', JSON.stringify(gezien)); } catch (_) {} }
+
   /* ================= spelstand ================= */
   const KAARTEN = [
     { t: 'Superknechten', s: 'Zes renners sluiten aan vanuit de volgwagens.', doe: s => voegToe(6) },
@@ -389,7 +394,7 @@
 
   function herstart() {
     S = {
-      dist: 0, v: 13, cx: 0, f: 0, fDoel: 0, fRuw: 0, K: 6, t: 0, windDir: 1,
+      dist: 0, v: 17, cx: 0, f: 0, fDoel: 0, fRuw: 0, K: 6, t: 0, windDir: 1,
       score: 0, doorWind: 0, doorKlap: 0, hitte: 0, mult: 1, topMult: 1, laatstPak: 0, keten: 0, ketenT: 0, bidons: 0,
       meter: 0.5, rook: 0, boost: 0, boostKeten: 0, sleur: 0, schild: 0, magneet: 0,
       jack: 1, bidonHitte: 1, bidonRook: 0, magneetStraal: 0, boostDuur: 2.2, laadSnel: 1, hitteZak: 1, rookDuur: 5,
@@ -401,9 +406,9 @@
     KUNST.forEach((k, i) => peloton.splice(4 + i * 3, 0, nieuweRenner(rnd(-1, 1), rnd(-1, 3), k.kleur, i)));
     lossers = losserStart.map(l => ({ d: l.d, x: l.x, wakker: false, weg: false, kleur: kies(ploegen), fase: rnd(0, 6) }));
     groepen = [
-      { naam: 'Groep 3', d: 170, v: 10, n: 5, kleur: new THREE.Color(0xff8a2a) },
-      { naam: 'Achtervolgers', d: 400, v: 10.6, n: 7, kleur: new THREE.Color(0x9a5be0) },
-      { naam: 'Kop van de koers', d: 650, v: 11.1, n: 3, kleur: new THREE.Color(0x19b8c9), kop: true }
+      { naam: 'Groep 3', d: 200, v: 12.5, n: 5, kleur: new THREE.Color(0xff8a2a) },
+      { naam: 'Achtervolgers', d: 500, v: 13.2, n: 7, kleur: new THREE.Color(0x9a5be0) },
+      { naam: 'Kop van de koers', d: 830, v: 13.6, n: 3, kleur: new THREE.Color(0x19b8c9), kop: true }
     ];
     for (const g of groepen) { g.gepakt = false; g.leden = []; for (let i = 0; i < g.n; i++) g.leden.push({ ox: (i % 3 - 1) * 0.75 + rnd(-0.1, 0.1), oz: Math.floor(i / 3) * 1.3, fase: rnd(0, 6) }); }
     poorten.forEach(p => p.klaar = false); kaartPunten.forEach(k => k.klaar = false); matten.forEach(m => m.klaar = false);
@@ -452,9 +457,9 @@
   function raakt(x, z, rx, rz) { for (const r of peloton) if (Math.abs(r.x - x) < rx && Math.abs(r.z - z) < rz) return true; return false; }
 
   function laatLos(r, val) {
-    r.val = val; r.vz = val ? 0 : rnd(3.5, 5.5); gelost.push(r);
+    r.val = val; r.vz = val ? 0 : rnd(4.5, 7); gelost.push(r);
     S.hitte = Math.max(0, S.hitte - 10); S.mult = multVan(S.hitte);
-    if (r.kunst >= 0) { S.kunst[r.kunst].levend = false; flits(KUNST[r.kunst].naam + ' lost!', 'Zijn knop ben je kwijt', false, 2); }
+    if (r.kunst >= 0) { S.kunst[r.kunst].levend = false; flits(KUNST[r.kunst].naam + ' lost', 'zijn knop ben je kwijt', false, 2); }
   }
 
   /* ================= één stap ================= */
@@ -504,9 +509,9 @@
     const frac = n ? beschut / n : 0;
 
     // snelheid: vorm en wind, plus tempo, boost, sleuren en rook
-    let doel = wind && !beschermd ? 8.5 + 5.5 * frac : lerp(14, 12.4, S.f);
-    doel += (S.mult - 1) * 0.6;
-    if (S.boost > 0) doel += 4; if (S.sleur > 0) doel += 4; if (S.rook > 0) doel += 2.5;
+    let doel = wind && !beschermd ? 11 + 7 * frac : lerp(18, 16, S.f);
+    doel += (S.mult - 1) * 0.8;
+    if (S.boost > 0) doel += 5; if (S.sleur > 0) doel += 5; if (S.rook > 0) doel += 3;
     S.v += (doel - S.v) * Math.min(1, dt * 2.2);
     const vorige = S.dist; S.dist += S.v * dt;
 
@@ -539,8 +544,8 @@
     // lossers: renners die uit de groepen voor je zijn gevallen
     for (const l of lossers) {
       if (l.weg) continue;
-      if (!l.wakker) { if (l.d - S.dist < 95) l.wakker = true; else continue; }
-      l.d += 3 * dt; const z = S.dist - l.d, hb = halveBreedte(l.d) - 0.7;
+      if (!l.wakker) { if (l.d - S.dist < 120) l.wakker = true; else continue; }
+      l.d += 4 * dt; const z = S.dist - l.d, hb = halveBreedte(l.d) - 0.7;
       l.x = clamp(l.x, -hb, hb);
       if (S.magneet > 0 && z > -20) l.x += (S.cx - l.x) * Math.min(1, dt * 3);
       if (z > -1.5 && raakt(l.x, z, 1.0, 1.3)) {
@@ -579,8 +584,7 @@
         g.leden.slice(0, erbij).forEach(l => peloton.length < VOL && peloton.push(nieuweRenner(l.ox + (g.x || 0), -(g.d - S.dist) - l.oz, g.kleur)));
         pak(500, 15); S.meter = Math.min(1, S.meter + 0.15);
         for (let i = 0; i < 24; i++) wolk(rnd(-4, 4), rnd(0.5, 2), rnd(-8, 2), rnd(-3, 3), rnd(2, 5), rnd(-2, 2), rnd(0.8, 1.4), rnd(1.5, 3), rookKleur[i % 4], 0.85);
-        if (g.kop) flits('Geel ingelopen!', 'Hij kruipt in je wiel. Nu nog winnen', true, 2.4);
-        else flits(g.naam + ' ingelopen', '+' + erbij + ' renners', true, 1.8);
+        flits(g.kop ? 'Geel ingelopen' : g.naam + ' ingelopen', g.kop ? 'nu nog de sprint winnen' : '+' + erbij + ' renners', false, 1.8);
         ladder(true);
       }
     }
@@ -623,13 +627,13 @@
   function startSprint() {
     S.sprint = { ik: S.dist + 5, geel: S.dist + 8, kracht: 0, t: 0, tikken: 0 };
     S.rook = 0; $('tint').classList.remove('aan'); $('sprintbalk').hidden = false;
-    flits('Sprint!', 'Tik zo snel als je kunt', true, 1.6); G.knop();
+    S.flits = 0; G.knop();
   }
   function sprintTik() { const sp = S.sprint; if (!sp) return; sp.kracht += 1.1; sp.tikken++; G.tik(Math.min(12, sp.kracht * 2)); tril(5); }
   function updateSprint(dt) {
     const sp = S.sprint; sp.t += dt; sp.kracht *= Math.exp(-1.8 * dt);
-    const vIk = 15 + 0.1 * S.mult + sp.kracht, vGeel = Math.min(19.8, 15 + sp.t * 5);
-    sp.ik += vIk * dt; sp.geel += vGeel * dt; S.v = vIk; S.dist = sp.ik - 5; S.terug += (vIk - 14.5) * dt;
+    const vIk = 19 + 0.1 * S.mult + sp.kracht, vGeel = Math.min(23.8, 19 + sp.t * 5);
+    sp.ik += vIk * dt; sp.geel += vGeel * dt; S.v = vIk; S.dist = sp.ik - 5; S.terug += (vIk - 18.5) * dt;
     const n = peloton.length;
     for (let i = 0; i < n; i++) { const r = peloton[i], s = slot(i, n); r.x += (s.x - r.x) * Math.min(1, dt * 4); r.z += (s.z - r.z) * Math.min(1, dt * 4); r.kanteling = 0; }
     for (const f of fakkels) { const z = S.dist - f.d; if (z > -95 && z < 12 && Math.random() < dt * 8) wolk(f.x, 1.5, z, rnd(-0.6, 0.6), rnd(2, 4), 0, rnd(1.6, 2.4), rnd(1.2, 1.9), rookKleur[f.k], 0.85); }
@@ -689,7 +693,7 @@
     bus.position.z = 12 + S.terug; bus.visible = S.terug < 14;
 
     const s = rustig ? 0 : schud;
-    cam.fov = basisFov + (rustig ? 0 : clamp((S.v - 14) * 0.55, 0, 8)); cam.updateProjectionMatrix();
+    cam.fov = basisFov + (rustig ? 0 : clamp((S.v - 17) * 0.6, 0, 9)); cam.updateProjectionMatrix();
     pMat.uniforms.uSchaal.value = renderer.domElement.height / (2 * Math.tan(cam.fov * Math.PI / 360));
     cam.position.set(rnd(-s, s), 13 + rnd(-s, s), 19); cam.lookAt(0, 0, -6);
     renderer.render(scene, cam);
@@ -726,21 +730,17 @@
       el.classList.toggle('klaar', st.levend && st.laad <= 0 && !actief); el.classList.toggle('actief', actief); el.classList.toggle('weg', !st.levend);
     });
 
-    let titel = '', tekst = '', groot = false;
+    // Eén kleine regel boven de knoppen. Uitleg over wind, dorp en vluchtheuvels komt alleen de allereerste keer.
+    let titel = '', tekst = '';
     const d = S.dist;
-    if (S.flits > 0) { titel = S.flitsTitel; tekst = S.flitsTekst; groot = S.flitsGroot; }
-    else if (S.sprint) { titel = ''; }
-    else if (S.rook > 0) { titel = 'Meer rook!'; tekst = 'Alles telt dubbel'; }
-    else {
-      for (const w of winden) if (d > w.d - 75 && d < w.d + w.len - 10 && (d < w.d || S.f < 0.6) && S.schild <= 0) {
-        titel = w.dir > 0 ? 'Zijwind van links' : 'Zijwind van rechts'; tekst = 'Veeg omlaag: waaier';
-      }
-      for (const e of dorpen) if (d > e.d - 95 && d < e.d + e.len - 15 && (d < e.d - 40 || S.f > 0.4 || Math.abs(S.cx) > 1.3)) {
-        titel = 'Dorp'; tekst = S.f > 0.4 ? 'Veeg omhoog: lint' : 'Naar het midden';
-      }
-      if (!titel) for (const e of eilanden) if (!e.klaar && e.d - d < 60 && e.d - d > 0 && S.f > 0.4) { titel = 'Vluchtheuvels'; tekst = 'Veeg omhoog: lint'; }
+    if (S.flits > 0) { titel = S.flitsTitel; tekst = S.flitsTekst; }
+    else if (!S.sprint) {
+      const w = winden[0], e = dorpen[0], v = eilanden[0];
+      if (!gezien.wind) { if (d > w.d + w.len) leerde('wind'); else if (d > w.d - 110) { titel = w.dir > 0 ? 'Zijwind van links' : 'Zijwind van rechts'; tekst = 'veeg omlaag: waaier'; } }
+      if (!gezien.eiland) { if (d > v.d + 70) leerde('eiland'); else if (d > v.d - 110) { titel = 'Vluchtheuvels'; tekst = 'veeg omhoog: lint'; } }
+      if (!gezien.dorp) { if (d > e.d + e.len) leerde('dorp'); else if (d > e.d - 130) { titel = 'Dorp'; tekst = 'lint, en naar het midden'; } }
     }
-    const b = $('banner'); b.classList.toggle('weg', !titel); b.classList.toggle('groot', groot);
+    const b = $('banner'); b.classList.toggle('weg', !titel);
     if (titel) { $('bTitel').textContent = titel; $('bTekst').textContent = tekst; }
   }
 
@@ -752,7 +752,7 @@
       const b = document.createElement('button'); b.type = 'button'; b.className = 'kaart';
       const st = document.createElement('strong'); st.textContent = k.t; const sp = document.createElement('span'); sp.textContent = k.s;
       b.append(st, sp);
-      b.addEventListener('click', () => { k.doe(S); $('kaartBlad').hidden = true; fase = 'spel'; flits(k.t, '', false, 1.3); G.poort(); });
+      b.addEventListener('click', () => { k.doe(S); $('kaartBlad').hidden = true; fase = 'spel'; G.poort(); });
       el.append(b);
     });
     $('kaartBlad').hidden = false;
