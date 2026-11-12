@@ -603,7 +603,7 @@
       r.x += (r.tx - r.x) * Math.min(1, dt * r.lag * 1.4); r.z += (r.tz - r.z) * Math.min(1, dt * r.lag);
       let veilig = !wind || beschermd;
       // op de plek in de formatie, niet op de renner zelf: sturen mag de beschutting niet breken
-      if (!veilig) for (let j = 0; j < n; j++) {
+      if (!veilig) for (let j = 0; j < peloton.length; j++) {   // niet n: er kan in deze ronde al iemand gelost zijn
         if (j === i) continue; const o = peloton[j], dx = (r.tx - o.tx) * wind.dir, dz = r.tz - o.tz;
         if (dx > 0.3 && dx < 1.35 && dz > 0.12 && dz < 0.95) { veilig = true; break; }
       }
@@ -1014,12 +1014,13 @@
     if (fase === 'spel' && dt > 0) {
       // bij hoge snelheid in kleinere stapjes rekenen, zodat je niet door een hindernis heen schiet
       const stappen = clamp(Math.ceil(S.v * dt / 1.4), 1, 5);
-      for (let k = 0; k < stappen && fase === 'spel'; k++) update(dt / stappen);
+      try { for (let k = 0; k < stappen && fase === 'spel'; k++) update(dt / stappen); }
+      catch (fout) { console.error(fout); }   // één fout in een stap mag het spel niet laten bevriezen
     }
     if (S.flits > 0) S.flits -= echt;
     schud = Math.max(0, schud - echt * 1.2);
     updateRook(fase === 'kaart' ? 0 : echt, fase === 'spel' ? S.v : 0);
-    teken(); hud(echt);
+    try { teken(); hud(echt); } catch (fout) { console.error(fout); }
     requestAnimationFrame(lus);
   }
   requestAnimationFrame(lus);
